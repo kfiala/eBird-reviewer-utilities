@@ -98,6 +98,7 @@ if (mainTable) {
 			spreadSheet.push(row.join());
 
 			chklstCell = document.createElement('td');
+			chklstCell.setAttribute('class','KeBird');
 			elTr.appendChild(chklstCell);
 			
 			chklstLink = document.createElement('a');
@@ -126,4 +127,29 @@ if (mainTable) {
 		var a = document.getElementById('dlAnchor');
 	}
 	a.href=window.URL.createObjectURL(new Blob(['\ufeff',spreadSheet.join('\r\n')],{type:'text/csv'}));
+
+
+	var nodeferPara = document.getElementById('nodefID');
+	if (!document.body.contains(nodeferPara)) {	// Create this paragraph only if not already done
+		var nodeferLi = document.createElement('p');
+		nodeferLi.setAttribute('id','nodeferID');
+		document.getElementById("listnav").appendChild(nodeferLi);
+
+		// Create an anchor element
+		var ae = document.createElement('a');
+		ae.setAttribute("id",'nodeferAnchor');
+		ae.appendChild(document.createTextNode("Toggle deferred"));
+		ae.setAttribute("href","#");
+		ae.onclick=function(){
+			var deferred = document.getElementsByClassName('deferred');
+			for (var i=0; i<deferred.length; i++) {
+				if (deferred[i].parentNode.style.display == 'none') {
+					deferred[i].parentNode.style.display = 'table-row'; 
+				}
+				else {deferred[i].parentNode.style.display = 'none';}
+			}
+		}
+		ae.setAttribute("class","toggler");
+		nodeferLi.appendChild(ae);
+	}
 }
