@@ -35,7 +35,7 @@ if (mainTable) {
 				break;
 				case "species": {
 					if (el.nodeName === 'LABEL') {
-						species = el.innerHTML;
+						species = el.textContent;
 					}
 				}
 				break;
