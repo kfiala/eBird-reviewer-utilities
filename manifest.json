@@ -1,19 +1,25 @@
 {
 
   "manifest_version": 2,
-  "name": "eBird search report downloader",
-  "version": "1.0.3",
+  "name": "eBird reviewer utilities",
+  "version": "1.0.4",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/review.htm*"],
-      "js": ["eBirdReport.js"]
+      "js": ["utilities.js"]
     }
   ],
 
-  "description": "Provides a button for downloading a search report from eBird csv format",
+  "description": "Provides conveniences for the ebird review queue/search report page: 1. Hyperlink for downloading the table, 2. Hyperlink to the eBird checklist for each report, 3. Adjust widths of some inputs",
   "homepage_url": "https://www.faintlake.com/eBird/extension/report",
   "icons": {
     "48": "icons/48.png",
     "96": "icons/96.png"
+  },
+  "author": "Kent Fiala",
+  "browser_specific_settings": {
+     "gecko": {
+       "update_url": "https://www.faintlake.com/eBird/extension/updates/updates.json"
+     }
   }
 }

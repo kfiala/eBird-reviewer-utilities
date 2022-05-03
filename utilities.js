@@ -1,23 +1,35 @@
 "use strict";
+// Provides several unrelated conveniences for the traditional review queue page.
+//
+// 1. Provides a hyperlink for downloading the displayed queue or search report in CSV format.
+// 2. Provides a hyperlink to the eBird checklist for each report.
+// 3. Provides a hyperlink for toggling display of Deferred reports on or off.
+// 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
+
 var mainTable = document.getElementById('contents');
 if (mainTable) {
+//	First set up the CSV download
 	var spreadSheet = [];
 	var doHeaders = true;
 	var headers = [];
 	var rownum = 0;
 
 	mainTable.querySelectorAll('tr').forEach(function(elTr) {
+		// Extract the data from each row of the queue/search
 		var row = [];
 		var subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear;
 		var checklist, chklstCell, chklstLink;
 		const parser = new DOMParser();		
 
 		elTr.querySelectorAll('td').forEach(function(Cell) {
+			// Look at each column cell in this row of the table
 			var Class = Cell.getAttribute('class').split(' ')[0];
 			var html = parser.parseFromString(Cell.innerHTML,"text/html");
 			var el = html.body.firstChild;
 
 			if (doHeaders &&  (Class !== 'select') &&  (Class !== 'details')) {
+				// In the first row, save the headers of the columns that we are going to keep;
+				// also create and save header of the new day of year column we will create
 				headers.push(Class);
 				if (Class === 'obsdate') {
 					headers.push('day of year');
@@ -25,8 +37,10 @@ if (mainTable) {
 			}
 			switch  (Class) {
 				case "select":
+					// "select" column, do nothing
 				break;
 				case "subID": {
+					// "subID" column, get the report subID and set up the eBird checklist URL 
 					if (el.nodeName === 'A') {
 						subid = el.innerHTML;
 						checklist = 'https://ebird.org/checklist/' + subid
@@ -34,12 +48,14 @@ if (mainTable) {
 				}
 				break;
 				case "species": {
+					// "species" column, get the species name
 					if (el.nodeName === 'LABEL') {
 						species = el.textContent;
 					}
 				}
 				break;
-				case "evidence": if  (html) {
+				case "evidence": if (html) {
+					// "evidence" column, get the code letter for type of details
 					if (el && el.nodeName === 'A') {
 						var ev = parser.parseFromString(el.innerHTML,"text/html");
 						evidence = ev.body.firstChild.innerHTML;                    
@@ -48,13 +64,16 @@ if (mainTable) {
 				break;
 				case "count": count = Cell.innerHTML;
 				break;
-				case "obsdate": obsdate = Cell.innerHTML;
+				case "obsdate":
+					// Get the observation date, also format a copy of the date as day of year (without the year)
+					obsdate = Cell.innerHTML;
 					var date = new Date(obsdate);
 					var day = String(date.getDate()).padStart(2,'0');
 					var month = String(date.getMonth()+1).padStart(2,'0');
 					dayOfYear = month + ' ' + day;
 				break;
-				case "user": {
+				case "user": 
+				{	// Get the user's name
 					if (el.nodeName === 'A' && el.getAttribute('class') === 'userprofile') {
 						user = el.innerHTML;
 					}
@@ -74,10 +93,10 @@ if (mainTable) {
 				break;
 				case "status": status = Cell.innerHTML;
 				break;
-				case "details": break;
+				case "details": break;	// Don't keep anything from "details" column
 			}
 		});
-		if (rownum++) {
+		if (rownum++) {	// Skip row 0 (headers)
 			row.push(subid);
 			row.push('"' + species + '"');
 			row.push(evidence);
@@ -92,11 +111,14 @@ if (mainTable) {
 			row.push(status);
 			row.push(checklist);
 			if (doHeaders) {
+				// Put the headings in the first spreadsheet row, and
+				// turn off flag for saving headers.
 				spreadSheet.push(headers.join());
 				doHeaders = false;
 			}
-			spreadSheet.push(row.join());
+			spreadSheet.push(row.join());	// Add this row to spreadsheet
 
+			// Create a new table cell at the end of the row, for the eBird hyperlink
 			chklstCell = document.createElement('td');
 			chklstCell.setAttribute('class','KeBird');
 			elTr.appendChild(chklstCell);
@@ -108,29 +130,34 @@ if (mainTable) {
 			chklstLink.setAttribute('target','_blank');
 		}
 	});
-	
+	// All done building the CSV, now set up the hyperlink for it.
 	var downloadPara = document.getElementById('DownloadCSV');
 	if (!document.body.contains(downloadPara)) {	// Create this paragraph only if not already done
+		// Set up a paragraph (p element) to contain the hyperlink
 		var downloadLi = document.createElement('p');
 		downloadLi.setAttribute('id','DownloadCSV');
+		// Add the paragraph to the existing list of hyperlinks
 		document.getElementById("listnav").appendChild(downloadLi);
 
-		// Create an anchor element
+		// Create the anchor element to go in the paragraph
 		var a = document.createElement('a');
 		a.setAttribute("id",'dlAnchor');
 		a.appendChild(document.createTextNode("Download csv"));
-		a.setAttribute("download",'eBird report.csv');	// Set the csv name
+		a.setAttribute("download",'eBird report.csv');	// Set the csv file name
 		a.setAttribute("class","toggler");
 		downloadLi.appendChild(a);
 	}
 	else {
 		var a = document.getElementById('dlAnchor');
 	}
+	// Hook up the CSV data to the hyperlink
 	a.href=window.URL.createObjectURL(new Blob(['\ufeff',spreadSheet.join('\r\n')],{type:'text/csv'}));
-
-
+	// All done with the CSV stuff, now on to the next feature
+// -------------------------------------------------------------------
+	// Set up "Toggle deferred" hyperlink
 	var nodeferPara = document.getElementById('nodefID');
 	if (!document.body.contains(nodeferPara)) {	// Create this paragraph only if not already done
+		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
 		var nodeferLi = document.createElement('p');
 		nodeferLi.setAttribute('id','nodeferID');
 		document.getElementById("listnav").appendChild(nodeferLi);
@@ -140,6 +167,8 @@ if (mainTable) {
 		ae.setAttribute("id",'nodeferAnchor');
 		ae.appendChild(document.createTextNode("Toggle deferred"));
 		ae.setAttribute("href","#");
+		// This function will execute when "Toggle deferred" is clicked.
+		// It toggles the display status of deferred reports.
 		ae.onclick=function(){
 			var deferred = document.getElementsByClassName('deferred');
 			for (var i=0; i<deferred.length; i++) {
@@ -152,4 +181,9 @@ if (mainTable) {
 		ae.setAttribute("class","toggler");
 		nodeferLi.appendChild(ae);
 	}
+// -------------------------------------------------------------------
+	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs	
+	document.getElementById('reasonCode').style='width:275px';
+	document.getElementById('resultingValid').style='width:160px';
+	document.getElementById('notes').style='width:300px';
 }
