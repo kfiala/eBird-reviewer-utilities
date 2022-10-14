@@ -18,7 +18,7 @@ if (mainTable) {
 		// Extract the data from each row of the queue/search
 		var row = [];
 		var subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear;
-		var checklist, chklstCell, chklstLink;
+		var checklist, chklstCell, chklstLink, quickReview, qReviewLink, lineBreak;
 		const parser = new DOMParser();		
 
 		elTr.querySelectorAll('td').forEach(function(Cell) {
@@ -37,7 +37,10 @@ if (mainTable) {
 			}
 			switch  (Class) {
 				case "select":
-					// "select" column, do nothing
+					// "select" column
+					if (el.nodeName === 'INPUT') {
+						quickReview = 'https://review.ebird.org/admin/qr.htm?obsId='	+ el.value;
+					}
 				break;
 				case "subID": {
 					// "subID" column, get the report subID and set up the eBird checklist URL 
@@ -121,13 +124,23 @@ if (mainTable) {
 			// Create a new table cell at the end of the row, for the eBird hyperlink
 			chklstCell = document.createElement('td');
 			chklstCell.setAttribute('class','KeBird');
+			chklstCell.setAttribute('style','color:#ccc');
 			elTr.appendChild(chklstCell);
-			
+
 			chklstLink = document.createElement('a');
 			chklstCell.appendChild(chklstLink);
 			chklstLink.appendChild(document.createTextNode('ebird'));
 			chklstLink.setAttribute('href',checklist);
 			chklstLink.setAttribute('target','_blank');
+
+			lineBreak = document.createTextNode(' | ');
+			chklstCell.appendChild(lineBreak);
+
+			qReviewLink = document.createElement('a');
+			chklstCell.appendChild(qReviewLink);
+			qReviewLink.appendChild(document.createTextNode('quick'));
+			qReviewLink.setAttribute('href',quickReview);
+			qReviewLink.setAttribute('target','_blank');
 		}
 	});
 	// All done building the CSV, now set up the hyperlink for it.
