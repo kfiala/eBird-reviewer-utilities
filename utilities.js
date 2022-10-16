@@ -179,7 +179,7 @@ if (mainTable) {
 
 		// Create an anchor element
 		var ae = document.createElement('a');
-		ae.setAttribute("id",'nodeferAnchor');https://extensionworkshop.com/documentation/manage/updating-your-extension/
+		ae.setAttribute("id",'nodeferAnchor');
 		ae.appendChild(document.createTextNode("Toggle deferred"));
 		ae.setAttribute("href","#");
 		// This function will execute when "Toggle deferred" is clicked.
@@ -191,6 +191,16 @@ if (mainTable) {
 			deferToggle = ++deferToggle % 3;	// Cycle through three different view
 			
 			var reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+
+			var checkAll = mainTable.querySelector('input.checkbox');
+			switch(deferToggle) {
+				case 1:
+				case 2:
+					checkAll.disabled = true;
+					break;
+				default:
+					checkAll.disabled = false;
+			}
 
 			for (var i=0; i<reviewRows.length; i++) {
 				switch (deferToggle) {
