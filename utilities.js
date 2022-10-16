@@ -6,6 +6,8 @@
 // 3. Provides a hyperlink for toggling display of Deferred reports on or off.
 // 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
 
+var deferToggle;
+
 var mainTable = document.getElementById('contents');
 if (mainTable) {
 //	First set up the CSV download
@@ -177,18 +179,42 @@ if (mainTable) {
 
 		// Create an anchor element
 		var ae = document.createElement('a');
-		ae.setAttribute("id",'nodeferAnchor');
+		ae.setAttribute("id",'nodeferAnchor');https://extensionworkshop.com/documentation/manage/updating-your-extension/
 		ae.appendChild(document.createTextNode("Toggle deferred"));
 		ae.setAttribute("href","#");
 		// This function will execute when "Toggle deferred" is clicked.
 		// It toggles the display status of deferred reports.
 		ae.onclick=function(){
-			var deferred = document.getElementsByClassName('deferred');
-			for (var i=0; i<deferred.length; i++) {
-				if (deferred[i].parentNode.style.display == 'none') {
-					deferred[i].parentNode.style.display = 'table-row'; 
+			if (deferToggle === undefined) {
+				deferToggle = 0;
+			}
+			deferToggle = ++deferToggle % 3;	// Cycle through three different view
+			
+			var reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+
+			for (var i=0; i<reviewRows.length; i++) {
+				switch (deferToggle) {
+					case 0:	// Display all rows
+						reviewRows[i].parentNode.style.display = 'table-row';
+						break;
+					case 1:	// Display only non-deferred observations
+						if (reviewRows[i].classList.contains('deferred')) {
+							reviewRows[i].parentNode.style.display = 'none';
+						}
+						else {
+							reviewRows[i].parentNode.style.display = 'table-row';
+						}
+						break;
+					case 2:	// Display only Deferred observations
+						if (reviewRows[i].classList.contains('deferred')) {
+							reviewRows[i].parentNode.style.display = 'table-row';
+						}
+						else {
+							reviewRows[i].parentNode.style.display = 'none';
+						}
+						break;
+					default:
 				}
-				else {deferred[i].parentNode.style.display = 'none';}
 			}
 		}
 		ae.setAttribute("class","toggler");
