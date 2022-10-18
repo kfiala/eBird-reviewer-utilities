@@ -5,6 +5,7 @@
 // 2. Provides a hyperlink to the eBird checklist for each report.
 // 3. Provides a hyperlink for toggling display of Deferred reports on or off.
 // 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
+// 5. Preserves links to last observations updated.
 
 var deferToggle;
 
@@ -147,6 +148,7 @@ if (mainTable) {
 	});
 	// All done building the CSV, now set up the hyperlink for it.
 	var downloadPara = document.getElementById('DownloadCSV');
+	var a;
 	if (!document.body.contains(downloadPara)) {	// Create this paragraph only if not already done
 		// Set up a paragraph (p element) to contain the hyperlink
 		var downloadLi = document.createElement('p');
@@ -155,7 +157,7 @@ if (mainTable) {
 		document.getElementById("listnav").appendChild(downloadLi);
 
 		// Create the anchor element to go in the paragraph
-		var a = document.createElement('a');
+		a = document.createElement('a');
 		a.setAttribute("id",'dlAnchor');
 		a.appendChild(document.createTextNode("Download csv"));
 		a.setAttribute("download",'eBird report.csv');	// Set the csv file name
@@ -163,14 +165,14 @@ if (mainTable) {
 		downloadLi.appendChild(a);
 	}
 	else {
-		var a = document.getElementById('dlAnchor');
+		a = document.getElementById('dlAnchor');
 	}
 	// Hook up the CSV data to the hyperlink
 	a.href=window.URL.createObjectURL(new Blob(['\ufeff',spreadSheet.join('\r\n')],{type:'text/csv'}));
 	// All done with the CSV stuff, now on to the next feature
 // -------------------------------------------------------------------
 	// Set up "Toggle deferred" hyperlink
-	var nodeferPara = document.getElementById('nodefID');
+	var nodeferPara = document.getElementById('nodeferID');
 	if (!document.body.contains(nodeferPara)) {	// Create this paragraph only if not already done
 		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
 		var nodeferLi = document.createElement('p');
@@ -235,4 +237,63 @@ if (mainTable) {
 	document.getElementById('reasonCode').style='width:275px';
 	document.getElementById('resultingValid').style='width:160px';
 	document.getElementById('notes').style='width:300px';
+// -------------------------------------------------------------------
+	// Next feature: Set up for "oops"
+	var oopsControl = document.getElementById('oopsControl');
+	if (!document.body.contains(oopsControl)) {	// Create this paragraph only if not already done
+		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
+		let oopsControlP = document.createElement('p');		// Paragraph to contain the toggle hyperlink
+		oopsControlP.setAttribute('id','oopsControl');
+		document.getElementById("listnav").appendChild(oopsControlP);	// Add it to the list at the top
+
+		// Create an anchor element
+		let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
+		oopsAnchor.setAttribute("id",'oopsAnchor');		// Not actually used
+		oopsAnchor.appendChild(document.createTextNode("Recall"));
+		oopsAnchor.setAttribute("href","#");
+		oopsAnchor.setAttribute("class","toggler");
+		oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
+
+		const oopsText = document.createElement('p');	// Paragraph to contain the list of observations
+		oopsText.setAttribute('id','oopsText');
+		oopsText.style.display = 'none';	// Initially it is not displayed
+		oopsText.style.marginBottom = '1em';
+		const tableNode = mainTable.firstElementChild;
+		mainTable.insertBefore(oopsText,tableNode);	// Insert in front of the table
+
+		// This function will execute when oopsAnchor is clicked.
+		// It toggles the display status of deferred reports.
+		oopsAnchor.onclick=function(){
+			let oops = document.getElementById('oopsText');
+			if (oops.style.display === 'none') {
+				oops.style.display = 'block';
+			} else {
+				oops.style.display = 'none';
+			}			
+		}
+		// End of one-time setup
+	}
+	// Processing for each load
+	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
+	if (!obsList) {
+		obsList = 'None';
+	}	
+
+	let oopsText = document.getElementById('oopsText');
+	oopsText.innerHTML = 'Previously changed records: ' + obsList;	// Insert the text in the page
+	
+	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
+		// This function runs on an update submit, to capture the submitted data.
+		const data = new FormData(e.target);
+		let obsHTML, obsURL;
+
+		const list=data.getAll('obsIds');
+		var obsList = '';
+		for (var l=0; l<list.length; l++) {
+			obsURL = 'https://review.ebird.org/admin/reviewObs.htm?obsID=' + list[l];
+			obsHTML = '<a href="' + obsURL + '" target=_blank>' + list[l] + '</a>';
+			obsList += ' ' + obsHTML;
+		}
+		localStorage.setItem('lastChange',obsList);	// Save for later
+	});
 }
