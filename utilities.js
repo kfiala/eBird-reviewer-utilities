@@ -227,6 +227,13 @@ if (mainTable) {
 	document.getElementById('notes').style='width:300px';
 // -------------------------------------------------------------------
 	// Next feature: Set up for "oops"
+	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
+		// This function runs on an update submit, to capture the submitted data.
+		const data = new FormData(e.target);
+		localStorage.setItem('lastChange',data.getAll('obsIds'));	// Save for later
+		document.getElementById('oopsText').style.display === 'none';	// Hide the stale output
+	});
+
 	var oopsControl = document.getElementById('oopsControl');
 	if (!document.body.contains(oopsControl)) {	// Create this paragraph only if not already done
 		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
@@ -242,13 +249,6 @@ if (mainTable) {
 		oopsAnchor.setAttribute("class","toggler");
 		oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
 
-		const oopsText = document.createElement('p');	// Paragraph to contain the list of observations
-		oopsText.setAttribute('id','oopsText');
-		oopsText.style.display = 'none';	// Initially it is not displayed
-		oopsText.style.marginBottom = '1em';
-		const tableNode = mainTable.firstElementChild;
-		mainTable.insertBefore(oopsText,tableNode);	// Insert in front of the table
-
 		// This function will execute when oopsAnchor is clicked.
 		// It toggles the display status of deferred reports.
 		oopsAnchor.onclick=function(){
@@ -261,27 +261,37 @@ if (mainTable) {
 		}
 		// End of one-time setup
 	}
-	// Processing for each load
+	// Processing for each page load
 	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
-	if (!obsList) {
-		obsList = 'None';
-	}	
+	let obsArray = [];
+	if (obsList) {
+		obsArray = obsList.split(","); 
+	} else {
+		obsArray[0] = 'None';
+	}
 
-	let oopsText = document.getElementById('oopsText');
-	oopsText.innerHTML = 'Previously changed records: ' + obsList;	// Insert the text in the page
-	
-	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
-		// This function runs on an update submit, to capture the submitted data.
-		const data = new FormData(e.target);
-		let obsHTML, obsURL;
+	let oopsText = document.getElementById('oopsText');	// Clear the previous output
+	if (oopsText) document.remove(oopsText);
 
-		const list=data.getAll('obsIds');
-		var obsList = '';
-		for (var l=0; l<list.length; l++) {
-			obsURL = 'https://review.ebird.org/admin/reviewObs.htm?obsID=' + list[l];
-			obsHTML = '<a href="' + obsURL + '" target=_blank>' + list[l] + '</a>';
-			obsList += ' ' + obsHTML;
+	oopsText = document.createElement('p');	// Paragraph to contain the list of observations
+	oopsText.setAttribute('id','oopsText');
+	oopsText.style.display = 'none';	// Initially it is not displayed
+	oopsText.style.marginBottom = '1em';
+	oopsText.appendChild(document.createTextNode('Previously changed records: '));
+
+	let oopsTextAnchor;
+	for (var l=0; l<obsArray.length; l++) {
+		if (obsArray[l] === 'None') {
+			oopsText.appendChild(document.createTextNode('None'))
+		} else {	// Set up the hyperlink for this observation
+			oopsTextAnchor = document.createElement('a');
+			oopsTextAnchor.appendChild(document.createTextNode(obsArray[l]));
+			oopsTextAnchor.setAttribute('target','_blank');
+			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/reviewObs.htm?obsID=' + obsArray[l]);
+			oopsText.appendChild(oopsTextAnchor);
+			if (l+1 < obsArray.length)	// Make the list comma-separated
+				oopsText.appendChild(document.createTextNode(', '));
 		}
-		localStorage.setItem('lastChange',obsList);	// Save for later
-	});
+	}
+	mainTable.insertBefore(oopsText,mainTable.firstElementChild);	// Insert in front of the table
 }
