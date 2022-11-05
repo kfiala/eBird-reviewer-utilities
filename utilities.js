@@ -22,7 +22,7 @@ if (mainTable) {
 		var row = [];
 		var subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear;
 		var checklist, chklstCell, chklstLink;
-		const parser = new DOMParser();		
+		const parser = new DOMParser();
 
 		elTr.querySelectorAll('td').forEach(function(Cell) {
 			// Look at each column cell in this row of the table
@@ -43,7 +43,7 @@ if (mainTable) {
 					// "select" column, do nothing
 				break;
 				case "subID": {
-					// "subID" column, get the report subID and set up the eBird checklist URL 
+					// "subID" column, get the report subID and set up the eBird checklist URL
 					if (el.nodeName === 'A') {
 						subid = el.innerHTML;
 						checklist = 'https://ebird.org/checklist/' + subid
@@ -61,7 +61,7 @@ if (mainTable) {
 					// "evidence" column, get the code letter for type of details
 					if (el && el.nodeName === 'A') {
 						var ev = parser.parseFromString(el.innerHTML,"text/html");
-						evidence = ev.body.firstChild.innerHTML;                    
+						evidence = ev.body.firstChild.innerHTML;
 					}
 				}
 				break;
@@ -75,7 +75,7 @@ if (mainTable) {
 					var month = String(date.getMonth()+1).padStart(2,'0');
 					dayOfYear = month + ' ' + day;
 				break;
-				case "user": 
+				case "user":
 				{	// Get the user's name
 					if (el.nodeName === 'A' && el.getAttribute('class') === 'userprofile') {
 						user = el.innerHTML;
@@ -179,7 +179,7 @@ if (mainTable) {
 				deferToggle = 0;
 			}
 			deferToggle = ++deferToggle % 3;	// Cycle through three different view
-			
+
 			var reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
 
 			var checkAll = mainTable.querySelector('input.checkbox');
@@ -221,7 +221,7 @@ if (mainTable) {
 		nodeferLi.appendChild(ae);
 	}
 // -------------------------------------------------------------------
-	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs	
+	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs
 	document.getElementById('reasonCode').style='width:275px';
 	document.getElementById('resultingValid').style='width:160px';
 	document.getElementById('notes').style='width:300px';
@@ -234,38 +234,50 @@ if (mainTable) {
 		document.getElementById('oopsText').style.display === 'none';	// Hide the stale output
 	});
 
-	var oopsControl = document.getElementById('oopsControl');
-	if (!document.body.contains(oopsControl)) {	// Create this paragraph only if not already done
-		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
-		let oopsControlP = document.createElement('p');		// Paragraph to contain the toggle hyperlink
-		oopsControlP.setAttribute('id','oopsControl');
-		document.getElementById("listnav").appendChild(oopsControlP);	// Add it to the list at the top
+	createOopsControl();
+	// End of one-time setup
 
-		// Create an anchor element
-		let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
-		oopsAnchor.setAttribute("id",'oopsAnchor');		// Not actually used
-		oopsAnchor.appendChild(document.createTextNode("Recall"));
-		oopsAnchor.setAttribute("href","#");
-		oopsAnchor.setAttribute("class","toggler");
-		oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
+	let recallText = createRecallText();
+	mainTable.insertBefore(recallText,mainTable.firstElementChild);	// Insert in front of the table
+} else {	// Special case when review queue is empty
+	createOopsControl();
+	let recallText = createRecallText();
+	document.getElementById('listnav').insertBefore(recallText,null);
+}
 
-		// This function will execute when oopsAnchor is clicked.
-		// It toggles the display status of deferred reports.
-		oopsAnchor.onclick=function(){
-			let oops = document.getElementById('oopsText');
-			if (oops.style.display === 'none') {
-				oops.style.display = 'block';
-			} else {
-				oops.style.display = 'none';
-			}			
+function createOopsControl() {
+	// Create a paragraph to contain the hyperlink and add it to the "listnav" list
+	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
+	let oopsControlP = document.createElement('p');		// Paragraph to contain the toggle hyperlink
+	oopsControlP.setAttribute('id','oopsControl');
+	document.getElementById("listnav").appendChild(oopsControlP);	// Add it to the list at the top
+
+	// Create an anchor element
+	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
+	oopsAnchor.setAttribute("id",'oopsAnchor');		// Not actually used
+	oopsAnchor.appendChild(document.createTextNode("Recall"));
+	oopsAnchor.setAttribute("href","#");
+	oopsAnchor.setAttribute("class","toggler");
+	oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
+
+	// This function will execute when oopsAnchor is clicked.
+	// It toggles the display status of deferred reports.
+	oopsAnchor.onclick=function(){
+		let oops = document.getElementById('oopsText');
+		if (oops.style.display === 'none') {
+			oops.style.display = 'block';
+		} else {
+			oops.style.display = 'none';
 		}
-		// End of one-time setup
 	}
+}
+
+function createRecallText() {
 	// Processing for each page load
 	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
 	let obsArray = [];
 	if (obsList) {
-		obsArray = obsList.split(","); 
+		obsArray = obsList.split(",");
 	} else {
 		obsArray[0] = 'None';
 	}
@@ -273,6 +285,8 @@ if (mainTable) {
 	let oopsText = document.getElementById('oopsText');	// Clear the previous output
 	if (oopsText) document.remove(oopsText);
 
+	// We are going to build <p id=oopsText style='display:none margin-bottom:1em'>Previously changed records:
+	// <a target=_blank href=https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1>OBS1</a> [, OBS2] ... </p>
 	oopsText = document.createElement('p');	// Paragraph to contain the list of observations
 	oopsText.setAttribute('id','oopsText');
 	oopsText.style.display = 'none';	// Initially it is not displayed
@@ -281,7 +295,7 @@ if (mainTable) {
 
 	let oopsTextAnchor;
 	for (var l=0; l<obsArray.length; l++) {
-		if (obsArray[l] === 'None') {
+		if (obsArray[0] === 'None') {
 			oopsText.appendChild(document.createTextNode('None'))
 		} else {	// Set up the hyperlink for this observation
 			oopsTextAnchor = document.createElement('a');
@@ -293,5 +307,5 @@ if (mainTable) {
 				oopsText.appendChild(document.createTextNode(', '));
 		}
 	}
-	mainTable.insertBefore(oopsText,mainTable.firstElementChild);	// Insert in front of the table
+	return oopsText;
 }
