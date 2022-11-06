@@ -233,16 +233,11 @@ if (mainTable) {
 		localStorage.setItem('lastChange',data.getAll('obsIds'));	// Save for later
 		document.getElementById('oopsText').style.display === 'none';	// Hide the stale output
 	});
-
 	createOopsControl();
-	// End of one-time setup
-
-	let recallText = createRecallText();
-	mainTable.insertBefore(recallText,mainTable.firstElementChild);	// Insert in front of the table
+	mainTable.insertBefore(createRecallText(),mainTable.firstElementChild);	// Insert in front of the table
 } else {	// Special case when review queue is empty
 	createOopsControl();
-	let recallText = createRecallText();
-	document.getElementById('listnav').insertBefore(recallText,null);
+	document.getElementById('listnav').insertBefore(createRecallText(),null);
 }
 
 function createOopsControl() {
@@ -273,7 +268,6 @@ function createOopsControl() {
 }
 
 function createRecallText() {
-	// Processing for each page load
 	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
 	let obsArray = [];
 	if (obsList) {
