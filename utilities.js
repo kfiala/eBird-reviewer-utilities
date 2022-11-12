@@ -160,16 +160,16 @@ if (mainTable) {
 	// All done with the CSV stuff, now on to the next feature
 // -------------------------------------------------------------------
 	// Set up "Toggle deferred" hyperlink
-	var nodeferPara = document.getElementById('nodeferID');
-	if (!document.body.contains(nodeferPara)) {	// Create this paragraph only if not already done
+	var toglStatusPara = document.getElementById('toglStatusID');
+	if (!document.body.contains(toglStatusPara)) {	// Create this paragraph only if not already done
 		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
-		var nodeferLi = document.createElement('p');
-		nodeferLi.setAttribute('id','nodeferID');
-		document.getElementById("listnav").appendChild(nodeferLi);
+		var toglStatusLi = document.createElement('p');
+		toglStatusLi.setAttribute('id','toglStatusID');
+		document.getElementById("listnav").appendChild(toglStatusLi);
 
 		// Create an anchor element
 		var ae = document.createElement('a');
-		ae.setAttribute("id",'nodeferAnchor');
+		ae.setAttribute("id",'toglStatusAnchor');
 		ae.appendChild(document.createTextNode("Toggle deferred"));
 		ae.setAttribute("href","#");
 		// This function will execute when "Toggle deferred" is clicked.
@@ -218,7 +218,7 @@ if (mainTable) {
 			}
 		}
 		ae.setAttribute("class","toggler");
-		nodeferLi.appendChild(ae);
+		toglStatusLi.appendChild(ae);
 	}
 // -------------------------------------------------------------------
 	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs
