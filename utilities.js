@@ -229,13 +229,18 @@ if (mainTable) {
 	}
 // -------------------------------------------------------------------
 	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs
-	if (reviewMode == 'exotic') {
-		document.getElementById('newExoticCategory').style='width:125px';
-	} else {
-		document.getElementById('reasonCode').style='width:300px';
-		document.getElementById('resultingValid').style='width:160px';
+	switch (reviewMode) {
+		case 'exotic':
+			document.getElementById('newExoticCategory').style='width:125px';
+			document.getElementById('notes').style='width:300px';
+			break;
+		case 'actionbar-fixed':
+			document.getElementById('reasonCode').style='width:300px';
+			document.getElementById('resultingValid').style='width:160px';
+			document.getElementById('notes').style='width:300px';
+			break;
+		default:
 	}
-	document.getElementById('notes').style='width:300px';
 // -------------------------------------------------------------------
 	// Next feature: Set up for "oops"
 	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
