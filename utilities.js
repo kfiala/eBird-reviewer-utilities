@@ -9,7 +9,12 @@
 
 var deferToggle;
 
-let reviewMode = document.getElementById('bulkactions').getAttribute('class'); //'exotic' or 'actionbar-fixed'
+let reviewMode;
+if (document.getElementById('bulkactions')) {
+	reviewMode = document.getElementById('bulkactions').getAttribute('class'); //'exotic' or 'actionbar-fixed'
+} else {
+	reviewMode = 'no records';
+}
 
 var mainTable = document.getElementById('contents');
 if (mainTable) {
