@@ -9,6 +9,8 @@
 
 var deferToggle;
 
+let reviewMode = document.getElementById('bulkactions').getAttribute('class'); //'exotic' or 'actionbar-fixed'
+
 var mainTable = document.getElementById('contents');
 if (mainTable) {
 //	First set up the CSV download
@@ -222,8 +224,12 @@ if (mainTable) {
 	}
 // -------------------------------------------------------------------
 	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs
-	document.getElementById('reasonCode').style='width:275px';
-	document.getElementById('resultingValid').style='width:160px';
+	if (reviewMode == 'exotic') {
+		document.getElementById('newExoticCategory').style='width:125px';
+	} else {
+		document.getElementById('reasonCode').style='width:300px';
+		document.getElementById('resultingValid').style='width:160px';
+	}
 	document.getElementById('notes').style='width:300px';
 // -------------------------------------------------------------------
 	// Next feature: Set up for "oops"
