@@ -16,6 +16,8 @@ if (document.getElementById('bulkactions')) {
 	reviewMode = 'no records';
 }
 
+let Fwebring = document.getElementById("listnav").querySelector('.webring');
+
 var mainTable = document.getElementById('contents');
 if (mainTable) {
 //	First set up the CSV download
@@ -149,7 +151,7 @@ if (mainTable) {
 		var downloadLi = document.createElement('p');
 		downloadLi.setAttribute('id','DownloadCSV');
 		// Add the paragraph to the existing list of hyperlinks
-		document.getElementById("listnav").appendChild(downloadLi);
+		document.getElementById("listnav").insertBefore(downloadLi,Fwebring);
 
 		// Create the anchor element to go in the paragraph
 		a = document.createElement('a');
@@ -172,7 +174,7 @@ if (mainTable) {
 		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
 		var toglStatusLi = document.createElement('p');
 		toglStatusLi.setAttribute('id','toglStatusID');
-		document.getElementById("listnav").appendChild(toglStatusLi);
+		document.getElementById("listnav").insertBefore(toglStatusLi,Fwebring);
 
 		// Create an anchor element
 		var ae = document.createElement('a');
@@ -261,7 +263,7 @@ function createOopsControl() {
 	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
 	let oopsControlP = document.createElement('p');		// Paragraph to contain the toggle hyperlink
 	oopsControlP.setAttribute('id','oopsControl');
-	document.getElementById("listnav").appendChild(oopsControlP);	// Add it to the list at the top
+	document.getElementById("listnav").insertBefore(oopsControlP,Fwebring);	// Add it to the list at the top
 
 	// Create an anchor element
 	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
