@@ -1,11 +1,11 @@
 {
 
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "content_scripts": [
     {
-      "matches": ["https://review.ebird.org/admin/review.htm*"],
+      "matches": ["https://review.ebird.org/admin/review*"],
       "js": ["utilities.js"]
     }
   ],

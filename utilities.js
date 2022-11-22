@@ -8,7 +8,10 @@
 // 5. Preserves links to last observations updated.
 
 var deferToggle;
-
+//
+// Establish whether we are in review mode or exotics mode, or neither.
+// Review mode includes both regular review (review.htm) and history review (reviewObs.htm)
+//
 let reviewMode;
 if (document.getElementById('bulkactions')) {
 	reviewMode = document.getElementById('bulkactions').getAttribute('class'); //'exotic' or 'actionbar-fixed'
@@ -16,10 +19,45 @@ if (document.getElementById('bulkactions')) {
 	reviewMode = 'no records';
 }
 
-let Fwebring = document.getElementById("listnav").querySelector('.webring');
+//
+// Adjust the widths of "Review decision", "Reason", and "Notes" inputs
+//
+switch (reviewMode) {
+	case 'exotic':
+		document.getElementById('newExoticCategory').style='width:125px';
+		document.getElementById('notes').style='width:300px';
+		break;
+	case 'actionbar-fixed':
+		document.getElementById('reasonCode').style='width:300px';
+		document.getElementById('resultingValid').style='width:160px';
+		document.getElementById('notes').style='width:300px';
+		break;
+	default:
+}
 
+//
+// If there is a form, set up a submit listener to capture posted data.
+//
+if (document.getElementById('reviewForm')) {
+	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
+		// This function runs on an update submit, to capture the submitted data.
+		const data = new FormData(e.target);
+		localStorage.setItem('lastChange',data.getAll('obsIds'));	// Save for later
+	});
+}
+
+//
+// Check if we have listnav, and if so get its webring element.
+// This will be true for regular review and exotic review but not for history review
+//
+var Fwebring='';
+if (document.getElementById("listnav")) {
+	Fwebring = document.getElementById("listnav").querySelector('.webring');
+}
+
+if (Fwebring) {	// If we are in regular review or exotic review
 var mainTable = document.getElementById('contents');
-if (mainTable) {
+if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
 //	First set up the CSV download
 	var spreadSheet = [];
 	var doHeaders = true;
@@ -230,34 +268,14 @@ if (mainTable) {
 		toglStatusLi.appendChild(ae);
 	}
 // -------------------------------------------------------------------
-	// Next feature: adjust the widths of "Review decision", "Reason code", and "Notes" inputs
-	switch (reviewMode) {
-		case 'exotic':
-			document.getElementById('newExoticCategory').style='width:125px';
-			document.getElementById('notes').style='width:300px';
-			break;
-		case 'actionbar-fixed':
-			document.getElementById('reasonCode').style='width:300px';
-			document.getElementById('resultingValid').style='width:160px';
-			document.getElementById('notes').style='width:300px';
-			break;
-		default:
-	}
-// -------------------------------------------------------------------
 	// Next feature: Set up for "oops"
-	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
-		// This function runs on an update submit, to capture the submitted data.
-		const data = new FormData(e.target);
-		localStorage.setItem('lastChange',data.getAll('obsIds'));	// Save for later
-		document.getElementById('oopsText').style.display === 'none';	// Hide the stale output
-	});
 	createOopsControl();
 	mainTable.insertBefore(createRecallText(),mainTable.firstElementChild);	// Insert in front of the table
-} else {	// Special case when review queue is empty
+} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 	createOopsControl();
 	document.getElementById('listnav').insertBefore(createRecallText(),null);
 }
-
+}
 function createOopsControl() {
 	// Create a paragraph to contain the hyperlink and add it to the "listnav" list
 	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
