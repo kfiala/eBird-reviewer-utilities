@@ -11,6 +11,7 @@ var deferToggle;
 //
 // Establish whether we are in review mode or exotics mode, or neither.
 // Review mode includes both regular review (review.htm) and history review (reviewObs.htm)
+// Both review queue and search results can be either review or exotics.
 //
 let reviewMode;
 if (document.getElementById('bulkactions')) {
@@ -28,8 +29,8 @@ switch (reviewMode) {
 		document.getElementById('notes').style='width:300px';
 		break;
 	case 'actionbar-fixed':
-		document.getElementById('reasonCode').style='width:300px';
 		document.getElementById('resultingValid').style='width:160px';
+		document.getElementById('reasonCode').style='width:300px';
 		document.getElementById('notes').style='width:300px';
 		break;
 	default:
