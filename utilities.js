@@ -276,6 +276,50 @@ if (Fwebring) {	// If we are in regular review or exotic review
 		createOopsControl();
 		document.getElementById('listnav').insertBefore(createRecallText(),null);
 	}
+} else {	// History screen
+	const dparser = new DOMParser();
+//	From, e.g.,
+//<h3 class="obsreview_species"><a href="https://birdsoftheworld.org/bow/species/snogoo/cur/introduction">Snow Goose</a>
+//<h3 class="obsreview_species"><a href="https://ebird.org/species/passer1">passerine sp.</a>
+//	parse out snogoo or passer1
+	const anchor = document.querySelector('.obsreview_species').innerHTML;
+	const urlPieces = dparser.parseFromString(anchor,"text/html").body.firstChild.href.split('/');
+	let sixcode='';
+	for (let up=0; up < urlPieces.length; up++) {
+		if (urlPieces[up] === 'species') {
+			sixcode = urlPieces[up+1];
+			break;
+		}
+	}
+
+//	Now within obsreview_table, from e.g,
+//	<td class="name"><a target="_blank" href="https://www.google.com/maps/place/35.727862,-78.776077">
+//	parse out 35.727862,-78.776077
+	const tr = document.querySelector('.obsreview_table').querySelectorAll('td')[1].innerHTML;
+	const coords = dparser.parseFromString(tr,'text/html').body.firstChild.href.split('/')[5].split(',');
+	const Y = parseFloat(coords[0]);
+	const X = parseFloat(coords[1]);
+//	Also get the numeric month of the observation date	
+	const dateString = document.querySelector('.obsreview_status').textContent;
+	const date  = new Date(dateString);
+	const month = date.getMonth()+1;
+//	Set up the URL for the species map
+	const URL = 'https://ebird.org/map/' + sixcode + '?neg=false'+
+		'&env.minX=' + (X-0.5) +
+		'&env.minY=' + (Y-0.5) +
+		'&env.maxX=' + (X+0.5) +
+		'&env.maxY=' + (Y+0.5) +
+		'&bmo=' + month +
+		'&emo=' + month +
+		'&zh=true&gp=true';
+//	Create the anchor for the map
+	const map = document.createElement('a');
+	map.appendChild(document.createTextNode('eBird species map'));
+	map.setAttribute('style','float:right');
+	map.setAttribute('href',URL);
+	map.setAttribute('target','_blank');
+//	Insert hyperlink at top right
+	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
 }
 
 function createOopsControl() {
