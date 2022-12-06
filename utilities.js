@@ -276,7 +276,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 		createOopsControl();
 		document.getElementById('listnav').insertBefore(createRecallText(),null);
 	}
-} else {	// History screen
+} else if (document.querySelector('.obsreview_species')) {	// History screen
 	const dparser = new DOMParser();
 //	From, e.g.,
 //<h3 class="obsreview_species"><a href="https://birdsoftheworld.org/bow/species/snogoo/cur/introduction">Snow Goose</a>
@@ -369,15 +369,27 @@ function createRecallText() {
 	oopsText.style.marginBottom = '1em';
 	oopsText.appendChild(document.createTextNode('Previously changed records: '));
 
-	let oopsTextAnchor;
+	let oopsTextAnchor, pieces, obsID, taxon;
 	for (var l=0; l<obsArray.length; l++) {
 		if (obsArray[0] === 'None') {
 			oopsText.appendChild(document.createTextNode('None'))
 		} else {	// Set up the hyperlink for this observation
+			pieces = obsArray[l].split('/');
+			obsID = pieces[0];
+			if (pieces.length > 1) {
+				taxon = pieces[1];
+			} else {
+				taxon = '';
+			}
+			
 			oopsTextAnchor = document.createElement('a');
-			oopsTextAnchor.appendChild(document.createTextNode(obsArray[l]));
+			if (taxon) {
+				oopsTextAnchor.appendChild(document.createTextNode(taxon));
+			} else {
+				oopsTextAnchor.appendChild(document.createTextNode(obsID));
+			}
 			oopsTextAnchor.setAttribute('target','_blank');
-			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/reviewObs.htm?obsID=' + obsArray[l]);
+			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/reviewObs.htm?obsID=' + obsID);
 			oopsText.appendChild(oopsTextAnchor);
 			if (l+1 < obsArray.length)	// Make the list comma-separated
 				oopsText.appendChild(document.createTextNode(', '));
