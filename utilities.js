@@ -7,6 +7,7 @@
 // 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
 // 5. Preserves links to last observations updated.
 
+let lookup = {};
 var deferToggle;
 //
 // Establish whether we are in review mode or exotics mode, or neither.
@@ -43,7 +44,12 @@ if (document.getElementById('reviewForm')) {
 	document.querySelector('#reviewForm').addEventListener('submit', (e) => {
 		// This function runs on an update submit, to capture the submitted data.
 		const data = new FormData(e.target);
-		localStorage.setItem('lastChange',data.getAll('obsIds'));	// Save for later
+		let observation = data.getAll('obsIds').toString().split(',');
+		let obsList = [];
+		for (let obs=0; obs<observation.length; obs++) {
+			obsList.push(observation[obs] + '/' + lookup[observation[obs]]);
+		}
+		localStorage.setItem('lastChange',obsList.join());	// Save for later
 	});
 }
 
@@ -71,6 +77,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 			var subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear;
 			var checklist, chklstCell, chklstLink;
 			const parser = new DOMParser();
+			let OBS;
 
 			elTr.querySelectorAll('td').forEach(function(Cell) {
 				// Look at each column cell in this row of the table
@@ -89,6 +96,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 				switch  (Class) {
 					case "select":
 						// "select" column, do nothing
+						OBS = el.getAttribute('value');
 					break;
 					case "subID": {
 						// "subID" column, get the report subID and set up the eBird checklist URL
@@ -101,7 +109,8 @@ if (Fwebring) {	// If we are in regular review or exotic review
 					case "species": {
 						// "species" column, get the species name
 						if (el.nodeName === 'LABEL') {
-							species = el.textContent;
+							species = el.textContent.trim();
+							lookup[OBS] = species;
 						}
 					}
 					break;
@@ -177,7 +186,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 
 				chklstLink = document.createElement('a');
 				chklstCell.appendChild(chklstLink);
-				chklstLink.appendChild(document.createTextNode('ebird'));
+				chklstLink.appendChild(document.createTextNode('eBird'));
 				chklstLink.setAttribute('href',checklist);
 				chklstLink.setAttribute('target','_blank');
 			}
@@ -359,7 +368,7 @@ function createRecallText() {
 	}
 
 	let oopsText = document.getElementById('oopsText');	// Clear the previous output
-	if (oopsText) document.remove(oopsText);
+	if (oopsText) oopsText.remove;
 
 	// We are going to build <p id=oopsText style='display:none margin-bottom:1em'>Previously changed records:
 	// <a target=_blank href=https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1>OBS1</a> [, OBS2] ... </p>
@@ -367,14 +376,16 @@ function createRecallText() {
 	oopsText.setAttribute('id','oopsText');
 	oopsText.style.display = 'none';	// Initially it is not displayed
 	oopsText.style.marginBottom = '1em';
+	oopsText.style.fontSize = '13px';
 	oopsText.appendChild(document.createTextNode('Previously changed records: '));
 
-	let oopsTextAnchor, pieces, obsID, taxon;
-	for (var l=0; l<obsArray.length; l++) {
+	let oopsTextAnchor, pieces, obsID, taxon = '';
+	for (var obs=0; obs<obsArray.length; obs++) {
 		if (obsArray[0] === 'None') {
-			oopsText.appendChild(document.createTextNode('None'))
+			oopsText.appendChild(document.createTextNode('None'));
+			break;
 		} else {	// Set up the hyperlink for this observation
-			pieces = obsArray[l].split('/');
+			pieces = obsArray[obs].split('/');
 			obsID = pieces[0];
 			if (pieces.length > 1) {
 				taxon = pieces[1];
@@ -386,12 +397,13 @@ function createRecallText() {
 			if (taxon) {
 				oopsTextAnchor.appendChild(document.createTextNode(taxon));
 			} else {
-				oopsTextAnchor.appendChild(document.createTextNode(obsID));
+				oopsTextAnchor.appendChild(document.createTextNode(obsArray[obs]));
 			}
 			oopsTextAnchor.setAttribute('target','_blank');
-			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/reviewObs.htm?obsID=' + obsID);
+			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/qr.htm?obsId=' + obsID);
+
 			oopsText.appendChild(oopsTextAnchor);
-			if (l+1 < obsArray.length)	// Make the list comma-separated
+			if (obs+1 < obsArray.length)	// Make the list comma-separated
 				oopsText.appendChild(document.createTextNode(', '));
 		}
 	}
