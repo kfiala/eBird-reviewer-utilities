@@ -275,8 +275,7 @@ async function obsViewData(OBS) {
 
 		let span = document.getElementById('kInfo');
 		let method, version;
-		
-		
+
 		if (json.loc.isHotspot) {
 			let locType = ' Location is hotspot';
 			let hotLink = document.createElement('a');
@@ -289,7 +288,6 @@ async function obsViewData(OBS) {
 		} else {
 			span.appendChild(document.createTextNode(' Location is personal | '));
 		}
-
 
 		if (typeof json.sub.submissionMethodCode !== undefined) {	// Possibilities: EBIRD_web, EBIRD_upload, EBIRD_iOS, EBIRD_Android, or none
 			method = json.sub.submissionMethodCode;
@@ -305,8 +303,6 @@ async function obsViewData(OBS) {
 			version = '';
 		}
 		span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
-
-
 		return(json.sub.submissionMethodCode);
 	} catch (error) {
 		alert(error);

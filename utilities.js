@@ -7,6 +7,8 @@
 // 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
 // 5. Preserves links to last observations updated.
 
+if (window.location.href.includes('https://review.ebird.org/admin/review')) {  
+
 let lookup = {};
 var deferToggle;
 //
@@ -300,6 +302,12 @@ if (Fwebring) {	// If we are in regular review or exotic review
 			break;
 		}
 	}
+	let species = dparser.parseFromString(anchor,"text/html").body.firstChild.textContent;
+	const urlParams = new URLSearchParams(location.search);
+	if (urlParams.has('obsID')) {
+		let OBS = urlParams.get('obsID');
+		lookup[OBS] = species;
+	}
 
 //	Now within obsreview_table, from e.g,
 //	<td class="name"><a target="_blank" href="https://www.google.com/maps/place/35.727862,-78.776077">
@@ -308,7 +316,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 	const coords = dparser.parseFromString(tr,'text/html').body.firstChild.href.split('/')[5].split(',');
 	const Y = parseFloat(coords[0]);
 	const X = parseFloat(coords[1]);
-//	Also get the numeric month of the observation date	
+//	Also get the numeric month of the observation date
 	const dateString = document.querySelector('.obsreview_status').textContent;
 	const date  = new Date(dateString);
 	const month = date.getMonth()+1;
@@ -329,6 +337,7 @@ if (Fwebring) {	// If we are in regular review or exotic review
 	map.setAttribute('target','_blank');
 //	Insert hyperlink at top right
 	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
+}
 }
 
 function createOopsControl() {
@@ -392,7 +401,7 @@ function createRecallText() {
 			} else {
 				taxon = '';
 			}
-			
+
 			oopsTextAnchor = document.createElement('a');
 			if (taxon) {
 				oopsTextAnchor.appendChild(document.createTextNode(taxon));
