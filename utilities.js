@@ -304,8 +304,9 @@ if (Fwebring) {	// If we are in regular review or exotic review
 	}
 	let species = dparser.parseFromString(anchor,"text/html").body.firstChild.textContent;
 	const urlParams = new URLSearchParams(location.search);
+	let OBS = '';
 	if (urlParams.has('obsID')) {
-		let OBS = urlParams.get('obsID');
+		OBS = urlParams.get('obsID');
 		lookup[OBS] = species;
 	}
 
@@ -316,27 +317,13 @@ if (Fwebring) {	// If we are in regular review or exotic review
 	const coords = dparser.parseFromString(tr,'text/html').body.firstChild.href.split('/')[5].split(',');
 	const Y = parseFloat(coords[0]);
 	const X = parseFloat(coords[1]);
-//	Also get the numeric month of the observation date
-	const dateString = document.querySelector('.obsreview_status').textContent;
-	const date  = new Date(dateString);
-	const month = date.getMonth()+1;
 //	Set up the URL for the species map
 	const URL = 'https://ebird.org/map/' + sixcode + '?neg=false'+
 		'&env.minX=' + (X-0.5) +
 		'&env.minY=' + (Y-0.5) +
 		'&env.maxX=' + (X+0.5) +
-		'&env.maxY=' + (Y+0.5) +
-		'&bmo=' + month +
-		'&emo=' + month +
-		'&zh=true&gp=true';
-//	Create the anchor for the map
-	const map = document.createElement('a');
-	map.appendChild(document.createTextNode('eBird species map'));
-	map.setAttribute('style','float:right');
-	map.setAttribute('href',URL);
-	map.setAttribute('target','_blank');
-//	Insert hyperlink at top right
-	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
+		'&env.maxY=' + (Y+0.5) ;
+	finishMapURL(URL, OBS);
 }
 }
 
@@ -417,4 +404,27 @@ function createRecallText() {
 		}
 	}
 	return oopsText;
+}
+
+async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which has to be done asynchronously
+	let response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+	let json = await response.json();
+	let ISOdate = json.sub.obsDt;
+
+//	Create the anchor for the map
+	const map = document.createElement('a');
+	map.appendChild(document.createTextNode('eBird species map for month'));
+	map.setAttribute('style','float:right');
+	map.setAttribute('target','_blank');
+//	Insert hyperlink at top right
+	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
+
+//	Get the numeric month of the observation date from the ISO date
+	const month = ISOdate.split('-')[1];
+	let URLend = 
+		'&bmo=' + month +
+		'&emo=' + month +
+		'&zh=true&gp=true';
+
+	map.setAttribute('href',URL + URLend);
 }

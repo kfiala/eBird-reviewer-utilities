@@ -2,7 +2,7 @@
 
   "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/review*","https://review.ebird.org/admin/qr.htm*"],
@@ -10,7 +10,7 @@
     }
   ],
 
-  "description": "Provides conveniences for the ebird review queue/search report page.",
+  "description": "Provides conveniences for ebird reviewers.",
   "homepage_url": "https://www.faintlake.com/eBird/extension/ReviewerUtilities/",
   "icons": {
     "48": "icons/48.png",
