@@ -244,7 +244,7 @@ function createRecallText() {
 			pieces = obsArray[obs].split('/');
 			obsID = pieces[0];
 			if (pieces.length > 1) {
-				taxon = pieces[1];
+				taxon = obsArray[obs].substring(obsID.length+1);	// Might be a slash in the name, can't use split
 			} else {
 				taxon = '';
 			}
