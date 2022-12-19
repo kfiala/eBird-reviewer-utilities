@@ -289,11 +289,11 @@ async function obsViewData(OBS) {
 			span.appendChild(document.createTextNode(' Location is personal | '));
 		}
 
-		if (typeof json.sub.submissionMethodCode !== undefined) {	// Possibilities: EBIRD_web, EBIRD_upload, EBIRD_iOS, EBIRD_Android, or none
+		if (typeof json.sub.submissionMethodCode !== 'undefined') {	// Possibilities: EBIRD_web, EBIRD_upload, EBIRD_iOS, EBIRD_Android, or none
 			method = json.sub.submissionMethodCode;
 			if (method.substr(0,6) === 'EBIRD_')
 				method = method.substr(6);
-			if (json.sub.submissionMethodVersionDisp !== undefined) {
+			if (json.sub.submissionMethodVersionDisp !== 'undefined') {
 				version = json.sub.submissionMethodVersionDisp;
 			} else {
 				version = '';
