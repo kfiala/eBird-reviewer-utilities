@@ -154,11 +154,7 @@ function reviewReasonAndNotesSetup(recursing) {
 	}
 	if (!recursing) {
 		checkBox.addEventListener('change',() => {
-			if (document.getElementById('send-email-checkbox').checked) {
 				reviewReasonAndNotesSetup(true);
-			} else {
-				reviewReasonAndNotesSetup(true);
-			}
 		});
 	}
 }
@@ -268,43 +264,39 @@ function createRecallText() {
 
 async function obsViewData(OBS) {
 	let url = 'https://review.ebird.org/admin/api/v1/obs/view/' + OBS;
-	try {
-		let response = await fetch(url);
-		let json = await response.json();
-		let locId = json.sub.locId;
+	let response = await fetch(url);
+	let json = await response.json();
+	let locId = json.sub.locId;
 
-		let span = document.getElementById('kInfo');
-		let method, version;
+	let span = document.getElementById('kInfo');
+	let method, version;
 
-		if (json.loc.isHotspot) {
-			let locType = ' Location is hotspot';
-			let hotLink = document.createElement('a');
-			span.appendChild(hotLink);
-			hotLink.appendChild(document.createTextNode(locType));
-			let hotUrl = 'https://ebird.org/hotspot/' + locId;
-			hotLink.setAttribute('href',hotUrl);
-			hotLink.setAttribute('target','_blank');
-			span.appendChild(document.createTextNode(' | '));
+	if (json.loc.isHotspot) {
+		let locType = ' Location is hotspot';
+		let hotLink = document.createElement('a');
+		span.appendChild(hotLink);
+		hotLink.appendChild(document.createTextNode(locType));
+		let hotUrl = 'https://ebird.org/hotspot/' + locId;
+		hotLink.setAttribute('href',hotUrl);
+		hotLink.setAttribute('target','_blank');
+		span.appendChild(document.createTextNode(' | '));
+	} else {
+		span.appendChild(document.createTextNode(' Location is personal | '));
+	}
+
+	if (typeof json.sub.submissionMethodCode !== 'undefined') {	// Possibilities: EBIRD_web, EBIRD_upload, EBIRD_iOS, EBIRD_Android, or none
+		method = json.sub.submissionMethodCode;
+		if (method.substr(0,6) === 'EBIRD_')
+			method = method.substr(6);
+		if (json.sub.submissionMethodVersionDisp !== 'undefined') {
+			version = json.sub.submissionMethodVersionDisp;
 		} else {
-			span.appendChild(document.createTextNode(' Location is personal | '));
-		}
-
-		if (typeof json.sub.submissionMethodCode !== 'undefined') {	// Possibilities: EBIRD_web, EBIRD_upload, EBIRD_iOS, EBIRD_Android, or none
-			method = json.sub.submissionMethodCode;
-			if (method.substr(0,6) === 'EBIRD_')
-				method = method.substr(6);
-			if (json.sub.submissionMethodVersionDisp !== 'undefined') {
-				version = json.sub.submissionMethodVersionDisp;
-			} else {
-				version = '';
-			}
-		} else {
-			method = 'unknown method';
 			version = '';
 		}
-		span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
-		return(json.sub.submissionMethodCode);
-	} catch (error) {
-		alert(error);
+	} else {
+		method = 'unknown method';
+		version = '';
 	}
+	span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
+	return;
 }
