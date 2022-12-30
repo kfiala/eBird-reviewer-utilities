@@ -2,7 +2,7 @@
 
   "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/review*","https://review.ebird.org/admin/qr.htm*"],
