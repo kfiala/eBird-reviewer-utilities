@@ -127,6 +127,7 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 
 function reviewReasonAndNotesSetup(recursing) {
 	let reasonPage = document.getElementById('reasonPage');
+	reasonPage.style.top = '75%';
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
 	let checkBox = document.getElementById('send-email-checkbox');
