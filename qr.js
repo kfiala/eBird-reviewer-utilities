@@ -289,7 +289,7 @@ async function obsViewData(OBS) {
 		method = json.sub.submissionMethodCode;
 		if (method.substr(0,6) === 'EBIRD_')
 			method = method.substr(6);
-		if (json.sub.submissionMethodVersionDisp !== 'undefined') {
+		if (json.sub.submissionMethodVersionDisp) {
 			version = json.sub.submissionMethodVersionDisp;
 		} else {
 			version = '';
