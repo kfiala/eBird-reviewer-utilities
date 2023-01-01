@@ -442,17 +442,19 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 
 //	Create the anchor for the map
 	const map = document.createElement('a');
-	map.appendChild(document.createTextNode('eBird species map for month'));
+	map.appendChild(document.createTextNode('eBird species map for season'));
 	map.setAttribute('style','float:right');
 	map.setAttribute('target','_blank');
 //	Insert hyperlink at top right
 	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
 
 //	Get the numeric month of the observation date from the ISO date
-	const month = ISOdate.split('-')[1];
+	const month = parseInt(ISOdate.split('-')[1]);
+	let Bmonth = (month > 1) ? month - 1 : 12;
+	let Emonth = (month < 12) ? month + 1 : 1;
 	let URLend = 
-		'&bmo=' + month +
-		'&emo=' + month +
+		'&bmo=' + Bmonth +
+		'&emo=' + Emonth +
 		'&zh=true&gp=true';
 
 	map.setAttribute('href',URL + URLend);

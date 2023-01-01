@@ -82,7 +82,9 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	chklstCell.appendChild(document.createTextNode(' | '));
 
 //	Get the numeric month of the observation date
-	const month = ISOdate.split('-')[1];
+	const month = parseInt(ISOdate.split('-')[1]);
+	let Bmonth = (month > 1) ? month - 1 : 12;
+	let Emonth = (month < 12) ? month + 1 : 1;
 //	Get coordinates
 	const coords = GPS.split(',');
 	const Y = parseFloat(coords[0]);
@@ -93,12 +95,12 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		'&env.minY=' + (Y-0.5) +
 		'&env.maxX=' + (X+0.5) +
 		'&env.maxY=' + (Y+0.5) +
-		'&bmo=' + month +
-		'&emo=' + month +
+		'&bmo=' + Bmonth +
+		'&emo=' + Emonth +
 		'&zh=true&gp=true';
 //	Create the anchor for the map
 	const map = document.createElement('a');
-	map.appendChild(document.createTextNode(' eBird species map for month'));
+	map.appendChild(document.createTextNode(' eBird species map for season'));
 
 	map.setAttribute('href',URL);
 	map.setAttribute('target','_blank');
