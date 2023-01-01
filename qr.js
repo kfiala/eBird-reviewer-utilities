@@ -202,7 +202,7 @@ function createOopsControl() {
 	kdiv.appendChild(document.createTextNode(' | '));
 
 	// This function will execute when oopsAnchor is clicked.
-	// It toggles the display status of deferred reports.
+	// It toggles the display status of previously updated records..
 	oopsAnchor.onclick=function(){
 		let oops = document.getElementById('oopsText');
 		if (oops.style.display === 'none') {

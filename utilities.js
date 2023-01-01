@@ -329,23 +329,23 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {
 		let theForm = document.getElementById('reviewForm');
 		let theTable = theForm.getElementsByTagName('tbody')[0];
 		let Class, html, el;
-		if (theTable) {
+		if (theTable) {	// Go through the table of species for this submission
 			theTable.querySelectorAll('tr').forEach(function (elTr) {
-				// Extract the data from each row 
+				// Examine the data from each row 
 				let OBS;
 				elTr.querySelectorAll('td').forEach(function (Cell) {
-					// Look at each column cell in this row of the table
+					// Look at the "select" and "species" column cells in this row of the table
 					Class = Cell.getAttribute('class').split(' ')[0];
 					html = parser.parseFromString(Cell.innerHTML, "text/html");
 					el = html.body.firstChild;
 
 					switch (Class) {
 						case "select":
-							OBS = el.getAttribute('value');
+							OBS = el.getAttribute('value');	// The "select" cell has the OBS value
 							break;
 						case "species":
 							if (el.nodeName === 'LABEL') {
-								lookup[OBS] = el.textContent.trim();	// species name
+								lookup[OBS] = el.textContent.trim();	// Insert the species name into the OBS lookup table
 							}
 							break;
 						default:
@@ -372,7 +372,7 @@ function createOopsControl() {
 	oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
 
 	// This function will execute when oopsAnchor is clicked.
-	// It toggles the display status of deferred reports.
+	// It toggles the display status of previously updated records.
 	oopsAnchor.onclick=function(){
 		let oops = document.getElementById('oopsText');
 		if (oops.style.display === 'none') {
