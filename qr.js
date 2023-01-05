@@ -60,14 +60,8 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		}		
 	}
 	let qrTitle = document.getElementById('qr-obs-title');
-	urls = qrTitle.querySelectorAll('a');
-	for (let ur=0; ur<urls.length; ur++) {
-		let url = urls[ur].toString();
-		if (url.includes('/species/' )) {
-			TAXON = urls[ur].textContent;
-		}
-	}
-
+	TAXON = qrTitle.querySelector('span.Heading-main').textContent;
+	
 	// Create a new span ("cell") for the eBird checklist hyperlink
 	let chklstCell = document.createElement('span');
 	chklstCell.setAttribute('style','color:#ccc');
