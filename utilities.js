@@ -354,7 +354,12 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {
 			});
 		}
 	}
+
+	// -------------------------------------------------------------------
+	makeDocList();	// Set up reviewer documents hyperlink
+
 }
+///////////	End of mainline code
 
 function createOopsControl() {
 	// Create a paragraph to contain the hyperlink and add it to the "listnav" list
@@ -458,4 +463,82 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 		'&zh=true&gp=true';
 
 	map.setAttribute('href',URL + URLend);
+}
+
+function makeDocList() {	// Prepare the clickable list of reviewer docs
+	var listDocs = document.getElementById('listDocsID');
+	if (!document.body.contains(listDocs)) {	// Create this paragraph only if not already done
+		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
+		var listDocsLI = document.createElement('p');
+		listDocsLI.setAttribute('id', 'listDocsID');
+		document.getElementById("listnav").insertBefore(listDocsLI, Fwebring);
+
+		// Create an anchor element
+		let ae = document.createElement('a');
+		ae.setAttribute("id", 'toglDocsAnchor');
+		ae.appendChild(document.createTextNode("Reviewer docs"));
+		ae.setAttribute("href", "#");
+		ae.setAttribute("class", "toggler");
+		listDocsLI.appendChild(ae);
+
+		// Create a div to contain the list
+		let docDiv = document.createElement('div');
+		docDiv.setAttribute("id", 'docDiv');
+		docDiv.style.position = 'absolute';
+		docDiv.style.left = '450px';
+		docDiv.style.top = '120px';
+		docDiv.style.border = 'medium solid #CCF3B4';
+		docDiv.style.width = '15em';
+		docDiv.style.backgroundColor = '#edf4fe';
+		docDiv.style.paddingTop = '1em';
+		docDiv.style.paddingBottom = '1em';
+		docDiv.style.display = 'none';
+		docDiv.style.zIndex = 1;
+		document.getElementById("listnav").appendChild(docDiv);
+
+		docDiv.addEventListener('click',  () => {	// Close the document list when it is clicked on
+			document.getElementById('docDiv').style.display = 'none';
+		});
+
+		document.getElementById('contents').addEventListener('click', () => {	// Close the document list when table is clicked on
+			document.getElementById('docDiv').style.display = 'none';
+		});
+
+		// Create the unordered list of links
+		let docUL = document.createElement('ul');
+		docUL.style.listStyle = 'none';
+		docUL.style.marginLeft = '15px';
+		docDiv.appendChild(docUL);
+
+		let URLlist = [['eBird Reviewer Handbook','https://drive.google.com/file/d/1zeGEwMt9vrJL3dvj1aAuYodErB8ikl3e/view?usp=share_link'],
+			['eBird Regional Editors','https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
+			['Exotics and taxonomy files', 'https://drive.google.com/drive/folders/1CzYzrR4DOMWpTxPnafvqjBw77JcTUcJr'],
+			['Filter taxa recommendations', 'https://docs.google.com/spreadsheets/d/1p-VRE2GhUuJXv6ADUehw7tlVLauYB7YI/edit#gid=446487343'],
+			['All documents', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
+
+		const liList = [];
+		const linkList = [];
+		for (let i = 0; i < URLlist.length; i++) {
+			
+			liList[i] = document.createElement('li');
+			liList[i].style.lineHeight = '30px';
+			docUL.appendChild(liList[i]);
+
+			linkList[i] = document.createElement('a');
+			linkList[i].appendChild(document.createTextNode(URLlist[i][0]));
+			linkList[i].setAttribute('href', URLlist[i][1]);
+			linkList[i].setAttribute('target', '_blank');
+			linkList[i].style.textDecoration = 'none';
+			liList[i].appendChild(linkList[i]);
+		}
+		// This function will execute when "Reviewer docs" is clicked.
+		ae.addEventListener('click', function () {
+			let docDiv = document.getElementById('docDiv');
+			if (docDiv.style.display == 'block') {
+				docDiv.style.display = 'none';
+			} else {
+				docDiv.style.display = 'block';
+			}
+		});
+	}
 }
