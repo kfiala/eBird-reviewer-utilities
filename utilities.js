@@ -285,9 +285,11 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {
 			// Next feature: Set up for "oops"
 			createOopsControl();
 			mainTable.insertBefore(createRecallText(),mainTable.firstElementChild);	// Insert in front of the table
+			makeDocList();	// Set up reviewer documents hyperlink
 		} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 			createOopsControl();
-			document.getElementById('listnav').insertBefore(createRecallText(),null);
+			document.getElementById('listnav').insertBefore(createRecallText(), null);
+			makeDocList();	// Set up reviewer documents hyperlink
 		}
 	} else if (location.pathname == '/admin/reviewObs.htm') {	// History window
 	//	From, e.g.,
@@ -354,10 +356,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {
 			});
 		}
 	}
-
-	// -------------------------------------------------------------------
-	makeDocList();	// Set up reviewer documents hyperlink
-
 }
 ///////////	End of mainline code
 
@@ -500,9 +498,11 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 			document.getElementById('docDiv').style.display = 'none';
 		});
 
-		document.getElementById('contents').addEventListener('click', () => {	// Close the document list when table is clicked on
-			document.getElementById('docDiv').style.display = 'none';
-		});
+		if (document.getElementById('contents')) {
+			document.getElementById('contents').addEventListener('click', () => {	// Close the document list when table is clicked on
+				document.getElementById('docDiv').style.display = 'none';
+			});
+		}	
 
 		// Create the unordered list of links
 		let docUL = document.createElement('ul');
