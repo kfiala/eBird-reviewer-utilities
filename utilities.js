@@ -53,14 +53,19 @@ function widthAdjustment() {	// Adjust the widths of "Review decision", "Reason"
 	switch (reviewMode) {
 		case 'Exotics mode':
 			document.getElementById('newExoticCategory').style = 'width:125px';
-			document.getElementById('notes').style = 'width:300px';
 			break;
 		case 'Review mode':
 			document.getElementById('resultingValid').style = 'width:160px';
 			document.getElementById('reasonCode').style = 'width:300px';
-			document.getElementById('notes').style = 'width:300px';
 			break;
 		default:
+	}
+	//	Unfortunately reviewSub.htm is coded incorrectly with two instances of id="notes" so we have to use name= instead of id= to find the notes fields.
+	let notesList = document.getElementsByName('notes');
+	if (notesList) {
+		for (let i = 0; i < notesList.length; i++) {
+			notesList[i].style = 'width:300px';
+		}
 	}
 }
 
