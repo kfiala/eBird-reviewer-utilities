@@ -7,7 +7,7 @@
 // 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
 // 5. Preserves links to last observations updated.
 
-if (window.location.href.includes('https://review.ebird.org/admin/review')) {  
+if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
 	var lookup = {};	// global
 
@@ -19,12 +19,12 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {
 	// Check if we have listnav, and if so get its webring element.
 	// This will be true for regular review (normal or exotic) but not for history or submission review
 	//
-	var Fwebring='';
+	let Fwebring = '';
 	if (document.getElementById("listnav")) {
 		Fwebring = document.getElementById("listnav").querySelector('.webring');
 	}
 
-	if (Fwebring) {	// If we are in regular review 
+	if (Fwebring) {	// If we are in regular review queue window
 		regularReview();
 	} else if (location.pathname == '/admin/reviewObs.htm') {	// History window
 		historyWindow();
@@ -86,23 +86,34 @@ function formListener() {	// If there is a form, set up a submit listener to cap
 
 function regularReview() {
 	let mainTable = document.getElementById('contents');
+	let hyperlinkDownload = '';
+	let hyperlinkToggle = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
-		buildCSV(mainTable);	//	First set up the CSV download
-		setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
+		hyperlinkDownload = buildCSV(mainTable);	//	First set up the CSV download
+		hyperlinkToggle = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 		document.getElementById('listnav').insertBefore(createRecallText(), null);
 	}
-	createOopsControl();	// Create recall hyperlink
-	makeDocList();	// Set up reviewer documents hyperlink
+	let hyperlinkRecall = createOopsControl();	// Create recall hyperlink
+	let hyperlinkDocList = makeDocList();	// Set up reviewer documents hyperlink
+
+
+	if (hyperlinkDownload) {
+		document.getElementById("listnav").insertBefore(hyperlinkDownload, null);
+	}
+	document.getElementById("listnav").insertBefore(hyperlinkDocList, null);
+	if (hyperlinkToggle) {
+		document.getElementById("listnav").insertBefore(hyperlinkToggle, null);
+	}
+	document.getElementById("listnav").insertBefore(hyperlinkRecall, null);	// Add it to the list at the top
 }
 
 function createOopsControl() {
-	// Create a paragraph to contain the hyperlink and add it to the "listnav" list
+	// Create a paragraph to contain the hyperlink 
 	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
-	let oopsControlP = document.createElement('p');		// Paragraph to contain the toggle hyperlink
-	oopsControlP.setAttribute('id','oopsControl');
-	document.getElementById("listnav").insertBefore(oopsControlP,Fwebring);	// Add it to the list at the top
+	let hyperlinkRecall = document.createElement('p');		// Paragraph to contain the toggle hyperlink
+	hyperlinkRecall.setAttribute('id','oopsControl');
 
 	// Create an anchor element
 	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
@@ -110,7 +121,7 @@ function createOopsControl() {
 	oopsAnchor.appendChild(document.createTextNode("Recall"));
 	oopsAnchor.setAttribute("href","#");
 	oopsAnchor.setAttribute("class","toggler");
-	oopsControlP.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
+	hyperlinkRecall.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
 
 	// This function will execute when oopsAnchor is clicked.
 	// It toggles the display status of previously updated records.
@@ -122,6 +133,7 @@ function createOopsControl() {
 			oops.style.display = 'none';
 		}
 	}
+	return (hyperlinkRecall);
 }
 
 function createRecallText() {
@@ -203,10 +215,9 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 
 function makeDocList() {	// Prepare the clickable list of reviewer docs
 	if (!document.body.contains(document.getElementById('listDocsID'))) {	// Create this paragraph only if not already done
-		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
-		let listDocsLI = document.createElement('p');
-		listDocsLI.setAttribute('id', 'listDocsID');
-		document.getElementById("listnav").insertBefore(listDocsLI, Fwebring);
+		// Create a paragraph to contain the hyperlink 
+		let hyperlinkDocList = document.createElement('p');
+		hyperlinkDocList.setAttribute('id', 'listDocsID');
 
 		// Create an anchor element
 		let ae = document.createElement('a');
@@ -214,7 +225,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		ae.appendChild(document.createTextNode("Reviewer docs"));
 		ae.setAttribute("href", "#");
 		ae.setAttribute("class", "toggler");
-		listDocsLI.appendChild(ae);
+		hyperlinkDocList.appendChild(ae);
 
 		// Create a div to contain the list
 		let docDiv = document.createElement('div');
@@ -277,6 +288,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 				docDiv.style.display = 'block';
 			}
 		});
+		return (hyperlinkDocList);
 	}
 }
 
@@ -405,12 +417,11 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	// All done building the CSV, now set up the hyperlink for it.
 	let downloadPara = document.getElementById('DownloadCSV');
 	let a;
+	let downloadLi;
 	if (!document.body.contains(downloadPara)) {	// Create this paragraph only if not already done
 		// Set up a paragraph (p element) to contain the hyperlink
-		let downloadLi = document.createElement('p');
+		downloadLi = document.createElement('p');
 		downloadLi.setAttribute('id', 'DownloadCSV');
-		// Add the paragraph to the existing list of hyperlinks
-		document.getElementById("listnav").insertBefore(downloadLi, Fwebring);
 
 		// Create the anchor element to go in the paragraph
 		a = document.createElement('a');
@@ -425,6 +436,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	}
 	// Hook up the CSV data to the hyperlink
 	a.href = window.URL.createObjectURL(new Blob(['\ufeff', spreadSheet.join('\r\n')], { type: 'text/csv' }));
+	return (downloadLi);
 	// All done with the CSV stuff, now on to the next feature
 }
 
@@ -432,10 +444,9 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	let toglStatusPara = document.getElementById('toglStatusID');
 	let deferToggle;
 	if (!document.body.contains(toglStatusPara)) {	// Create this paragraph only if not already done
-		// Create a paragraph to contain the hyperlink and add it to the "listnav" list
-		let toglStatusLi = document.createElement('p');
-		toglStatusLi.setAttribute('id', 'toglStatusID');
-		document.getElementById("listnav").insertBefore(toglStatusLi, Fwebring);
+		// Create a paragraph to contain the hyperlink 
+		let hyperlinkToggle = document.createElement('p');
+		hyperlinkToggle.setAttribute('id', 'toglStatusID');
 
 		// Create an anchor element
 		let ae = document.createElement('a');
@@ -488,7 +499,8 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 			}
 		}
 		ae.setAttribute("class", "toggler");
-		toglStatusLi.appendChild(ae);
+		hyperlinkToggle.appendChild(ae);
+		return (hyperlinkToggle);
 	}
 }
 
