@@ -132,11 +132,14 @@ function reviewReasonAndNotesSetup(recursing) {
 		if (targetLabels.includes(label)) {
 			buttons[b].removeEventListener('click', secondWait);
 			if (mainButton === 'Defer') {	// fix a bug in CLO code
-				if (!checkBox.checked) {
-					buttons[b].textContent = 'Defer';
-					label = 'Defer!';
-				} else {
+				if (!recursing) {
 					buttons[b].textContent = 'Next';
+				} else {
+					if (!checkBox.checked) {
+						buttons[b].textContent = 'Defer';
+					} else {
+						buttons[b].textContent = 'Next';
+					}
 				}
 			}
 			if (label==='Next') {
