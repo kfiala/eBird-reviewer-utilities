@@ -98,21 +98,75 @@ function regularReview() {
 	}
 	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
 	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
-	rowHyperlinks(hyperlink);
+
+	pulldownHyperlinks(hyperlink);
 }
 
-function rowHyperlinks(hyperlink) {
-	if (hyperlink['Download']) {
-		document.getElementById("listnav").insertBefore(hyperlink['Download'], null);
-	}
+function pulldownHyperlinks(hyperlink) {
 
-	document.getElementById("listnav").insertBefore(hyperlink['DocList'], null);
+	// Create a paragraph to contain the pulldown button
+	let hyperlinkPulldownButton = document.createElement('p');
+	hyperlinkPulldownButton.setAttribute('id', 'PullDown');
+	hyperlinkPulldownButton.setAttribute("class", "toggler");
+	hyperlinkPulldownButton.textContent = "Add-ons";
+	hyperlinkPulldownButton.style.color = '#3366cc';
+	hyperlinkPulldownButton.addEventListener('mouseover', function () { hyperlinkPulldownButton.style.textDecoration = 'underline' });
 
-	if (hyperlink['Toggle']) {
-		document.getElementById("listnav").insertBefore(hyperlink['Toggle'], null);
-	}
+	document.getElementById("listnav").insertBefore(hyperlinkPulldownButton, null);
+
+	// Create a div to contain the list
+	let hyperlinkDiv = document.createElement('div');
+	hyperlinkDiv.setAttribute("id", 'hyperlinkDiv');
+	hyperlinkDiv.style.position = 'absolute';
+	hyperlinkDiv.style.left = '130px';
+	hyperlinkDiv.style.top = '120px';
+	hyperlinkDiv.style.border = 'medium solid #CCF3B4';
+	hyperlinkDiv.style.width = '15em';
+	hyperlinkDiv.style.backgroundColor = '#edf4fe';
+	hyperlinkDiv.style.paddingTop = '1em';
+	hyperlinkDiv.style.paddingBottom = '1em';
+	hyperlinkDiv.style.display = 'none';
+	hyperlinkDiv.style.zIndex = 1;
+	document.getElementById("listnav").appendChild(hyperlinkDiv);
+
+	// Create the list of addons
+	let addonUL = document.createElement('ul');
+	addonUL.style.listStyle = 'none';
+	addonUL.style.marginLeft = '15px';
+	hyperlinkDiv.appendChild(addonUL);
+
+	addonLink(addonUL, hyperlink['Recall'], true, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
 	
-	document.getElementById("listnav").insertBefore(hyperlink['Recall'], null);
+	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
+		document.getElementById('hyperlinkDiv').style.display = 'block';
+		document.removeEventListener('mouseleave', closeHyperlinkDiv);
+	});
+
+	hyperlinkDiv.addEventListener('mouseenter', function () {
+		hyperlinkDiv.addEventListener('mouseleave', closeHyperlinkDiv);
+	});
+
+	function closeHyperlinkDiv() {
+		hyperlinkDiv.style.display = 'none';
+	}
+}
+
+function addonLink(addonUL, addon, clear, hyperlinkDiv) {
+
+	let item;
+	item = document.createElement('li');
+	item.style.lineHeight = '30px';
+	addonUL.appendChild(item);
+
+	item.appendChild(addon);
+	if (clear) {
+		addon.addEventListener('click', function () {
+			hyperlinkDiv.style.display = 'none';
+		});
+	}
 }
 
 function createOopsControl() {
