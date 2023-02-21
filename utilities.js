@@ -86,27 +86,33 @@ function formListener() {	// If there is a form, set up a submit listener to cap
 
 function regularReview() {
 	let mainTable = document.getElementById('contents');
-	let hyperlinkDownload = '';
-	let hyperlinkToggle = '';
+	let hyperlink = [];
+	hyperlink['Download'] = '';
+	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
-		hyperlinkDownload = buildCSV(mainTable);	//	First set up the CSV download
-		hyperlinkToggle = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
+		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
+		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 		document.getElementById('listnav').insertBefore(createRecallText(), null);
 	}
-	let hyperlinkRecall = createOopsControl();	// Create recall hyperlink
-	let hyperlinkDocList = makeDocList();	// Set up reviewer documents hyperlink
+	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
+	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
+	rowHyperlinks(hyperlink);
+}
 
+function rowHyperlinks(hyperlink) {
+	if (hyperlink['Download']) {
+		document.getElementById("listnav").insertBefore(hyperlink['Download'], null);
+	}
 
-	if (hyperlinkDownload) {
-		document.getElementById("listnav").insertBefore(hyperlinkDownload, null);
+	document.getElementById("listnav").insertBefore(hyperlink['DocList'], null);
+
+	if (hyperlink['Toggle']) {
+		document.getElementById("listnav").insertBefore(hyperlink['Toggle'], null);
 	}
-	document.getElementById("listnav").insertBefore(hyperlinkDocList, null);
-	if (hyperlinkToggle) {
-		document.getElementById("listnav").insertBefore(hyperlinkToggle, null);
-	}
-	document.getElementById("listnav").insertBefore(hyperlinkRecall, null);	// Add it to the list at the top
+	
+	document.getElementById("listnav").insertBefore(hyperlink['Recall'], null);
 }
 
 function createOopsControl() {
