@@ -312,6 +312,12 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 			});
 		}
 
+		docDiv.addEventListener('mouseenter', () => {	// Once the mouse enters the document list;
+			docDiv.addEventListener('mouseleave', () => {	// Close the document list when the mouse leaves
+				document.getElementById('docDiv').style.display = 'none';
+			});
+		});
+
 		// Create the unordered list of links
 		let docUL = document.createElement('ul');
 		docUL.style.listStyle = 'none';
