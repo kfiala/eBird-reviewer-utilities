@@ -139,7 +139,7 @@ function pulldownHyperlinks(hyperlink) {
 	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
-	
+
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
 		document.getElementById('hyperlinkDiv').style.display = 'block';
 		document.removeEventListener('mouseleave', closeHyperlinkDiv);
@@ -173,19 +173,19 @@ function createOopsControl() {
 	// Create a paragraph to contain the hyperlink 
 	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
 	let hyperlinkRecall = document.createElement('p');		// Paragraph to contain the toggle hyperlink
-	hyperlinkRecall.setAttribute('id','oopsControl');
+	hyperlinkRecall.setAttribute('id', 'oopsControl');
 
 	// Create an anchor element
 	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
-	oopsAnchor.setAttribute("id",'oopsAnchor');		// Not actually used
+	oopsAnchor.setAttribute("id", 'oopsAnchor');		// Not actually used
 	oopsAnchor.appendChild(document.createTextNode("Recall"));
-	oopsAnchor.setAttribute("href","#");
-	oopsAnchor.setAttribute("class","toggler");
+	oopsAnchor.setAttribute("href", "#");
+	oopsAnchor.setAttribute("class", "toggler");
 	hyperlinkRecall.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
 
 	// This function will execute when oopsAnchor is clicked.
 	// It toggles the display status of previously updated records.
-	oopsAnchor.onclick=function(){
+	oopsAnchor.onclick = function () {
 		let oops = document.getElementById('oopsText');
 		if (oops.style.display === 'none') {
 			oops.style.display = 'block';
@@ -211,14 +211,14 @@ function createRecallText() {
 	// We are going to build <p id=oopsText style='display:none margin-bottom:1em'>Previously changed records:
 	// <a target=_blank href=https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1>OBS1</a> [, OBS2] ... </p>
 	oopsText = document.createElement('p');	// Paragraph to contain the list of observations
-	oopsText.setAttribute('id','oopsText');
+	oopsText.setAttribute('id', 'oopsText');
 	oopsText.style.display = 'none';	// Initially it is not displayed
 	oopsText.style.marginBottom = '1em';
 	oopsText.style.fontSize = '13px';
 	oopsText.appendChild(document.createTextNode('Previously changed records: '));
 
 	let oopsTextAnchor, pieces, obsID, taxon = '';
-	for (let obs=0; obs<obsArray.length; obs++) {
+	for (let obs = 0; obs < obsArray.length; obs++) {
 		if (obsArray[0] === 'None') {
 			oopsText.appendChild(document.createTextNode('None'));
 			break;
@@ -226,7 +226,7 @@ function createRecallText() {
 			pieces = obsArray[obs].split('/');
 			obsID = pieces[0];
 			if (pieces.length > 1) {
-				taxon = obsArray[obs].substring(obsID.length+1);	// Might be a slash in the name, can't use split
+				taxon = obsArray[obs].substring(obsID.length + 1);	// Might be a slash in the name, can't use split
 			} else {
 				taxon = '';
 			}
@@ -237,11 +237,11 @@ function createRecallText() {
 			} else {
 				oopsTextAnchor.appendChild(document.createTextNode(obsArray[obs]));
 			}
-			oopsTextAnchor.setAttribute('target','_blank');
-			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/qr.htm?obsId=' + obsID);
+			oopsTextAnchor.setAttribute('target', '_blank');
+			oopsTextAnchor.setAttribute('href', 'https://review.ebird.org/admin/qr.htm?obsId=' + obsID);
 
 			oopsText.appendChild(oopsTextAnchor);
-			if (obs+1 < obsArray.length)	// Make the list comma-separated
+			if (obs + 1 < obsArray.length)	// Make the list comma-separated
 				oopsText.appendChild(document.createTextNode(', '));
 		}
 	}
@@ -253,24 +253,24 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 	let json = await response.json();
 	let ISOdate = json.sub.obsDt;
 
-//	Create the anchor for the map
+	//	Create the anchor for the map
 	const map = document.createElement('a');
 	map.appendChild(document.createTextNode('eBird species map for season'));
-	map.setAttribute('style','float:right');
-	map.setAttribute('target','_blank');
-//	Insert hyperlink at top right
-	document.getElementById('reviewForm').insertBefore(map,document.getElementById('submissiondetails'));
+	map.setAttribute('style', 'float:right');
+	map.setAttribute('target', '_blank');
+	//	Insert hyperlink at top right
+	document.getElementById('reviewForm').insertBefore(map, document.getElementById('submissiondetails'));
 
-//	Get the numeric month of the observation date from the ISO date
+	//	Get the numeric month of the observation date from the ISO date
 	const month = parseInt(ISOdate.split('-')[1]);
 	let Bmonth = (month > 1) ? month - 1 : 12;
 	let Emonth = (month < 12) ? month + 1 : 1;
-	let URLend = 
+	let URLend =
 		'&bmo=' + Bmonth +
 		'&emo=' + Emonth +
 		'&zh=true&gp=true';
 
-	map.setAttribute('href',URL + URLend);
+	map.setAttribute('href', URL + URLend);
 }
 
 function makeDocList() {	// Prepare the clickable list of reviewer docs
@@ -302,7 +302,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docDiv.style.zIndex = 1;
 		document.getElementById("listnav").appendChild(docDiv);
 
-		docDiv.addEventListener('click',  () => {	// Close the document list when it is clicked on
+		docDiv.addEventListener('click', () => {	// Close the document list when it is clicked on
 			document.getElementById('docDiv').style.display = 'none';
 		});
 
@@ -310,7 +310,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 			document.getElementById('contents').addEventListener('click', () => {	// Close the document list when table is clicked on
 				document.getElementById('docDiv').style.display = 'none';
 			});
-		}	
+		}
 
 		// Create the unordered list of links
 		let docUL = document.createElement('ul');
@@ -318,16 +318,16 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docUL.style.marginLeft = '15px';
 		docDiv.appendChild(docUL);
 
-		let URLlist = [['eBird Reviewer Handbook','https://drive.google.com/file/d/1zeGEwMt9vrJL3dvj1aAuYodErB8ikl3e/view?usp=share_link'],
-			['eBird Regional Editors','https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
-			['Exotics and taxonomy files', 'https://drive.google.com/drive/folders/1CzYzrR4DOMWpTxPnafvqjBw77JcTUcJr'],
-			['Filter taxa recommendations', 'https://docs.google.com/spreadsheets/d/1p-VRE2GhUuJXv6ADUehw7tlVLauYB7YI/edit#gid=446487343'],
-			['All documents', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
+		let URLlist = [['eBird Reviewer Handbook', 'https://drive.google.com/file/d/1zeGEwMt9vrJL3dvj1aAuYodErB8ikl3e/view?usp=share_link'],
+		['eBird Regional Editors', 'https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
+		['Exotics and taxonomy files', 'https://drive.google.com/drive/folders/1CzYzrR4DOMWpTxPnafvqjBw77JcTUcJr'],
+		['Filter taxa recommendations', 'https://docs.google.com/spreadsheets/d/1p-VRE2GhUuJXv6ADUehw7tlVLauYB7YI/edit#gid=446487343'],
+		['All documents', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
 
 		const liList = [];
 		const linkList = [];
 		for (let i = 0; i < URLlist.length; i++) {
-			
+
 			liList[i] = document.createElement('li');
 			liList[i].style.lineHeight = '30px';
 			docUL.appendChild(liList[i]);
@@ -385,7 +385,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					// "select" column, do nothing
 					OBS = el.getAttribute('value');
 					break;
-				case "subID": 
+				case "subID":
 					// "subID" column, get the report subID and set up the eBird checklist URL
 					if (el.nodeName === 'A') {
 						subid = el.innerHTML;
@@ -400,23 +400,23 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					}
 					break;
 				case "evidence": if (html) {
-						// "evidence" column, get the code letter for type of details
-						if (el && el.nodeName === 'A') {
-							let ev = parser.parseFromString(el.innerHTML, "text/html");
-							evidence = ev.body.firstChild.innerHTML;
-						}
+					// "evidence" column, get the code letter for type of details
+					if (el && el.nodeName === 'A') {
+						let ev = parser.parseFromString(el.innerHTML, "text/html");
+						evidence = ev.body.firstChild.innerHTML;
 					}
+				}
 					break;
 				case "count": count = Cell.innerHTML;
 					break;
 				case "obsdate": {
 					// Get the observation date, also format a copy of the date as day of year (without the year)
-						obsdate = Cell.innerHTML;
-						let date = new Date(obsdate);
-						let day = String(date.getDate()).padStart(2, '0');
-						let month = String(date.getMonth() + 1).padStart(2, '0');
-						dayOfYear = month + ' ' + day;
-					}
+					obsdate = Cell.innerHTML;
+					let date = new Date(obsdate);
+					let day = String(date.getDate()).padStart(2, '0');
+					let month = String(date.getMonth() + 1).padStart(2, '0');
+					dayOfYear = month + ' ' + day;
+				}
 					break;
 				case "user":	// Get the user's name
 					if (el.nodeName === 'A' && el.getAttribute('class') === 'userprofile') {
@@ -427,7 +427,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					break;
 				case "county": county = Cell.innerHTML;
 					break;
-				case "state": 
+				case "state":
 					if (el.nodeName === '#text') {
 						state = el.nodeValue;
 					}
