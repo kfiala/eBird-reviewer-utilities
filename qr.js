@@ -179,6 +179,20 @@ function mailSetup() {
 			break;
 		}
 	}
+	// Update the email content to convert the checklist URL to a clickable hyperlink
+	let message = document.getElementById('email-message1').textContent;
+	let URLindex = message.indexOf('https');
+	if (URLindex) {
+		let URL = message.substring(URLindex);
+		let URLlen = URL.indexOf("\n");
+		URL = URL.substring(0, URLlen);
+		let newMessage = message.replace(URL, '<a href="' + URL + '">' + URL + '</a>');
+
+		// Reword this message, which is only in the "misidentified" email:
+		newMessage = newMessage.replace('The documentation you have provided shows a', 'The photos you have provided show');
+
+		document.getElementById('email-message1').textContent = newMessage;
+	}
 }
 
 function createOopsControl() {
