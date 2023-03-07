@@ -94,7 +94,11 @@ function regularReview() {
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
-		document.getElementById('listnav').insertBefore(createRecallText(), null);
+		let oopsText = createRecallText();
+		oopsText.style.position = 'absolute';
+		oopsText.style.left = '230px';
+		oopsText.style.top = '175px';
+		document.getElementById('listnav').insertBefore(oopsText, null);
 	}
 	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
 	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
@@ -110,7 +114,6 @@ function pulldownHyperlinks(hyperlink) {
 	hyperlinkPulldownButton.setAttribute("class", "toggler");
 	hyperlinkPulldownButton.textContent = "Add-ons";
 	hyperlinkPulldownButton.style.color = '#3366cc';
-	hyperlinkPulldownButton.addEventListener('mouseover', function () { hyperlinkPulldownButton.style.textDecoration = 'underline' });
 
 	document.getElementById("listnav").insertBefore(hyperlinkPulldownButton, null);
 
@@ -119,7 +122,11 @@ function pulldownHyperlinks(hyperlink) {
 	hyperlinkDiv.setAttribute("id", 'hyperlinkDiv');
 	hyperlinkDiv.style.position = 'absolute';
 	hyperlinkDiv.style.left = '130px';
-	hyperlinkDiv.style.top = '120px';
+	if (document.getElementById('contents')) {
+		hyperlinkDiv.style.top = '120px';	// Regular table
+	} else {
+		hyperlinkDiv.style.top = '200px';	// You have no more records to review
+	}
 	hyperlinkDiv.style.border = 'medium solid #CCF3B4';
 	hyperlinkDiv.style.width = '15em';
 	hyperlinkDiv.style.backgroundColor = '#edf4fe';
@@ -141,47 +148,41 @@ function pulldownHyperlinks(hyperlink) {
 	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
+		hyperlinkPulldownButton.style.textDecoration = 'underline' 
 		document.getElementById('hyperlinkDiv').style.display = 'block';
-		document.removeEventListener('mouseleave', closeHyperlinkDiv);
+	});
+
+	hyperlinkPulldownButton.addEventListener('mouseleave', function () {
+		hyperlinkPulldownButton.style.textDecoration = 'none';
 	});
 
 	hyperlinkDiv.addEventListener('mouseenter', function () {
-		hyperlinkDiv.addEventListener('mouseleave', closeHyperlinkDiv);
-	});
-
-	function closeHyperlinkDiv() {
-		hyperlinkDiv.style.display = 'none';
-	}
+		hyperlinkDiv.addEventListener('mouseleave', () => { hyperlinkDiv.style.display = 'none'; });
+	});	
 }
 
 function addonLink(addonUL, addon, clear, hyperlinkDiv) {
-
-	let item;
-	item = document.createElement('li');
-	item.style.lineHeight = '30px';
-	addonUL.appendChild(item);
-
-	item.appendChild(addon);
-	if (clear) {
-		addon.addEventListener('click', function () {
-			hyperlinkDiv.style.display = 'none';
-		});
+	if (addon) {
+		let item = document.createElement('li');
+		item.style.lineHeight = '30px';
+		addonUL.appendChild(item);
+		item.appendChild(addon);
+		if (clear) {
+			addon.addEventListener('click', function () {
+				hyperlinkDiv.style.display = 'none';
+			});
+		}
 	}
 }
 
 function createOopsControl() {
 	// Create a paragraph to contain the hyperlink 
-	// We are going to build <p id=oopsControl><a id=oopsAnchor href=# class=toggler>Recall</a></p>
-	let hyperlinkRecall = document.createElement('p');		// Paragraph to contain the toggle hyperlink
-	hyperlinkRecall.setAttribute('id', 'oopsControl');
-
+	// We are going to build <a id=oopsAnchor href=# class=toggler>Recall</a>
 	// Create an anchor element
 	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
 	oopsAnchor.setAttribute("id", 'oopsAnchor');		// Not actually used
 	oopsAnchor.appendChild(document.createTextNode("Recall"));
 	oopsAnchor.setAttribute("href", "#");
-	oopsAnchor.setAttribute("class", "toggler");
-	hyperlinkRecall.appendChild(oopsAnchor);	// Put the hyperlink in its paragraph
 
 	// This function will execute when oopsAnchor is clicked.
 	// It toggles the display status of previously updated records.
@@ -193,7 +194,7 @@ function createOopsControl() {
 			oops.style.display = 'none';
 		}
 	}
-	return (hyperlinkRecall);
+	return (oopsAnchor);
 }
 
 function createRecallText() {
@@ -274,18 +275,12 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 }
 
 function makeDocList() {	// Prepare the clickable list of reviewer docs
-	if (!document.body.contains(document.getElementById('listDocsID'))) {	// Create this paragraph only if not already done
-		// Create a paragraph to contain the hyperlink 
-		let hyperlinkDocList = document.createElement('p');
-		hyperlinkDocList.setAttribute('id', 'listDocsID');
-
+	if (!document.body.contains(document.getElementById('toglDocsAnchor'))) {	// Create this paragraph only if not already done
 		// Create an anchor element
-		let ae = document.createElement('a');
-		ae.setAttribute("id", 'toglDocsAnchor');
-		ae.appendChild(document.createTextNode("Reviewer docs"));
-		ae.setAttribute("href", "#");
-		ae.setAttribute("class", "toggler");
-		hyperlinkDocList.appendChild(ae);
+		let hyperlinkDocAnchor = document.createElement('a');
+		hyperlinkDocAnchor.setAttribute("id", 'toglDocsAnchor');
+		hyperlinkDocAnchor.appendChild(document.createTextNode("Reviewer docs"));
+		hyperlinkDocAnchor.setAttribute("href", "#");
 
 		// Create a div to contain the list
 		let docDiv = document.createElement('div');
@@ -346,7 +341,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 			liList[i].appendChild(linkList[i]);
 		}
 		// This function will execute when "Reviewer docs" is clicked.
-		ae.addEventListener('click', function () {
+		hyperlinkDocAnchor.addEventListener('click', function () {
 			let docDiv = document.getElementById('docDiv');
 			if (docDiv.style.display == 'block') {
 				docDiv.style.display = 'none';
@@ -354,7 +349,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 				docDiv.style.display = 'block';
 			}
 		});
-		return (hyperlinkDocList);
+		return (hyperlinkDocAnchor);
 	}
 }
 
@@ -481,39 +476,28 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		}
 	});
 	// All done building the CSV, now set up the hyperlink for it.
-	let downloadPara = document.getElementById('DownloadCSV');
+	let downloadAnchor = document.getElementById('dlanchor');
 	let a;
 	let downloadLi;
-	if (!document.body.contains(downloadPara)) {	// Create this paragraph only if not already done
-		// Set up a paragraph (p element) to contain the hyperlink
-		downloadLi = document.createElement('p');
-		downloadLi.setAttribute('id', 'DownloadCSV');
-
+	if (!document.body.contains(downloadAnchor)) {	// Create this paragraph only if not already done
 		// Create the anchor element to go in the paragraph
 		a = document.createElement('a');
 		a.setAttribute("id", 'dlAnchor');
 		a.appendChild(document.createTextNode("Download csv"));
 		a.setAttribute("download", 'eBird report.csv');	// Set the csv file name
-		a.setAttribute("class", "toggler");
-		downloadLi.appendChild(a);
 	}
 	else {
 		a = document.getElementById('dlAnchor');
 	}
 	// Hook up the CSV data to the hyperlink
 	a.href = window.URL.createObjectURL(new Blob(['\ufeff', spreadSheet.join('\r\n')], { type: 'text/csv' }));
-	return (downloadLi);
+	return (a);
 	// All done with the CSV stuff, now on to the next feature
 }
 
 function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
-	let toglStatusPara = document.getElementById('toglStatusID');
 	let deferToggle;
-	if (!document.body.contains(toglStatusPara)) {	// Create this paragraph only if not already done
-		// Create a paragraph to contain the hyperlink 
-		let hyperlinkToggle = document.createElement('p');
-		hyperlinkToggle.setAttribute('id', 'toglStatusID');
-
+	if (!document.body.contains(document.getElementById('toglStatusAnchor'))) {	// Create this paragraph only if not already done
 		// Create an anchor element
 		let ae = document.createElement('a');
 		ae.setAttribute("id", 'toglStatusAnchor');
@@ -564,9 +548,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 				}
 			}
 		}
-		ae.setAttribute("class", "toggler");
-		hyperlinkToggle.appendChild(ae);
-		return (hyperlinkToggle);
+		return (ae);
 	}
 }
 
