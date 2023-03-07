@@ -130,25 +130,19 @@ function reviewReasonAndNotesSetup(recursing) {
 	for (let b=0; b<buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			buttons[b].removeEventListener('click', secondWait);
 			if (mainButton === 'Defer') {	// fix a bug in CLO code
-				if (!recursing) {
-					buttons[b].textContent = 'Next';
+				if (!checkBox.checked) {
+					buttons[b].textContent = 'Defer';
 				} else {
-					if (!checkBox.checked) {
-						buttons[b].textContent = 'Defer';
-					} else {
-						buttons[b].textContent = 'Next';
-					}
+					buttons[b].textContent = 'Next';
 				}
 			}
 			if (label==='Next') {
-				buttons[b].addEventListener('click', emailWait);	// If mailing, need to wait for more DOM
+				buttons[b].addEventListener('click', emailWait);	// mailing so need to wait for more email DOM
+				buttons[b].removeEventListener('click', storeChange);	// button may have previously had one of the other labels
 				break;
 			} else {
-				buttons[b].addEventListener('click', () => {
-					localStorage.setItem('lastChange',OBS + '/' + TAXON);
-				});
+				buttons[b].addEventListener('click', storeChange);
 			}
 		}
 	}
@@ -156,7 +150,15 @@ function reviewReasonAndNotesSetup(recursing) {
 		checkBox.addEventListener('change',() => {
 				reviewReasonAndNotesSetup(true);
 		});
+		// When top-level Unconfirm is clicked for a record with no media, reviewReasonAndNotesSetup does not get driven,
+		// so we set it up to run when the reason code is set. We have to do it with a delay to give time for
+		// reason code setup to complete.
+		document.getElementById('review-reason').addEventListener('change', () => { setTimeout(reviewReasonAndNotesSetup, 100) });
 	}
+}
+
+function storeChange() {
+	localStorage.setItem('lastChange', OBS + '/' + TAXON);
 }
 
 function emailWait() {
