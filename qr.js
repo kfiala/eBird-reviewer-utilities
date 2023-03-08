@@ -165,7 +165,8 @@ function emailWait() {
 	if (!document.getElementById('email-message2')) {
 		setTimeout(emailWait,100);
 	} else {
-		mailSetup();
+		// There seems to be an occasional race situation so I'm putting in a delay before this call.
+		setTimeout(mailSetup,100);
 	}
 }
 
