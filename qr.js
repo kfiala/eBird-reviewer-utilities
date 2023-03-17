@@ -162,11 +162,10 @@ function storeChange() {
 }
 
 function emailWait() {
-	if (!document.getElementById('email-message2')) {
+	if (!document.getElementById('email-message2') || !document.getElementById('email-message2').textContent) {
 		setTimeout(emailWait,100);
 	} else {
-		// There seems to be an occasional race situation so I'm putting in a delay before this call.
-		setTimeout(mailSetup,100);
+		mailSetup();
 	}
 }
 
@@ -176,9 +175,7 @@ function mailSetup() {
 	for (let b=0; b<buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			buttons[b].addEventListener('click', () => {
-				localStorage.setItem('lastChange',OBS + '/' + TAXON);
-			});
+			buttons[b].addEventListener('click', storeChange);
 			break;
 		}
 	}
