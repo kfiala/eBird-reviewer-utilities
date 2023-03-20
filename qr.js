@@ -56,7 +56,6 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 			sixcode = sixcode.split('&')[0];
 		} else if (url.includes('obsID=')) {			// https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1570434379
 			OBS = url.split('=')[1];
-			obsViewData(OBS);
 		}		
 	}
 	let qrTitle = document.getElementById('qr-obs-title');
@@ -108,6 +107,50 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 
 	document.getElementById('kdiv').appendChild(infoCell);	// Append the span to kdiv
 	document.getElementById('kdiv').appendChild(createRecallText());
+
+// Setup for checklist comments
+// Create empty html elements that will be filled in later
+	let commentsP = document.createElement('p');
+	commentsP.style.fontSize = '13px';
+	commentsP.style.color = '#0070b3';
+	commentsP.style.display = 'none';
+	commentsP.setAttribute('id', 'commentsP');
+	let commentSpan0 = document.createElement('span');
+	let commentSpan1 = document.createElement('span');
+	let commentSpan2 = document.createElement('span');
+	let commentSpan3 = document.createElement('span');
+	let commentSpan4 = document.createElement('span');
+	commentSpan0.style.display = 'none';
+	commentSpan1.style.display = 'inline-block';
+	commentSpan2.style.display = 'none';
+	commentSpan2.style.textDecoration = 'underline';
+	commentSpan3.style.display = 'none';
+	commentSpan4.style.display = 'none';
+	commentSpan4.style.textDecoration = 'underline';
+	commentSpan0.setAttribute('id', 'commentSpan0');
+	commentSpan1.setAttribute('id','commentSpan1');
+	commentSpan2.setAttribute('id','commentSpan2');
+	commentSpan3.setAttribute('id','commentSpan3');
+	commentSpan4.setAttribute('id', 'commentSpan4');
+	commentsP.appendChild(commentSpan0);
+	commentsP.appendChild(commentSpan1);
+	commentsP.appendChild(commentSpan2);
+	commentsP.appendChild(commentSpan3);
+	commentsP.appendChild(commentSpan4);
+	commentSpan0.appendChild(document.createTextNode('Checklist comments: '));
+	commentSpan2.addEventListener('click', () => {
+		commentSpan1.style.display = 'none'; commentSpan2.style.display = 'none';
+		commentSpan3.style.display = 'inline-block'; commentSpan4.style.display = 'block';
+	});
+	commentSpan4.addEventListener('click', () => {
+		commentSpan1.style.display = 'inline-block'; commentSpan2.style.display = 'block';
+		commentSpan3.style.display = 'none'; commentSpan4.style.display = 'none';
+	});
+	document.getElementById('kdiv').appendChild(commentsP);
+	// End of setup for checklist comments
+	if (OBS) {	// Start asynchronous call for observation data
+		obsViewData(OBS);
+	}
 }
 
 function secondWait(e) { //	After a top-level button is clicked, wait for the "Review reason and notes" panel to be ready.
@@ -280,7 +323,27 @@ async function obsViewData(OBS) {
 	let url = 'https://review.ebird.org/admin/api/v1/obs/view/' + OBS;
 	let response = await fetch(url);
 	let json = await response.json();
-	let locId = json.sub.locId;
+// Store the checklist comments into the previously created but empty html elements
+	const maxCommentLength = 400;
+	let listComments = json.sub.comments;
+	if (listComments) {
+		let shortComments = listComments;
+		if (shortComments.length > maxCommentLength) {
+			let breakpoint = listComments.lastIndexOf(' ', maxCommentLength);
+			breakpoint = (breakpoint > 0) ? breakpoint : listComments.length;
+			shortComments = listComments.slice(0, breakpoint);
+			document.getElementById('commentSpan2').style.display = 'block'; // "[More]"
+		}
+
+		document.getElementById('commentsP').style.display = 'block';
+		document.getElementById('commentSpan0').style.display = 'inline-block';
+		document.getElementById('commentSpan0').style.marginRight = '0.2em';
+		document.getElementById('commentSpan1').appendChild(document.createTextNode(shortComments));
+		document.getElementById('commentSpan2').appendChild(document.createTextNode(' [More]'));
+		document.getElementById('commentSpan3').appendChild(document.createTextNode(listComments));
+		document.getElementById('commentSpan4').appendChild(document.createTextNode(' [Less]'));
+	}
+// End of checklist comment setup
 
 	let span = document.getElementById('kInfo');
 	let method, version;
@@ -290,7 +353,7 @@ async function obsViewData(OBS) {
 		let hotLink = document.createElement('a');
 		span.appendChild(hotLink);
 		hotLink.appendChild(document.createTextNode(locType));
-		let hotUrl = 'https://ebird.org/hotspot/' + locId;
+		let hotUrl = 'https://ebird.org/hotspot/' + json.sub.locId;
 		hotLink.setAttribute('href',hotUrl);
 		hotLink.setAttribute('target','_blank');
 		span.appendChild(document.createTextNode(' | '));
