@@ -1,15 +1,7 @@
 var OBS, TAXON, mainButton;
 
-mainline();
-
-function mainline () {
-	if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
-		document.body.addEventListener('mouseenter', () => {	// We can't do anything until DOM is complete; have to wait for it
-			if (!document.getElementById('kdiv')) {				// Need a signal when to start
-				wait();
-			}
-		});
-	}
+if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
+	wait();
 }
 
 function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
@@ -17,6 +9,11 @@ function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setu
 	if (!document.getElementById('qr-obs-documentation')) {
 		setTimeout(wait,100);
 	} else {
+		document.body.addEventListener('mouseenter', () => {
+			if (!document.getElementById('kdiv')) {
+				wait();
+			}
+		});
 		delayedSetup();
 	}
 }
