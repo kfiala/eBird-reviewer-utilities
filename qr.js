@@ -202,10 +202,10 @@ function storeChange() {
 }
 
 function emailWait() {
-	if (!document.getElementById('email-message2') || !document.getElementById('email-message2').textContent) {
+	if (!document.getElementById('email-message1') || !document.getElementById('email-message1').textContent) {
 		setTimeout(emailWait,100);
 	} else {
-		mailSetup();
+		setTimeout(mailSetup,100);	// Wait for CLO code to finish
 	}
 }
 

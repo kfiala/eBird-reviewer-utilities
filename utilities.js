@@ -478,7 +478,6 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	// All done building the CSV, now set up the hyperlink for it.
 	let downloadAnchor = document.getElementById('dlanchor');
 	let a;
-	let downloadLi;
 	if (!document.body.contains(downloadAnchor)) {	// Create this paragraph only if not already done
 		// Create the anchor element to go in the paragraph
 		a = document.createElement('a');
