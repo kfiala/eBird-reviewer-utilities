@@ -358,6 +358,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	let doHeaders = true;
 	let headers = [];
 	let rownum = 0;
+	let mediaCell;
 	const parser = new DOMParser();
 
 	mainTable.querySelectorAll('tr').forEach(function (elTr) {
@@ -400,13 +401,17 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 						lookup[OBS] = species;
 					}
 					break;
-				case "evidence": if (html) {
-					// "evidence" column, get the code letter for type of details
-					if (el && el.nodeName === 'A') {
-						let ev = parser.parseFromString(el.innerHTML, "text/html");
-						evidence = ev.body.firstChild.innerHTML;
+				case "evidence":
+					mediaCell = document.createElement('td');
+					elTr.insertBefore(mediaCell, Cell);
+					setupMedia(elTr, mediaCell, OBS);
+					if (html) {
+						// "evidence" column, get the code letter for type of details
+						if (el && el.nodeName === 'A') {
+							let ev = parser.parseFromString(el.innerHTML, "text/html");
+							evidence = ev.body.firstChild.innerHTML;
+						}
 					}
-				}
 					break;
 				case "count": count = Cell.innerHTML;
 					break;
@@ -475,6 +480,16 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			chklstLink.setAttribute('target', '_blank');
 		}
 	});
+
+	let headerRow = mainTable.querySelector('tr');
+	headerRow.querySelectorAll('th').forEach(function (Header) {
+		if (Header.textContent == 'Note') {
+			let newHeader = document.createElement('th');
+			newHeader.appendChild(document.createTextNode('Doc'));
+			headerRow.insertBefore(newHeader, Header);
+		}
+	});
+
 	// All done building the CSV, now set up the hyperlink for it.
 	let downloadAnchor = document.getElementById('dlanchor');
 	let a;
@@ -493,6 +508,145 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	return (a);
 	// All done with the CSV stuff, now on to the next feature
 }
+
+function setupMedia(elTr, mediaCell, OBS) {
+//	mediaCell.appendChild(document.createTextNode(''));
+	let newRow = document.createElement('tr');
+	elTr.after(newRow);
+	let newTD = document.createElement('td');
+	newTD.setAttribute('colspan', 15);
+	newRow.appendChild(newTD);
+	newTD.style.display = 'none';
+	mediaCell.addEventListener('click', function () {
+		let display = newTD.style.display == 'none' ? 'table-cell' : 'none';
+		newTD.style.display = display;
+	})
+	getMedia(mediaCell, newTD, OBS);
+}
+
+async function getMedia(mediaCell, newTD, OBS) { // Need to get media data via api, which has to be done asynchronously
+	let response = await fetch('https://review.ebird.org/admin/reviewServices/getObsComments.do?obsId=' + OBS);
+	let comments = await response.text();
+	comments.replace(/\\"/g, '"');	// unescape internal quotes
+	comments = comments.slice(1, comments.length-1);	// strip enclosing quotes.
+
+	newTD.textContent = comments;
+	let mediaType = comments.length > 0 ? 'N' : '';
+	let mediaIcon = document.createElement('i');
+
+	if (mediaType == 'N') {
+		newTD.appendChild(document.createElement('br'));
+	}
+
+	response = await fetch('https://review.ebird.org/admin/reviewServices/getObsMedia.do?obsId=' + OBS);
+	let json = await response.json();
+	if (json.length == 0) {
+		if (mediaType == 'N') {
+			mediaIcon.setAttribute('class', 'icon icon-ev-N');
+			mediaIcon.appendChild(document.createTextNode('N'));
+			mediaCell.appendChild(mediaIcon);
+		}
+	} else {
+		const asset = [];		// Macaulay id
+		const previewURL = [];		//
+		const largeURL = [];
+		const mediaURL = [];
+		const userDisplayName = [];	// eBirder
+
+		for (let index in json) {
+			asset.push(json[index].assetId);
+		}
+
+		response = await fetch('https://search.macaulaylibrary.org/api/v1/search?includeUnconfirmed=T&sort=id_asc&catId=' + asset.toString());
+		json = await response.json();
+		for (let index in json.results.content) {
+			previewURL.push(json.results.content[index].previewUrl);
+			largeURL.push(json.results.content[index].largeUrl);
+			mediaURL.push(json.results.content[index].mediaUrl);
+			userDisplayName.push(json.results.content[index].userDisplayName);
+
+			let mType = json.results.content[index].mediaType;	// Photo, Audio, Video
+			switch (mType) {
+				case 'Photo': mediaType += 'p'; break;
+				case 'Audio': mediaType += 'a'; break;
+				case 'Video': mediaType += 'v'; break;
+				default:
+			}
+
+		}
+
+		if (mediaType.indexOf("v") >= 0) { mediaType = 'V' }
+		else if (mediaType.indexOf("p") >= 0) { mediaType = 'P' }
+		else if (mediaType.indexOf("a") >= 0) { mediaType = 'A' }
+		else if (mediaType.indexOf("N") >= 0) { mediaType = 'N' }
+
+		mediaIcon.setAttribute('class', 'icon icon-ev-' + mediaType);
+		mediaIcon.appendChild(document.createTextNode(mediaType));
+		mediaCell.appendChild(mediaIcon);
+//		mediaCell.appendChild(document.createTextNode(mediaType));
+
+		let mediaAnchor;
+		let imgTag;
+		let wavAnchor;
+//		let figureTag;
+//		let figureCaption;
+		for (let index in previewURL) {
+			let mtype = json.results.content[index].mediaType;	// Photo, Audio, Video
+
+			mediaAnchor = document.createElement('a');
+//			if (mtype == 'Photo' || mtype == 'Video') {
+				mediaAnchor.setAttribute('href', 'https://macaulaylibrary.org/asset/' + asset[index]);
+//			} else if (mtype == 'Audio') {
+//				mediaAnchor.setAttribute('href', mediaURL[index]);
+//				if (mtype == 'Audio') {
+//					mediaAnchor.appendChild(document.createTextNode('test text'));
+//				}
+//			}
+			mediaAnchor.setAttribute('target', '_blank');
+
+			if (mtype == 'Audio') {
+				wavAnchor = document.createElement('a');
+				wavAnchor.setAttribute('href', mediaURL[index]);
+				wavAnchor.appendChild(document.createTextNode('.wav'));
+			}
+/*
+			figureTag = document.createElement('figure');
+			figureCaption = document.createElement('figcaption');
+			figureCaption.appendChild(document.createTextNode('figure caption'));
+			figureTag.appendChild(figureCaption);
+*/
+			imgTag = document.createElement('img');
+			imgTag.setAttribute('src', previewURL[index]);
+			imgTag.setAttribute('title', userDisplayName[index]);
+			imgTag.style.marginRight = '5px';
+			imgTag.style.marginBottom = '5px';
+			imgTag.style.width = '15%';
+//			figureTag.appendChild(imgTag);
+			mediaAnchor.appendChild(imgTag);
+			if (mtype == 'Audio') {
+				mediaAnchor.appendChild(wavAnchor);
+			}
+			newTD.appendChild(mediaAnchor);
+/*
+			if (mtype == 'Photo' || mtype == 'Video') {
+				imgTag.addEventListener('click', function () {
+					//				window.open(largeURL[index], '_blank');
+					window.open('https://macaulaylibrary.org/asset/' + asset[index], '_blank');
+				});
+			} else if (mtype == 'Audio') {
+				imgTag.addEventListener('click', function () {
+					window.open(mediaURL[index], '_blank');
+				});
+			}
+*/
+				
+
+		}
+	}
+}
+	
+
+
 
 function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	let deferToggle;
