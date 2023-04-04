@@ -564,8 +564,8 @@ async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 		for (let index in json) {
 			asset.push(json[index].assetId);
 			switch (json[index].mediaType) {
-				case 'P': if (mediaType == '' || mediaType == 'A') { mediaType = 'P' }; break;
-				case 'A': if (mediaType == '') { mediaType = 'A' }; break;
+				case 'P': if (mediaType == '' || mediaType == 'A') { mediaType = 'P' } break;
+				case 'A': if (mediaType == '') { mediaType = 'A' } break;
 				case 'V': mediaType = 'V'; break;
 				default: mediaType = '';
 			}
