@@ -102,7 +102,12 @@ function regularReview() {
 	}
 	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
 	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
-
+	
+	hyperlink['Extension'] = document.createElement('a');
+	hyperlink['Extension'].appendChild(document.createTextNode("Extension documentation"));
+	hyperlink['Extension'].setAttribute("href", "https://www.faintlake.com/eBird/extension/ReviewerUtilities/");
+	hyperlink['Extension'].setAttribute("target", "_blank");
+	
 	pulldownHyperlinks(hyperlink);
 }
 
@@ -146,6 +151,7 @@ function pulldownHyperlinks(hyperlink) {
 	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
 		hyperlinkPulldownButton.style.textDecoration = 'underline' 
