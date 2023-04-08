@@ -594,15 +594,13 @@ async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 
 async function getMedia(mediaTD) {
 	let assetList = mediaTD.textContent;
-	console.log('AssetList: ' + assetList);
 	if (assetList) {
 		mediaTD.textContent = 'Fetching media...';
-		console.log('Trying ' + 'https://search.macaulaylibrary.org/api/v1/search?includeUnconfirmed=T&sort=id_asc&catId=' + assetList);
 		mediaTD.style.display = 'table-cell';
 		let resp = await fetch('https://search.macaulaylibrary.org/api/v1/search?includeUnconfirmed=T&sort=id_asc&catId=' + assetList);
 		let json = await resp.json();
 
-		const previewURL = [];		//
+		const previewURL = [];
 		const largeURL = [];
 		const mediaURL = [];
 		const userDisplayName = [];	// eBirder
