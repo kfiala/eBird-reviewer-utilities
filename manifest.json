@@ -1,16 +1,15 @@
 {
-
   "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "content_scripts": [
     {
-      "matches": ["https://review.ebird.org/admin/review*","https://review.ebird.org/admin/qr.htm*"],
-      "js": ["utilities.js","qr.js"]
+      "matches": ["https://review.ebird.org/admin/review*","https://review.ebird.org/admin/qr.htm*",
+         "https://review.ebird.org/admin/viewFilter.htm*"],
+      "js": ["utilities.js","qr.js","filterGraph.js","filterExport.js"]
     }
   ],
-
-  "description": "Provides conveniences for ebird reviewers.",
+  "description": "Utilities for eBird reviewers.",
   "homepage_url": "https://www.faintlake.com/eBird/extension/ReviewerUtilities/",
   "icons": {
     "48": "icons/48.png",

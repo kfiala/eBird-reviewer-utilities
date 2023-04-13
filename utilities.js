@@ -105,6 +105,12 @@ function regularReview() {
 	
 	hyperlink['Extension'] = document.createElement('a');
 	hyperlink['Extension'].appendChild(document.createTextNode("Extension documentation"));
+	hyperlink['Extension'].appendChild(document.createElement('br'));
+	let vspan = document.createElement('span');
+	vspan.style.fontSize = '8pt';
+	hyperlink['Extension'].appendChild(vspan);
+	vspan.appendChild(document.createTextNode("V1.3.5 -- 12 April 2023"));
+	
 	hyperlink['Extension'].setAttribute("href", "https://www.faintlake.com/eBird/extension/ReviewerUtilities/");
 	hyperlink['Extension'].setAttribute("target", "_blank");
 	
@@ -171,6 +177,8 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv) {
 	if (addon) {
 		let item = document.createElement('li');
 		item.style.lineHeight = '30px';
+		item.style.paddingLeft = '2em';
+		item.style.textIndent = '-2em';
 		addonUL.appendChild(item);
 		item.appendChild(addon);
 		if (clear) {
