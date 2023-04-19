@@ -90,6 +90,7 @@ function regularReview() {
 	hyperlink['Download'] = '';
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
+		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
@@ -109,7 +110,7 @@ function regularReview() {
 	let vspan = document.createElement('span');
 	vspan.style.fontSize = '8pt';
 	hyperlink['Extension'].appendChild(vspan);
-	vspan.appendChild(document.createTextNode("V1.3.5 -- 12 April 2023"));
+	vspan.appendChild(document.createTextNode("V1.3.6 -- 19 April 2023"));
 	
 	hyperlink['Extension'].setAttribute("href", "https://www.faintlake.com/eBird/extension/ReviewerUtilities/");
 	hyperlink['Extension'].setAttribute("target", "_blank");
@@ -660,7 +661,6 @@ async function getMedia(mediaTD) {
 }
 
 function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
-	let deferToggle;
 	if (!document.body.contains(document.getElementById('toglStatusAnchor'))) {	// Create this paragraph only if not already done
 		// Create an anchor element
 		let ae = document.createElement('a');
@@ -670,49 +670,57 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 		// This function will execute when "Toggle deferred" is clicked.
 		// It toggles the display status of deferred reports.
 		ae.onclick = function () {
-			if (deferToggle === undefined) {
-				deferToggle = 0;
-			}
-			deferToggle = ++deferToggle % 3;	// Cycle through three different view
-
-			let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
-
-			let checkAll = mainTable.querySelector('input.checkbox');
-			switch (deferToggle) {
-				case 1:
-				case 2:
-					checkAll.disabled = true;
-					break;
-				default:
-					checkAll.disabled = false;
-			}
-
-			for (let i = 0; i < reviewRows.length; i++) {
-				switch (deferToggle) {
-					case 0:	// Display all rows
-						reviewRows[i].parentNode.style.display = 'table-row';
-						break;
-					case 1:	// Display only non-deferred observations
-						if (reviewRows[i].classList.contains('deferred')) {
-							reviewRows[i].parentNode.style.display = 'none';
-						}
-						else {
-							reviewRows[i].parentNode.style.display = 'table-row';
-						}
-						break;
-					case 2:	// Display only Deferred observations
-						if (reviewRows[i].classList.contains('deferred')) {
-							reviewRows[i].parentNode.style.display = 'table-row';
-						}
-						else {
-							reviewRows[i].parentNode.style.display = 'none';
-						}
-						break;
-					default:
-				}
-			}
+			let deferToggle = Number(sessionStorage.getItem('deferToggle'));
+			deferToggle = ++deferToggle % 3;	// Cycle through three different views
+			sessionStorage.setItem('deferToggle', deferToggle);
+			performDeferToggle(mainTable);
 		}
 		return (ae);
+	}
+}
+
+function performDeferToggle(mainTable) {
+
+	let deferToggle = Number(sessionStorage.getItem('deferToggle'));
+	if (deferToggle === undefined) {
+		deferToggle = 0;
+	}
+
+	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+
+	let checkAll = mainTable.querySelector('input.checkbox');
+	switch (deferToggle) {
+		case 1:
+		case 2:
+			checkAll.disabled = true;
+			break;
+		default:
+			checkAll.disabled = false;
+	}
+
+	for (let i = 0; i < reviewRows.length; i++) {
+		switch (deferToggle) {
+			case 0:	// Display all rows
+				reviewRows[i].parentNode.style.display = 'table-row';
+				break;
+			case 1:	// Display only non-deferred observations
+				if (reviewRows[i].classList.contains('deferred')) {
+					reviewRows[i].parentNode.style.display = 'none';
+				}
+				else {
+					reviewRows[i].parentNode.style.display = 'table-row';
+				}
+				break;
+			case 2:	// Display only Deferred observations
+				if (reviewRows[i].classList.contains('deferred')) {
+					reviewRows[i].parentNode.style.display = 'table-row';
+				}
+				else {
+					reviewRows[i].parentNode.style.display = 'none';
+				}
+				break;
+			default:
+		}
 	}
 }
 
