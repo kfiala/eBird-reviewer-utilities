@@ -157,43 +157,63 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 	if (!document.getElementById('reasonPage')) {
 		setTimeout(secondWait,100);
 	} else {
-		reviewReasonAndNotesSetup(false);
+		setTimeout(reviewReasonAndNotesSetup, 50);
 	}
 }
 
-function reviewReasonAndNotesSetup(recursing) {
+function reviewReasonAndNotesSetup() {
 	let reasonPage = document.getElementById('reasonPage');
 	reasonPage.style.top = 'calc(100% - 175px)';
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
-	let checkBox = document.getElementById('send-email-checkbox');
-	for (let b=0; b<buttons.length; b++) {
+	let label;
+	for (let b = 0; b < buttons.length; b++) {
+		label = buttons[b].textContent;
+		if (targetLabels.includes(label)) {
+			if (['Next', 'Accept'].includes(label)) {
+				if (document.getElementById('send-email-checkbox').checked) {
+					buttons[b].addEventListener('click', emailWait);	// need to wait for more DOM for emailing
+				} else {
+					buttons[b].addEventListener('click', storeChange);
+				}
+			} else {	// Unconfirm, Defer
+				buttons[b].addEventListener('click', storeChange);
+			}
+		}
+	}
+
+	// Set up Send email checkbox.
+	document.getElementById('send-email-checkbox').addEventListener('change', () => {
+		setTimeout(emailToggle, 200);
+	});
+
+	// When top-level Unconfirm is clicked for a record with no media,
+	// "Reason" is not initially set, "Send email" is unchecked, and the right button is pre-set to Unconfirm thus no emailWait.
+	// When Reason is set, Send email is automatically checked and the right button gets set to Next but without emailWait
+	// because emailToggle does not get called.  So we set up emailToggle to run when the reason code is set.
+	document.getElementById('review-reason').addEventListener('change', () => { setTimeout(emailToggle, 200) });
+}
+
+function emailToggle() {	// Swap event listeners when Send email is toggled
+	let reasonPage = document.getElementById('reasonPage');
+	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
+	let buttons = reasonPage.querySelectorAll('button');
+	for (let b = 0; b < buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			if (mainButton === 'Defer') {	// fix a bug in CLO code
-				if (!checkBox.checked) {
-					buttons[b].textContent = 'Defer';
-				} else {
-					buttons[b].textContent = 'Next';
-				}
+			if (mainButton === 'Defer') {	// fix a bug in CLO code which unconditionally leaves the button labeled Next
+				label = document.getElementById('send-email-checkbox').checked ? 'Next' : 'Defer';
+				buttons[b].textContent = label;
 			}
-			if (label==='Next') {
+			if (label === 'Next') {
 				buttons[b].addEventListener('click', emailWait);	// mailing so need to wait for more email DOM
 				buttons[b].removeEventListener('click', storeChange);	// button may have previously had one of the other labels
 				break;
 			} else {
 				buttons[b].addEventListener('click', storeChange);
+				buttons[b].removeEventListener('click', emailWait);	// button may have previously had one of the other labels
 			}
 		}
-	}
-	if (!recursing) {
-		checkBox.addEventListener('change',() => {
-				reviewReasonAndNotesSetup(true);
-		});
-		// When top-level Unconfirm is clicked for a record with no media, reviewReasonAndNotesSetup does not get driven,
-		// so we set it up to run when the reason code is set. We have to do it with a delay to give time for
-		// reason code setup to complete.
-		document.getElementById('review-reason').addEventListener('change', () => { setTimeout(reviewReasonAndNotesSetup, 100) });
 	}
 }
 
@@ -221,18 +241,17 @@ function mailSetup() {
 	}
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
-	let URLindex = message.indexOf('https');
+	let URLindex = message.indexOf('\nhttps');
 	if (URLindex) {
-		let URL = message.substring(URLindex);
+		let URL = message.substring(URLindex+1);
 		let URLlen = URL.indexOf("\n");
 		URL = URL.substring(0, URLlen);
 		let newMessage = message.replace(URL, '<a href="' + URL + '">' + URL + '</a>');
 
 		// Reword this message, which is only in the "misidentified" email:
 		newMessage = newMessage.replace('The documentation you have provided shows a', 'The photos you have provided show');
-
 		document.getElementById('email-message1').textContent = newMessage;
-	}
+	} 
 }
 
 function createOopsControl() {
