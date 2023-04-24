@@ -110,7 +110,9 @@ function regularReview() {
 	let vspan = document.createElement('span');
 	vspan.style.fontSize = '8pt';
 	hyperlink['Extension'].appendChild(vspan);
-	vspan.appendChild(document.createTextNode("V1.3.6 -- 19 April 2023"));
+	let version = chrome.runtime.getManifest().version;
+	let version_name = chrome.runtime.getManifest().version_name;
+	vspan.appendChild(document.createTextNode("v" + version + " -- " + version_name));
 	
 	hyperlink['Extension'].setAttribute("href", "https://www.faintlake.com/eBird/extension/ReviewerUtilities/");
 	hyperlink['Extension'].setAttribute("target", "_blank");
