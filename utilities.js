@@ -113,8 +113,8 @@ function regularReview() {
 	let version = chrome.runtime.getManifest().version;
 	let version_name = chrome.runtime.getManifest().version_name;
 	vspan.appendChild(document.createTextNode("v" + version + " -- " + version_name));
-	
-	hyperlink['Extension'].setAttribute("href", "https://www.faintlake.com/eBird/extension/ReviewerUtilities/");
+
+	hyperlink['Extension'].setAttribute("href", chrome.runtime.getManifest().homepage_url + '#');
 	hyperlink['Extension'].setAttribute("target", "_blank");
 	
 	pulldownHyperlinks(hyperlink);
