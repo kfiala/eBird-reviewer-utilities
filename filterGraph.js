@@ -6,7 +6,7 @@ if (document.getElementById("region-name-codes"))
 	let srh = document.getElementsByClassName('srh');
 	let srv = document.getElementsByClassName('srv');
 	for (let i=0; i<srv.length; i++) {
-		species = srh[i].getElementsByClassName('snam')[0].innerHTML;
+		species = srh[i].getElementsByClassName('snam')[0].textContent;
 		sixcode = srv[i].getElementsByTagName('tr')[0].id;
 
 		greenButton = document.createElement('button');
