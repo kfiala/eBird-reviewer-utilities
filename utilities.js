@@ -561,7 +561,7 @@ async function setupMedia(elTr, mediaCell, OBS) {
 async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 	let response = await fetch('https://review.ebird.org/admin/reviewServices/getObsComments.do?obsId=' + OBS);
 	let comments = await response.text();
-	comments.replace(/\\"/g, '"');	// unescape internal quotes
+	comments = comments.replace(/\\"/g, '"');	// unescape internal quotes
 	comments = comments.slice(1, comments.length - 1);	// strip enclosing quotes.
 
 	if (comments.length) {
