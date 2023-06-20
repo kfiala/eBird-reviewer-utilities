@@ -111,8 +111,10 @@ function regularReview() {
 	vspan.style.fontSize = '8pt';
 	hyperlink['Extension'].appendChild(vspan);
 	let version = chrome.runtime.getManifest().version;
-	let version_name = chrome.runtime.getManifest().version_name;
-	vspan.appendChild(document.createTextNode("v" + version + " -- " + version_name));
+	let versionString = "v" + version;
+	if (chrome.runtime.getManifest().version_name)
+		versionString += " -- " + chrome.runtime.getManifest().version_name;
+	vspan.appendChild(document.createTextNode(versionString));
 
 	hyperlink['Extension'].setAttribute("href", chrome.runtime.getManifest().homepage_url + '#');
 	hyperlink['Extension'].setAttribute("target", "_blank");

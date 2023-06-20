@@ -1,8 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.3.9",
-  "version_name": "12 June 2023",
+  "version": "1.3.10",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/review*","https://review.ebird.org/admin/qr.htm*",
