@@ -251,7 +251,7 @@ function mailSetup() {
 		// Reword this message, which is only in the "misidentified" email:
 		newMessage = newMessage.replace('The documentation you have provided shows a', 'The photos you have provided show');
 		document.getElementById('email-message1').textContent = newMessage;
-	} 
+	}
 }
 
 function createOopsControl() {
@@ -391,5 +391,35 @@ async function obsViewData(OBS) {
 		version = '';
 	}
 	span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
+	
+	getMediaCounts(OBS);
 	return;
 }
+
+async function getMediaCounts(OBS) {
+	let Pcount = 0, Acount = 0, Vcount = 0; anyMedia = 0;
+	response = await fetch('https://review.ebird.org/admin/reviewServices/getObsMedia.do?obsId=' + OBS);
+
+	let mediaMessage = 'No media';
+
+	let json = await response.json();
+	if (json.length > 0) {
+		for (let index in json) {
+			anyMedia++;
+			switch (json[index].mediaType) {
+				case 'P': Pcount++; break;
+				case 'A': Acount++; break;
+				case 'V': Vcount++;  break;
+				default: anyMedia--;
+			}
+		}
+		if (anyMedia) {
+			mediaMessage = Pcount + ' photos, ' + Acount + ' recordings, ' + Vcount + ' videos';
+		}
+	}
+
+	let span = document.getElementById('kInfo');
+	span.appendChild(document.createTextNode(mediaMessage));
+
+}
+
