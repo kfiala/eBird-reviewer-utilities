@@ -165,15 +165,19 @@ function pulldownHyperlinks(hyperlink) {
 	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
-		hyperlinkPulldownButton.style.textDecoration = 'underline' 
+		hyperlinkPulldownButton.style.textDecoration = 'underline'
 		document.getElementById('hyperlinkDiv').style.display = 'block';
 	});
 
+	var timeoutID;
+
 	hyperlinkPulldownButton.addEventListener('mouseleave', function () {
 		hyperlinkPulldownButton.style.textDecoration = 'none';
+		timeoutID = setTimeout(() => { hyperlinkDiv.style.display = 'none'; }, 80);
 	});
 
 	hyperlinkDiv.addEventListener('mouseenter', function () {
+		clearTimeout(timeoutID);
 		hyperlinkDiv.addEventListener('mouseleave', () => { hyperlinkDiv.style.display = 'none'; });
 	});	
 }
@@ -195,7 +199,7 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv) {
 }
 
 function createOopsControl() {
-	// Create a paragraph to contain the hyperlink 
+	// Create a paragraph to contain the hyperlink
 	// We are going to build <a id=oopsAnchor href=# class=toggler>Recall</a>
 	// Create an anchor element
 	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
@@ -342,8 +346,8 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		['eBird Regional Editors', 'https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
 		['Exotics and taxonomy files', 'https://drive.google.com/drive/folders/1CzYzrR4DOMWpTxPnafvqjBw77JcTUcJr'],
 		['Filter taxa recommendations', 'https://docs.google.com/spreadsheets/d/1p-VRE2GhUuJXv6ADUehw7tlVLauYB7YI/edit#gid=446487343'],
-			['Exotic species guidelines','https://docs.google.com/document/d/1VHA1bpLI5zOk89WtbytUMfJME567SGRJUrHxmSr7Or8/'],
-		['All documents', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
+		['Exotic species guidelines','https://docs.google.com/document/d/1VHA1bpLI5zOk89WtbytUMfJME567SGRJUrHxmSr7Or8/'],
+		['Google Drive folder', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
 
 		const liList = [];
 		const linkList = [];
@@ -658,7 +662,7 @@ async function getMedia(mediaTD) {
 
 				mediaDiv.appendChild(document.createElement('br'));
 				mediaDiv.appendChild(wavAnchor);
-			} 
+			}
 			mediaTD.setAttribute('class', 'mediacomplete');
 			mediaTD.appendChild(mediaDiv);
 		}
@@ -775,7 +779,7 @@ function submissionWindow() {
 	let Class, html, el;
 	if (theTable) {	// Go through the table of species for this submission
 		theTable.querySelectorAll('tr').forEach(function (elTr) {
-			// Examine the data from each row 
+			// Examine the data from each row
 			let OBS;
 			elTr.querySelectorAll('td').forEach(function (Cell) {
 				// Look at the "select" and "species" column cells in this row of the table
