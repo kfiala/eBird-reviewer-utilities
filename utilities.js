@@ -384,6 +384,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	let rownum = 0;
 	let mediaCell;
 	const parser = new DOMParser();
+	let rowCounter = 0;
 
 	mainTable.querySelectorAll('tr').forEach(function (elTr) {
 		// Extract the data from each row of the queue/search
@@ -471,6 +472,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			}
 		});
 		if (rownum++) {	// Skip row 0 (headers)
+			rowCounter++;
 			row.push(subid);
 			row.push('"' + species + '"');
 			row.push(evidence);
@@ -514,6 +516,30 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			headerRow.insertBefore(newHeader, Header);
 		}
 	});
+
+	// For a search, the result count will be displayed in the form "Showing 1 - 500" regardless of the actual count.
+	// If the actual count is less than 500, we want to display the correct number, e.g. "Showing 1 - 13"
+	let mainType = document.getElementById("screentitle").getElementsByTagName("h2")[0].textContent; // "Search Results" or "Review Observations"
+	if (mainType == 'Search Results') {
+		let Fwebring = document.getElementById("listnav").querySelector('.webring');
+		if (Fwebring) {
+			let rangeText = Fwebring.getElementsByTagName("p")[0].textContent;	// result count
+			// Parse out the tokens from result count
+			let tokens = rangeText.split(" ");
+			let rangeEnd = tokens[tokens.length - 1];
+			let rangeStart = tokens[tokens.length - 3];
+			let actualRangeEnd = Number(rangeStart) + rowCounter - 1;
+			let actualRange = rangeStart + " - " + actualRangeEnd;
+
+			if (rangeEnd !=  actualRangeEnd ) {
+				let countPara = document.createElement('p');	// Create new paragraph to contain actual result count
+				let countText = document.createTextNode('Actually showing ' + actualRange);
+				countPara.appendChild(countText);
+				// Insert new paragraph before the second paragraph
+				Fwebring.insertBefore(countPara, Fwebring.querySelectorAll('p')[1]);
+			}
+		}
+	}
 
 	// All done building the CSV, now set up the hyperlink for it.
 	let downloadAnchor = document.getElementById('dlanchor');
