@@ -393,6 +393,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		let checklist, chklstCell, chklstLink;
 		let OBS;
 		let Class, html, el;
+		let speciesCell;
 
 		elTr.querySelectorAll('td').forEach(function (Cell) {
 			// Look at each column cell in this row of the table
@@ -425,6 +426,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					if (el.nodeName === 'LABEL') {
 						species = el.textContent.trim();
 						lookup[OBS] = species;
+						speciesCell = Cell;
 					}
 					break;
 				case "evidence":
@@ -464,9 +466,13 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 						state = el.nodeValue;
 					}
 					break;
-				case "validity": validity = Cell.innerHTML;
+				case "validity": validity = Cell.textContent;
 					break;
-				case "status": status = Cell.innerHTML;
+				case "status": status = Cell.textContent;
+					if (status == 'Deferred') {	// Gray out species name on deferred record
+						let speciesAnchor = speciesCell.querySelector('a');
+						speciesAnchor.style.color = '#aaa';
+					}
 					break;
 				case "details": break;	// Don't keep anything from "details" column
 			}
