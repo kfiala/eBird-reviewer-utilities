@@ -587,7 +587,14 @@ async function setupMedia(elTr, mediaCell, OBS) {
 		if (commentTD.childNodes.length > 0 || mediaTD.childNodes.length > 0) {
 			let display = commentTD.style.display == 'none' ? 'table-cell' : 'none';
 			commentTD.style.display = display;
-			if (mediaTD.getAttribute('class') == 'assetarray') {
+			if (display == 'none') {  // expanded indicates comments or media are displayed
+				commentTD.classList.remove('expanded');
+				mediaTD.classList.remove('expanded');
+			} else {
+				commentTD.classList.add('expanded');
+				mediaTD.classList.add('expanded');
+			}
+			if (mediaTD.classList.contains('assetarray')) {
 				getMedia(mediaTD);
 			}
 			else {
@@ -696,6 +703,7 @@ async function getMedia(mediaTD) {
 				mediaDiv.appendChild(wavAnchor);
 			}
 			mediaTD.setAttribute('class', 'mediacomplete');
+			mediaTD.classList.add('expanded');
 			mediaTD.appendChild(mediaDiv);
 		}
 	}
@@ -703,6 +711,23 @@ async function getMedia(mediaTD) {
 
 function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	if (!document.body.contains(document.getElementById('toglStatusAnchor'))) {	// Create this paragraph only if not already done
+
+		// Set up a div to display the toggle status
+		let toggleStatusDiv = document.createElement('div');
+		toggleStatusDiv.setAttribute("id", 'toggleStatusDiv');
+		toggleStatusDiv.style.position = 'absolute';
+		toggleStatusDiv.style.left = '300px';
+		toggleStatusDiv.style.top = '70px';
+		toggleStatusDiv.style.border = 'medium solid #CCF3B4';
+		toggleStatusDiv.style.backgroundColor = '#edf4fe';
+		toggleStatusDiv.style.padding = '1em';
+		toggleStatusDiv.style.display = 'none';
+		toggleStatusDiv.style.zIndex = 1;
+		document.getElementById("listnav").appendChild(toggleStatusDiv);
+		let toggleStatus = document.createElement('p');	// Paragraph for displaying toggle status
+		toggleStatusDiv.appendChild(toggleStatus);
+		toggleStatus.setAttribute('id', 'toggleStatus');
+
 		// Create an anchor element
 		let ae = document.createElement('a');
 		ae.setAttribute("id", 'toglStatusAnchor');
@@ -712,7 +737,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 		// It toggles the display status of deferred reports.
 		ae.onclick = function () {
 			let deferToggle = Number(sessionStorage.getItem('deferToggle'));
-			deferToggle = ++deferToggle % 3;	// Cycle through three different views
+			deferToggle = ++deferToggle % 4;	// Cycle through four different views
 			sessionStorage.setItem('deferToggle', deferToggle);
 			performDeferToggle(mainTable);
 		}
@@ -727,22 +752,49 @@ function performDeferToggle(mainTable) {
 		deferToggle = 0;
 	}
 
+	// Hide any rows expanded with comments or media
+	mainTable.querySelectorAll('.expanded').forEach(function (Row) {
+		Row.style.display = 'none';
+	});
+	
 	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
 
 	let checkAll = mainTable.querySelector('input.checkbox');
-	switch (deferToggle) {
-		case 1:
-		case 2:
-			checkAll.disabled = true;
+	if (deferToggle != 0) {
+		checkAll.disabled = true;
+	} else {
+		checkAll.disabled = false;
+	}
+	
+	// Put up a heading to display which toggle is in effect
+	let toggleStatus = document.getElementById('toggleStatus');
+	if (toggleStatus) {
+		let toggleStatusDiv = document.getElementById('toggleStatusDiv');
+		switch (deferToggle) {
+			case 1:
+				toggleStatus.textContent = 'Non-deferred records';
+				toggleStatusDiv.style.display = 'block';
 			break;
-		default:
-			checkAll.disabled = false;
+			case 2:
+				toggleStatus.textContent = 'Deferred records';
+				toggleStatusDiv.style.display = 'block';
+				break;
+			case 3:
+				toggleStatus.textContent = 'Rereview records';
+				toggleStatusDiv.style.display = 'block';
+				break;
+			default:
+				toggleStatus.textContent = '';
+				toggleStatusDiv.style.display = 'none';
+		}
 	}
 
+	let recordCount = 0;
 	for (let i = 0; i < reviewRows.length; i++) {
 		switch (deferToggle) {
 			case 0:	// Display all rows
 				reviewRows[i].parentNode.style.display = 'table-row';
+				recordCount++;
 				break;
 			case 1:	// Display only non-deferred observations
 				if (reviewRows[i].classList.contains('deferred')) {
@@ -751,6 +803,7 @@ function performDeferToggle(mainTable) {
 				else {
 					reviewRows[i].parentNode.style.display = 'table-row';
 				}
+				recordCount++;
 				break;
 			case 2:	// Display only Deferred observations
 				if (reviewRows[i].classList.contains('deferred')) {
@@ -759,9 +812,23 @@ function performDeferToggle(mainTable) {
 				else {
 					reviewRows[i].parentNode.style.display = 'none';
 				}
+				recordCount++;
+				break;
+			case 3:	// Display only inreview rows
+				if (reviewRows[i].classList.contains('inreview')) {
+					reviewRows[i].parentNode.style.display = 'table-row';
+					recordCount++;
+				}
+				else {
+					reviewRows[i].parentNode.style.display = 'none';
+				}
 				break;
 			default:
 		}
+	}
+	if (recordCount==0 && deferToggle==3) { // Rereview records are not present so continue to all records
+		sessionStorage.setItem('deferToggle', 0);
+		performDeferToggle(mainTable);
 	}
 }
 
