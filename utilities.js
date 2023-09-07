@@ -710,39 +710,38 @@ async function getMedia(mediaTD) {
 }
 
 function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
-	if (!document.body.contains(document.getElementById('toglStatusAnchor'))) {	// Create this paragraph only if not already done
+	// Set up a div to display the toggle status
+	let toggleStatusDiv = document.createElement('div');
+	toggleStatusDiv.setAttribute("id", 'toggleStatusDiv');
+	toggleStatusDiv.style.position = 'absolute';
+	toggleStatusDiv.style.left = '300px';
+	toggleStatusDiv.style.top = '70px';
+	toggleStatusDiv.style.border = 'medium solid #CCF3B4';
+	toggleStatusDiv.style.backgroundColor = '#edf4fe';
+	toggleStatusDiv.style.padding = '1em';
+	toggleStatusDiv.style.display = 'none';
+	toggleStatusDiv.style.zIndex = 1;
+	document.getElementById("listnav").appendChild(toggleStatusDiv);
+	let toggleStatus = document.createElement('p');	// Paragraph for displaying toggle status
+	toggleStatusDiv.appendChild(toggleStatus);
+	toggleStatus.setAttribute('id', 'toggleStatus');
 
-		// Set up a div to display the toggle status
-		let toggleStatusDiv = document.createElement('div');
-		toggleStatusDiv.setAttribute("id", 'toggleStatusDiv');
-		toggleStatusDiv.style.position = 'absolute';
-		toggleStatusDiv.style.left = '300px';
-		toggleStatusDiv.style.top = '70px';
-		toggleStatusDiv.style.border = 'medium solid #CCF3B4';
-		toggleStatusDiv.style.backgroundColor = '#edf4fe';
-		toggleStatusDiv.style.padding = '1em';
-		toggleStatusDiv.style.display = 'none';
-		toggleStatusDiv.style.zIndex = 1;
-		document.getElementById("listnav").appendChild(toggleStatusDiv);
-		let toggleStatus = document.createElement('p');	// Paragraph for displaying toggle status
-		toggleStatusDiv.appendChild(toggleStatus);
-		toggleStatus.setAttribute('id', 'toggleStatus');
+	setToggleStatus();
 
-		// Create an anchor element
-		let ae = document.createElement('a');
-		ae.setAttribute("id", 'toglStatusAnchor');
-		ae.appendChild(document.createTextNode("Toggle deferred"));
-		ae.setAttribute("href", "#");
-		// This function will execute when "Toggle deferred" is clicked.
-		// It toggles the display status of deferred reports.
-		ae.onclick = function () {
-			let deferToggle = Number(sessionStorage.getItem('deferToggle'));
-			deferToggle = ++deferToggle % 4;	// Cycle through four different views
-			sessionStorage.setItem('deferToggle', deferToggle);
-			performDeferToggle(mainTable);
-		}
-		return (ae);
+	// Create an anchor element
+	let ae = document.createElement('a');
+	ae.setAttribute("id", 'toglStatusAnchor');
+	ae.appendChild(document.createTextNode("Toggle deferred"));
+	ae.setAttribute("href", "#");
+	// This function will execute when "Toggle deferred" is clicked.
+	// It toggles the display status of deferred reports.
+	ae.onclick = function () {
+		let deferToggle = Number(sessionStorage.getItem('deferToggle'));
+		deferToggle = ++deferToggle % 4;	// Cycle through four different views
+		sessionStorage.setItem('deferToggle', deferToggle);
+		performDeferToggle(mainTable);
 	}
+	return (ae);
 }
 
 function performDeferToggle(mainTable) {
@@ -765,29 +764,8 @@ function performDeferToggle(mainTable) {
 	} else {
 		checkAll.disabled = false;
 	}
-	
-	// Put up a heading to display which toggle is in effect
-	let toggleStatus = document.getElementById('toggleStatus');
-	if (toggleStatus) {
-		let toggleStatusDiv = document.getElementById('toggleStatusDiv');
-		switch (deferToggle) {
-			case 1:
-				toggleStatus.textContent = 'Non-deferred records';
-				toggleStatusDiv.style.display = 'block';
-			break;
-			case 2:
-				toggleStatus.textContent = 'Deferred records';
-				toggleStatusDiv.style.display = 'block';
-				break;
-			case 3:
-				toggleStatus.textContent = 'Rereview records';
-				toggleStatusDiv.style.display = 'block';
-				break;
-			default:
-				toggleStatus.textContent = '';
-				toggleStatusDiv.style.display = 'none';
-		}
-	}
+
+	setToggleStatus();
 
 	let recordCount = 0;
 	for (let i = 0; i < reviewRows.length; i++) {
@@ -830,6 +808,31 @@ function performDeferToggle(mainTable) {
 		sessionStorage.setItem('deferToggle', 0);
 		performDeferToggle(mainTable);
 	}
+}
+
+function setToggleStatus() {
+	// Put up a heading to display which toggle is in effect
+	let toggleStatusDiv = document.getElementById('toggleStatusDiv');
+	if (toggleStatusDiv) {
+		let toggleStatus = document.getElementById('toggleStatus');
+		switch (Number(sessionStorage.getItem('deferToggle'))) {
+			case 1:
+				toggleStatus.textContent = 'Non-deferred records';
+				toggleStatusDiv.style.display = 'block';
+				break;
+			case 2:
+				toggleStatus.textContent = 'Deferred records';
+				toggleStatusDiv.style.display = 'block';
+				break;
+			case 3:
+				toggleStatus.textContent = 'Rereview records';
+				toggleStatusDiv.style.display = 'block';
+				break;
+			default:	// 0 or undefined
+				toggleStatus.textContent = '';
+				toggleStatusDiv.style.display = 'none';
+		}
+	} 
 }
 
 function historyWindow() {
