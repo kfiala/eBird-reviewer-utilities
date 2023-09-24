@@ -1,11 +1,5 @@
 "use strict";
-// Provides several unrelated conveniences for the traditional review queue page.
-//
-// 1. Provides a hyperlink for downloading the displayed queue or search report in CSV format.
-// 2. Provides a hyperlink to the eBird checklist for each report.
-// 3. Provides a hyperlink for toggling display of Deferred reports on or off.
-// 4. Adjusts the widths of "Review decision", "Reason code", and "Notes" inputs to reasonable values.
-// 5. Preserves links to last observations updated.
+// Provides several conveniences for the traditional review queue page.
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 

@@ -1,3 +1,4 @@
+// Enhancements for Quick Review
 var OBS, TAXON, mainButton;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {

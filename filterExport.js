@@ -5,7 +5,7 @@ if(mainTable)	// The filter is <ul id="filter-grid-species"
 	let nameLookup=[];
 	mainTable.querySelectorAll('label').forEach(function(elLabel)	// List all the species in a lookup table
 	{	// Each <li> contains a <label 
-		let alpha6=elLabel.getAttribute('for').substr(3);	// The <label's 'for' attribute contains the alpha6 code for the species
+		let alpha6=elLabel.getAttribute('for').substring(3);	// The <label's 'for' attribute contains the alpha6 code for the species
 		nameLookup[alpha6]=elLabel.querySelector('div').textContent;	// The label contains a <div whose innerHTML is the species name
 	});
 	// Each <li contains a <table that contains the cutoff dates and count limits
