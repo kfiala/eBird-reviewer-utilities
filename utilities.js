@@ -1,13 +1,17 @@
 "use strict";
 // Provides several conveniences for the traditional review queue page.
+const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
 	var lookup = {};	// global
-
-	widthAdjustment();	// Adjust widths of some input fields
+	var focusRow, focusRowNumber = 0, numRows = 0, mouseRow = 0;
+	
+	cssAdjustments();
 
 	formListener();	// If there is a form, set up a submit listener to capture posted data.
+
+	document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
 
 	//
 	// Check if we have listnav, and if so get its webring element.
@@ -28,8 +32,134 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 }
 ///////////	End of mainline code
 
-function widthAdjustment() {	// Adjust the widths of "Review decision", "Reason", and "Notes" inputs
+function keyboardHandler(ev)
+{
+	if (focusRowNumber) {
+		focusRow = document.getElementById('rowid' + focusRowNumber);
+	}
+	let originalRowNumber = focusRowNumber;
+	let direction = 'up';
+	switch (ev.code) {
+		case 'Home':
+			setRowBackground(focusRowNumber);
+			focusRowNumber = 0;
+			while (true) {
+				focusRowNumber++;
+				focusRow = document.getElementById('rowid' + focusRowNumber);
+				keepInView(focusRow,'keyboardHandler');
+				if (focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		case 'End':
+			setRowBackground(focusRowNumber);
+			focusRowNumber = numRows+1;
+			while (true) {
+				focusRowNumber--;
+				focusRow = document.getElementById('rowid' + focusRowNumber);
+				keepInView(focusRow, 'keyboardHandler');
+				if (focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		case 'ArrowDown':
+			direction = 'down';
+		case 'ArrowUp':
+			if (document.activeElement.id == 'resultingValid' || document.activeElement.id == 'reasonCode') {
+				return; // Focus in top menu
+			}
 
+			if (focusRow) {
+				setRowBackground(focusRowNumber);
+			}
+
+			while (true) {
+				if (direction == 'down') {
+					focusRowNumber++;
+				} else {
+					focusRowNumber--;
+				}
+				if (focusRowNumber > 0) {
+					focusRow = document.getElementById('rowid' + focusRowNumber);
+					if (!focusRow) {	// Stay on the last row
+						focusRowNumber = originalRowNumber;
+						focusRow = document.getElementById('rowid' + focusRowNumber);
+					}
+				} else { // stay on row 1
+					focusRowNumber = originalRowNumber;
+					focusRow = document.getElementById('rowid' + focusRowNumber);
+				}
+				keepInView(focusRow, 'keyboardHandler');
+				if (focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		case 'KeyX':
+			let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
+			document.getElementById('obsIds' + focusRowNumber).checked = XcheckBox.checked ? false : true;
+			setRowBackground(focusRowNumber);
+			if (!XcheckBox.checked) {
+				document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
+			} 
+			break;
+		case 'KeyJ':
+			document.getElementById('resultingValid').focus();
+			window.scrollTo(0, 0);
+			break;
+		default:
+//			console.log('Unhandled key: ' + ev.code);
+	}
+}
+
+function setRowBackground(rowNumber) {	// set or remove focus color / select color
+	if (document.getElementById('obsIds' + rowNumber)) {
+		let Row = document.getElementById('rowid' + rowNumber);		
+		if (document.getElementById('obsIds' + rowNumber).checked) {
+			Row.style.background = greenBackground;
+		} else {
+			Row.style.removeProperty("background");
+		}
+	}
+}
+
+function colorSelectAll() {	// Set row background color when select all is toggled
+	let mainTable = document.getElementById('contents');
+	mainTable.querySelectorAll('tr').forEach(function (elTr) {
+		let td = elTr.querySelector('td');
+		if (td) {
+			let input = td.querySelector('input');
+			if (input) {
+				let rowNumber = input.id.substring(6);
+				setRowBackground(rowNumber);
+				if (rowNumber == focusRowNumber) {
+					document.getElementById('rowid' + rowNumber).style.background = focusColor;
+				}
+			}
+		}
+	});
+}
+
+function keepInView(element,caller) {
+	if (element) {
+		let rect = element.getBoundingClientRect();
+		let fudge = 150;
+		if (rect.top < 70) {
+			let scroll = rect.top - fudge;
+			window.scrollBy(0, scroll);
+		} else if (rect.bottom + 50 > document.documentElement.clientHeight) {
+			let scroll = rect.top - document.documentElement.clientHeight + fudge;
+			window.scrollBy(0, scroll);
+		}
+	} 
+}
+
+function cssAdjustments() {	// Adjust the widths of "Review decision", "Reason", and "Notes" inputs
 	//
 	// Establish whether we are in review mode or exotics mode, or neither.
 	// Review mode includes both regular review (review.htm) and history review (reviewObs.htm)
@@ -60,6 +190,16 @@ function widthAdjustment() {	// Adjust the widths of "Review decision", "Reason"
 		for (let i = 0; i < notesList.length; i++) {
 			notesList[i].style = 'width:300px';
 		}
+	}
+	// Adjust background of Change button when in focus 
+	let changeButton = document.getElementsByClassName('inputsubmit');
+	if (changeButton.length) {
+		changeButton[changeButton.length-1].addEventListener('focus', (ev) => {
+			ev.target.style.background = '#0d0';
+		});
+		changeButton[changeButton.length - 1].addEventListener('blur', (ev) => {
+			ev.target.style.background = '#090';
+		});
 	}
 }
 
@@ -112,8 +252,17 @@ function regularReview() {
 
 	hyperlink['Extension'].setAttribute("href", chrome.runtime.getManifest().homepage_url + '#');
 	hyperlink['Extension'].setAttribute("target", "_blank");
+
+	hyperlink['WhatsNew'] = document.createElement('a');
+	hyperlink['WhatsNew'].appendChild(document.createTextNode("What's New"));
+	hyperlink['WhatsNew'].setAttribute("href", chrome.runtime.getManifest().homepage_url + "#whatsnew");
+	hyperlink['WhatsNew'].setAttribute("target", "_blank");
+	hyperlink['WhatsNew'].style.color = 'red';
 	
 	pulldownHyperlinks(hyperlink);
+
+	// Handler for when select all is checked
+	mainTable.querySelector('th').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
 }
 
 function pulldownHyperlinks(hyperlink) {
@@ -137,7 +286,7 @@ function pulldownHyperlinks(hyperlink) {
 	} else {
 		hyperlinkDiv.style.top = '200px';	// You have no more records to review
 	}
-	hyperlinkDiv.style.border = 'medium solid #CCF3B4';
+	hyperlinkDiv.style.border = 'medium solid ' + greenBackground;
 	hyperlinkDiv.style.width = '15em';
 	hyperlinkDiv.style.backgroundColor = '#edf4fe';
 	hyperlinkDiv.style.paddingTop = '1em';
@@ -157,6 +306,7 @@ function pulldownHyperlinks(hyperlink) {
 	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
 	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['WhatsNew'], true, hyperlinkDiv);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
 		hyperlinkPulldownButton.style.textDecoration = 'underline'
@@ -305,7 +455,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docDiv.style.position = 'absolute';
 		docDiv.style.left = '450px';
 		docDiv.style.top = '120px';
-		docDiv.style.border = 'medium solid #CCF3B4';
+		docDiv.style.border = 'medium solid ' + greenBackground;
 		docDiv.style.width = '15em';
 		docDiv.style.backgroundColor = '#edf4fe';
 		docDiv.style.paddingTop = '1em';
@@ -407,6 +557,22 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				case "select":
 					// "select" column, do nothing
 					OBS = el.getAttribute('value');
+					// Extra steps for background coloring, not part of building CSV.
+					let checkBoxId = el.getAttribute('id');
+					let rowNumber = checkBoxId.substring(6);
+					el.addEventListener('change', () => { setRowBackground(rowNumber) });
+					// Extra steps for keyboard focus, not part of building CSV.
+					elTr.addEventListener('mouseenter', (ev) => { mouseRow = ev.target.id; });
+					elTr.addEventListener('click', (ev) => {
+						if (focusRowNumber) {	// Skip unless keyboard focus is initialized
+							setRowBackground(focusRowNumber);
+							let focusRowId = mouseRow;
+							focusRow = document.getElementById(focusRowId);
+							keepInView(focusRow, 'click handler for focusRowId ' + focusRowId);
+							focusRow.style.background = focusColor;
+							focusRowNumber = Number(focusRowId.substring(5));
+						}
+					});
 					break;
 				case "subID":
 					// "subID" column, get the report subID and set up the eBird checklist URL
@@ -473,6 +639,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		});
 		if (rownum++) {	// Skip row 0 (headers)
 			rowCounter++;
+			elTr.setAttribute('id', 'rowid' + rowCounter);	// for keyboard focus code
 			row.push(subid);
 			row.push('"' + species + '"');
 			row.push(evidence);
@@ -507,6 +674,8 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			chklstLink.setAttribute('target', '_blank');
 		}
 	});
+
+	numRows = rowCounter;		// for keyboard focus code
 
 	let headerRow = mainTable.querySelector('tr');
 	headerRow.querySelectorAll('th').forEach(function (Header) {
@@ -710,7 +879,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	toggleStatusDiv.style.position = 'absolute';
 	toggleStatusDiv.style.left = '300px';
 	toggleStatusDiv.style.top = '70px';
-	toggleStatusDiv.style.border = 'medium solid #CCF3B4';
+	toggleStatusDiv.style.border = 'medium solid ' + greenBackground; 
 	toggleStatusDiv.style.backgroundColor = '#edf4fe';
 	toggleStatusDiv.style.padding = '1em';
 	toggleStatusDiv.style.display = 'none';
