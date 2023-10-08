@@ -5,7 +5,7 @@ const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
 	var lookup = {};	// global
-	var focusRow, focusRowNumber = 0, numRows = 0, mouseRow = 0;
+	var focusRow, focusRowNumber, numRows = 0, mouseRow = 0;
 	
 	cssAdjustments();
 
@@ -34,11 +34,16 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 
 function keyboardHandler(ev)
 {
+	if (document.activeElement.id == 'resultingValid' || document.activeElement.id == 'reasonCode'
+		|| document.activeElement.id == 'notes' || document.activeElement.type == 'submit') {
+		return; // If keyboard focus is in the top menu, do not proceed here.
+	}
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
 	}
 	let originalRowNumber = focusRowNumber;
 	let direction = 'up';
+	let handled = true;
 	switch (ev.code) {
 		case 'Home':
 			setRowBackground(focusRowNumber);
@@ -46,7 +51,7 @@ function keyboardHandler(ev)
 			while (true) {
 				focusRowNumber++;
 				focusRow = document.getElementById('rowid' + focusRowNumber);
-				keepInView(focusRow,'keyboardHandler');
+				keepInView(focusRow, 'keyboardHandler');
 				if (focusRow.style.display != 'none') {
 					focusRow.style.background = focusColor;
 					break;
@@ -55,7 +60,7 @@ function keyboardHandler(ev)
 			break;
 		case 'End':
 			setRowBackground(focusRowNumber);
-			focusRowNumber = numRows+1;
+			focusRowNumber = numRows + 1;
 			while (true) {
 				focusRowNumber--;
 				focusRow = document.getElementById('rowid' + focusRowNumber);
@@ -69,10 +74,6 @@ function keyboardHandler(ev)
 		case 'ArrowDown':
 			direction = 'down';
 		case 'ArrowUp':
-			if (document.activeElement.id == 'resultingValid' || document.activeElement.id == 'reasonCode') {
-				return; // Focus in top menu
-			}
-
 			if (focusRow) {
 				setRowBackground(focusRowNumber);
 			}
@@ -94,27 +95,82 @@ function keyboardHandler(ev)
 					focusRow = document.getElementById('rowid' + focusRowNumber);
 				}
 				keepInView(focusRow, 'keyboardHandler');
-				if (focusRow.style.display != 'none') {
+				if (focusRowNumber && focusRow.style.display != 'none') {
 					focusRow.style.background = focusColor;
 					break;
 				}
 			}
 			break;
-		case 'KeyX':
-			let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
-			document.getElementById('obsIds' + focusRowNumber).checked = XcheckBox.checked ? false : true;
-			setRowBackground(focusRowNumber);
-			if (!XcheckBox.checked) {
-				document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
-			} 
-			break;
-		case 'KeyJ':
-			document.getElementById('resultingValid').focus();
-			window.scrollTo(0, 0);
-			break;
 		default:
-//			console.log('Unhandled key: ' + ev.code);
+			handled = false;
+			break;
 	}
+
+	sessionStorage.setItem('focusRowNumber', focusRowNumber);
+
+	if (!handled && focusRowNumber) {	// Only handle these keys if there is a focus row
+		switch (ev.code) {
+			case 'KeyX':
+				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
+				document.getElementById('obsIds' + focusRowNumber).checked = XcheckBox.checked ? false : true;
+				setRowBackground(focusRowNumber);
+				if (!XcheckBox.checked) {
+					document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
+				}
+				break;
+			case 'KeyJ':
+				document.getElementById('resultingValid').focus();
+				window.scrollTo(0, 0);
+				break;
+			case 'Enter':
+				toggleMediaRows(focusRow);
+				break;
+			case 'KeyS':
+				hrefFromKey('.subID', 0, ev.ctrlKey);
+				break;
+			case 'KeyB':
+				hrefFromKey('.species', 0, ev.ctrlKey);
+				break;
+			case 'KeyF':
+				hrefFromKey('.details', 0, ev.ctrlKey);
+				break;
+			case 'KeyH':
+				hrefFromKey('.details', 1, ev.ctrlKey);
+				break;
+			case 'KeyC':
+				hrefFromKey('.KeBird', 0, ev.ctrlKey);
+				break;
+			case 'KeyQ':
+				hrefFromKey('.user', 1, ev.ctrlKey);
+				break;
+			case 'KeyU':
+				userWindow();
+				break;
+			default:
+			//			console.log('Unhandled key: ' + ev.code);
+		}
+	}
+}
+
+function hrefFromKey(selector, index, ctrlKey) {  // Open a page according to the key pressed
+	let td = focusRow.querySelector(selector);
+	let a = td.querySelectorAll('A')[index];
+	let target = '_blank';
+	let href = a.getAttribute('href');
+	if (href.substring(0, 8) != 'https://') {
+		href = location.origin + '/admin/' + href
+		target = ctrlKey ? '_blank' : '_self';
+	}
+	window.open(href, target);
+}
+
+function userWindow() { // Open the user window
+	let td = focusRow.querySelector('.user');
+	let a = td.querySelector('A');
+	let onclick = a.getAttribute('onclick');
+	let user = onclick.substring(onclick.indexOf("('") + 2);
+	user = user.substring(0,user.indexOf("'"));
+	let targetWindow = window.open(user, "poppedWindow", "toolbar=0,status=0,width=465,height=500,directories=0,scrollbars=1,location=0,resizable=1,menubar=0");
 }
 
 function setRowBackground(rowNumber) {	// set or remove focus color / select color
@@ -254,7 +310,7 @@ function regularReview() {
 	hyperlink['Extension'].setAttribute("target", "_blank");
 
 	hyperlink['WhatsNew'] = document.createElement('a');
-	hyperlink['WhatsNew'].appendChild(document.createTextNode("What's New"));
+	hyperlink['WhatsNew'].appendChild(document.createTextNode("What's New, take 2"));
 	hyperlink['WhatsNew'].setAttribute("href", chrome.runtime.getManifest().homepage_url + "#whatsnew");
 	hyperlink['WhatsNew'].setAttribute("target", "_blank");
 	hyperlink['WhatsNew'].style.color = 'red';
@@ -263,6 +319,15 @@ function regularReview() {
 
 	// Handler for when select all is checked
 	mainTable.querySelector('th').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
+	// Initialize focus row from stored value, if any
+	focusRowNumber = sessionStorage.getItem('focusRowNumber');
+	if (focusRowNumber) {
+		focusRow = document.getElementById('rowid' + focusRowNumber);
+		focusRow.style.background = focusColor;
+		keepInView(focusRow, 'main entry');
+	} else {
+		focusRowNumber = 0;
+	}
 }
 
 function pulldownHyperlinks(hyperlink) {
@@ -571,6 +636,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 							keepInView(focusRow, 'click handler for focusRowId ' + focusRowId);
 							focusRow.style.background = focusColor;
 							focusRowNumber = Number(focusRowId.substring(5));
+							sessionStorage.setItem('focusRowNumber', focusRowNumber);
 						}
 					});
 					break;
@@ -745,26 +811,38 @@ async function setupMedia(elTr, mediaCell, OBS) {
 	mediaRow.appendChild(mediaTD);
 	mediaTD.style.display = 'none';
 	getDetails(mediaCell, commentTD, mediaTD, OBS);
+	mediaCell.addEventListener('click', (ev) => { toggleMedia(ev); });
+}
 
-	mediaCell.addEventListener('click', function () {
-		if (commentTD.childNodes.length > 0 || mediaTD.childNodes.length > 0) {
-			let display = commentTD.style.display == 'none' ? 'table-cell' : 'none';
-			commentTD.style.display = display;
-			if (display == 'none') {  // expanded indicates comments or media are displayed
-				commentTD.classList.remove('expanded');
-				mediaTD.classList.remove('expanded');
-			} else {
-				commentTD.classList.add('expanded');
-				mediaTD.classList.add('expanded');
-			}
-			if (mediaTD.classList.contains('assetarray')) {
-				getMedia(mediaTD);
-			}
-			else {
-				mediaTD.style.display = display;
-			}
+function toggleMedia(ev) {
+	let td = ev.srcElement.parentElement;
+	toggleMediaRows(td.parentElement);
+}
+
+function toggleMediaRows(tr) {
+	let commentTR = tr.nextElementSibling;
+	let mediaTR = commentTR.nextElementSibling;
+
+	let commentTD = commentTR.firstElementChild;
+	let mediaTD = mediaTR.firstElementChild;
+
+	if (commentTD.childNodes.length > 0 || mediaTD.childNodes.length > 0) {
+		let display = commentTD.style.display == 'none' ? 'table-cell' : 'none';
+		commentTD.style.display = display;
+		if (display == 'none') {  // expanded indicates comments or media are displayed
+			commentTD.classList.remove('expanded');
+			mediaTD.classList.remove('expanded');
+		} else {
+			commentTD.classList.add('expanded');
+			mediaTD.classList.add('expanded');
 		}
-	});
+		if (mediaTD.classList.contains('assetarray')) {
+			getMedia(mediaTD);
+		}
+		else {
+			mediaTD.style.display = display;
+		}
+	}
 }
 
 async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
