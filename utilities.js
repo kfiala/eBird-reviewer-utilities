@@ -11,8 +11,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 
 	formListener();	// If there is a form, set up a submit listener to capture posted data.
 
-	document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
-
 	//
 	// Check if we have listnav, and if so get its webring element.
 	// This will be true for regular review (normal or exotic) but not for history or submission review
@@ -23,6 +21,7 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 	}
 
 	if (Fwebring) {	// If we are in regular review queue window
+		document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
 		regularReview();
 	} else if (location.pathname == '/admin/reviewObs.htm') {	// History window
 		historyWindow();
