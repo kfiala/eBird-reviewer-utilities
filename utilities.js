@@ -5,7 +5,7 @@ const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
 	var lookup = {};	// global
-	var focusRow, focusRowNumber, numRows = 0, mouseRow = 0;
+	var focusRow, focusRowNumber, numRows = 0, mouseRow = 0, firstDisplayedRow, lastDisplayedRow;
 	
 	cssAdjustments();
 
@@ -21,7 +21,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 	}
 
 	if (Fwebring) {	// If we are in regular review queue window
-		document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
 		regularReview();
 	} else if (location.pathname == '/admin/reviewObs.htm') {	// History window
 		historyWindow();
@@ -39,6 +38,8 @@ function keyboardHandler(ev)
 	}
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
+	} else {
+		focusRowNumber = 0;
 	}
 	let originalRowNumber = focusRowNumber;
 	let direction = 'up';
@@ -79,20 +80,15 @@ function keyboardHandler(ev)
 
 			while (true) {
 				if (direction == 'down') {
-					focusRowNumber++;
-				} else {
-					focusRowNumber--;
-				}
-				if (focusRowNumber > 0) {
-					focusRow = document.getElementById('rowid' + focusRowNumber);
-					if (!focusRow) {	// Stay on the last row
-						focusRowNumber = originalRowNumber;
-						focusRow = document.getElementById('rowid' + focusRowNumber);
+					if (++focusRowNumber > lastDisplayedRow) {
+						focusRowNumber = lastDisplayedRow;
 					}
-				} else { // stay on row 1
-					focusRowNumber = originalRowNumber;
-					focusRow = document.getElementById('rowid' + focusRowNumber);
+				} else {	// 'up'
+					if (--focusRowNumber < firstDisplayedRow) {
+						focusRowNumber = firstDisplayedRow;
+					}
 				}
+				focusRow = document.getElementById('rowid' + focusRowNumber);
 				keepInView(focusRow, 'keyboardHandler');
 				if (focusRowNumber && focusRow.style.display != 'none') {
 					focusRow.style.background = focusColor;
@@ -145,8 +141,12 @@ function keyboardHandler(ev)
 			case 'KeyU':
 				userWindow();
 				break;
+			case 'Escape':	// Disable keyboard focus
+				setRowBackground(focusRowNumber);
+				focusRowNumber = false;
+				break;
 			default:
-			//			console.log('Unhandled key: ' + ev.code);
+//			console.log('Unhandled key: ' + ev.code);
 		}
 	}
 }
@@ -279,10 +279,13 @@ function regularReview() {
 	hyperlink['Download'] = '';
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
+		document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
 		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
+		// Handler for when select all is checked
+		mainTable.querySelector('th').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 		let oopsText = createRecallText();
 		oopsText.style.position = 'absolute';
@@ -316,14 +319,17 @@ function regularReview() {
 	
 	pulldownHyperlinks(hyperlink);
 
-	// Handler for when select all is checked
-	mainTable.querySelector('th').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
 	// Initialize focus row from stored value, if any
 	focusRowNumber = sessionStorage.getItem('focusRowNumber');
-	if (focusRowNumber) {
+	if (Number(focusRowNumber)) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
-		focusRow.style.background = focusColor;
-		keepInView(focusRow, 'main entry');
+		if (focusRow) {
+			focusRow.style.background = focusColor;
+			keepInView(focusRow, 'main entry');
+		} else {	// Previous focus row position is now off the end, e.g. when filtering species
+			focusRowNumber = 0;
+			sessionStorage.setItem('focusRowNumber', focusRowNumber);
+		}
 	} else {
 		focusRowNumber = 0;
 	}
@@ -628,14 +634,21 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					// Extra steps for keyboard focus, not part of building CSV.
 					elTr.addEventListener('mouseenter', (ev) => { mouseRow = ev.target.id; });
 					elTr.addEventListener('click', (ev) => {
-						if (focusRowNumber) {	// Skip unless keyboard focus is initialized
+						let mouseRowNumber = mouseRow.substring(5);
+						if (focusRowNumber) {	// If keyboard focus is initialized
 							setRowBackground(focusRowNumber);
-							let focusRowId = mouseRow;
-							focusRow = document.getElementById(focusRowId);
-							keepInView(focusRow, 'click handler for focusRowId ' + focusRowId);
+							focusRow = document.getElementById(mouseRow);
+							keepInView(focusRow, 'click handler for mouse row');
 							focusRow.style.background = focusColor;
-							focusRowNumber = Number(focusRowId.substring(5));
+							focusRowNumber = mouseRowNumber;
 							sessionStorage.setItem('focusRowNumber', focusRowNumber);
+						} else {	// Set green background when keyboard focus uninitialized
+							let thisRow = document.getElementById('rowid' + mouseRowNumber);
+							if (document.getElementById('obsIds' + mouseRowNumber).checked) {
+								thisRow.style.background = greenBackground;
+							} else {
+								thisRow.style.removeProperty("background");
+							}
 						}
 					});
 					break;
@@ -1008,10 +1021,13 @@ function performDeferToggle(mainTable) {
 	setToggleStatus();
 
 	let recordCount = 0;
+	firstDisplayedRow = -1;
 	for (let i = 0; i < reviewRows.length; i++) {
 		switch (deferToggle) {
 			case 0:	// Display all rows
 				reviewRows[i].parentNode.style.display = 'table-row';
+				lastDisplayedRow = i;
+				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
 				recordCount++;
 				break;
 			case 1:	// Display only non-deferred observations
@@ -1020,12 +1036,16 @@ function performDeferToggle(mainTable) {
 				}
 				else {
 					reviewRows[i].parentNode.style.display = 'table-row';
+					lastDisplayedRow = i;
+					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
 				}
 				recordCount++;
 				break;
 			case 2:	// Display only Deferred observations
 				if (reviewRows[i].classList.contains('deferred')) {
 					reviewRows[i].parentNode.style.display = 'table-row';
+					lastDisplayedRow = i;
+					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
 				}
 				else {
 					reviewRows[i].parentNode.style.display = 'none';
@@ -1035,6 +1055,8 @@ function performDeferToggle(mainTable) {
 			case 3:	// Display only inreview rows
 				if (reviewRows[i].classList.contains('inreview')) {
 					reviewRows[i].parentNode.style.display = 'table-row';
+					lastDisplayedRow = i;
+					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
 					recordCount++;
 				}
 				else {
@@ -1044,6 +1066,8 @@ function performDeferToggle(mainTable) {
 			default:
 		}
 	}
+	lastDisplayedRow++; // zero-based to one-based;
+	firstDisplayedRow++;
 	if (recordCount==0 && deferToggle==3) { // Rereview records are not present so continue to all records
 		sessionStorage.setItem('deferToggle', 0);
 		performDeferToggle(mainTable);
