@@ -48,7 +48,7 @@ function keyboardHandler(ev)
 		case 'Home':
 			setRowBackground(focusRowNumber);
 			focusRowNumber = 0;
-			while (true) {
+			while (firstDisplayedRow) {	// Skip if no rows displayed
 				focusRowNumber++;
 				focusRow = document.getElementById('rowid' + focusRowNumber);
 				keepInView(focusRow, 'keyboardHandler');
@@ -61,7 +61,7 @@ function keyboardHandler(ev)
 		case 'End':
 			setRowBackground(focusRowNumber);
 			focusRowNumber = numRows + 1;
-			while (true) {
+			while (firstDisplayedRow) {	// Skip if no rows displayed
 				focusRowNumber--;
 				focusRow = document.getElementById('rowid' + focusRowNumber);
 				keepInView(focusRow, 'keyboardHandler');
@@ -78,7 +78,7 @@ function keyboardHandler(ev)
 				setRowBackground(focusRowNumber);
 			}
 
-			while (true) {
+			while (firstDisplayedRow) {	// Skip if no rows displayed
 				if (direction == 'down') {
 					if (++focusRowNumber > lastDisplayedRow) {
 						focusRowNumber = lastDisplayedRow;
