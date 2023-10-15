@@ -250,7 +250,40 @@ function mailSetup() {
 		let newMessage = message.replace(URL, '<a href="' + URL + '">' + URL + '</a>');
 
 		// Reword this message, which is only in the "misidentified" email:
-		newMessage = newMessage.replace('The documentation you have provided shows a', 'The photos you have provided show');
+		let noun, mcount, verb;
+
+		let mediaCounts = sessionStorage.getItem('mediaCounts').split(',');
+		if (!mediaCounts) {
+			mediaCounts = [0, 0, 0];
+		}
+		let Pcount = Number(mediaCounts[0]);
+		let Acount = Number(mediaCounts[1]);
+		let Vcount = Number(mediaCounts[2]);
+
+		if (Pcount) {
+			noun = 'photo'
+			mcount = Pcount;
+		} else if (Acount) {
+			noun = 'audio recording'
+			mcount = Acount;
+		} else if (Vcount) {
+			noun = 'video'
+			mcount = Vcount;
+		} else {
+			noun = 'documentation';
+			mcount = 0;
+		}
+		if (mcount > 1) {
+			verb = 'show';
+			noun = noun + 's';
+		} else if (mcount == 1) {
+			verb = 'shows';
+		} else {
+			verb = 'suggests';
+		}
+		let newText = 'The ' + noun + ' you have provided ' + verb;
+
+		newMessage = newMessage.replace('The documentation you have provided shows a', newText);
 		document.getElementById('email-message1').textContent = newMessage;
 	}
 }
@@ -421,6 +454,8 @@ async function getMediaCounts(OBS) {
 
 	let span = document.getElementById('kInfo');
 	span.appendChild(document.createTextNode(mediaMessage));
+
+	sessionStorage.setItem('mediaCounts', [Pcount, Acount, Vcount]);
 
 }
 
