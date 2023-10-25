@@ -36,6 +36,7 @@ function keyboardHandler(ev)
 		|| document.activeElement.id == 'notes' || document.activeElement.type == 'submit') {
 		return; // If keyboard focus is in the top menu, do not proceed here.
 	}
+	document.activeElement.blur();
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
 	} else {
@@ -249,11 +250,14 @@ function cssAdjustments() {	// Adjust the widths of "Review decision", "Reason",
 	// Adjust background of Change button when in focus 
 	let changeButton = document.getElementsByClassName('inputsubmit');
 	if (changeButton.length) {
-		changeButton[changeButton.length-1].addEventListener('focus', (ev) => {
+		changeButton[changeButton.length - 1].addEventListener('focus', (ev) => {
 			ev.target.style.background = '#0d0';
 		});
 		changeButton[changeButton.length - 1].addEventListener('blur', (ev) => {
 			ev.target.style.background = '#090';
+		});
+		changeButton[changeButton.length - 1].addEventListener('click', () => {
+			sessionStorage.setItem('focusRowNumber', 0);
 		});
 	}
 }
