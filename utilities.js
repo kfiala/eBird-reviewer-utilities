@@ -36,7 +36,7 @@ function keyboardHandler(ev)
 		|| document.activeElement.id == 'notes' || document.activeElement.type == 'submit') {
 		return; // If keyboard focus is in the top menu, do not proceed here.
 	}
-	document.activeElement.blur();
+//	document.activeElement.blur();
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
 	} else {
@@ -316,7 +316,7 @@ function regularReview() {
 	hyperlink['Extension'].setAttribute("target", "_blank");
 
 	hyperlink['WhatsNew'] = document.createElement('a');
-	hyperlink['WhatsNew'].appendChild(document.createTextNode("What's New, take 2"));
+	hyperlink['WhatsNew'].appendChild(document.createTextNode("What's New"));
 	hyperlink['WhatsNew'].setAttribute("href", chrome.runtime.getManifest().homepage_url + "#whatsnew");
 	hyperlink['WhatsNew'].setAttribute("target", "_blank");
 	hyperlink['WhatsNew'].style.color = 'red';
