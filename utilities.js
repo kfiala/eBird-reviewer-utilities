@@ -32,11 +32,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 
 function keyboardHandler(ev)
 {
-	if (document.activeElement.id == 'resultingValid' || document.activeElement.id == 'reasonCode'
-		|| document.activeElement.id == 'notes' || document.activeElement.type == 'submit') {
-		return; // If keyboard focus is in the top menu, do not proceed here.
-	}
-//	document.activeElement.blur();
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
 	} else {
@@ -284,7 +279,20 @@ function regularReview() {
 	hyperlink['Download'] = '';
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
-		document.addEventListener('keydown', (ev) => { keyboardHandler(ev); });
+		document.addEventListener('keydown', keyboardHandler);
+	
+		let filterForm = document.getElementById('filterwrapper');
+		if (filterForm) {	// Turn off keyboard handling when in filter form; turn it back on when leaving.
+			filterForm.addEventListener('focusin', () => { document.removeEventListener('keydown', keyboardHandler) });
+			filterForm.addEventListener('focusout', () => { document.addEventListener('keydown', keyboardHandler) });
+		}
+
+		let bulkactions = document.getElementById('bulkactions');
+		if (bulkactions) {	// Turn off keyboard handling when in disposition form; turn it back on when leaving.
+			bulkactions.addEventListener('focusin', () => { document.removeEventListener('keydown', keyboardHandler) });
+			bulkactions.addEventListener('focusout', () => { document.addEventListener('keydown', keyboardHandler) });
+		}
+
 		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
