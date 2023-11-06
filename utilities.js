@@ -119,6 +119,7 @@ function keyboardHandler(ev)
 				window.scrollTo(0, 0);
 				break;
 			case 'Enter':
+				ev.preventDefault();
 				toggleMediaRows(focusRow);
 				break;
 			case 'KeyS':
