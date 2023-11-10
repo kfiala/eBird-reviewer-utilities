@@ -37,7 +37,6 @@ function keyboardHandler(ev)
 	} else {
 		focusRowNumber = 0;
 	}
-	let originalRowNumber = focusRowNumber;
 	let direction = 'up';
 	let handled = true;
 	switch (ev.code) {
