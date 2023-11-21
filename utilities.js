@@ -122,9 +122,9 @@ function keyboardHandler(ev)
 	if (!handled && focusRowNumber) {	// Only handle these keys if there is a focus row
 		switch (ev.code) {
 			case 'KeyX':
-				setRowBackground(focusRowNumber);
 				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
 				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
+				setRowBackground(focusRowNumber);
 				if (XcheckBox.checked) {
 					XcheckBox.classList.add('Kchecked');
 				} else {
