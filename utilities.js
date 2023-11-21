@@ -32,6 +32,18 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 
 function keyboardHandler(ev)
 {
+	if (focusRowNumber == -1) { // keyboard select all is active
+		if (ev.code == 'KeyJ') {  // J is the only suppported key before deactivation
+			document.getElementById('resultingValid').focus();
+			window.scrollTo(0, 0);
+		}
+		else {  // Any other key, deactivate the select all
+			document.getElementById('tableHeader').style.removeProperty("background");
+			document.getElementById('selectalltop').querySelector('input.checkbox').checked = false;
+			colorSelectAll(false);
+			focusRowNumber = 0;
+		}
+	}
 	if (focusRowNumber) {
 		focusRow = document.getElementById('rowid' + focusRowNumber);
 	} else {
@@ -81,6 +93,15 @@ function keyboardHandler(ev)
 				} else {	// 'up'
 					if (--focusRowNumber < firstDisplayedRow) {
 						focusRowNumber = firstDisplayedRow;
+						let checkbox = document.getElementById('selectalltop').querySelector('input.checkbox');
+						if (!checkbox.disabled) {	// Activate select all
+							document.getElementById('tableHeader').style.backgroundColor = '#fe8';
+							focusRow = document.getElementById('tableHeader');
+							focusRowNumber = -1;
+							checkbox.checked = true;
+							colorSelectAll(true);
+							break;
+						}
 					}
 				}
 				focusRow = document.getElementById('rowid' + focusRowNumber);
@@ -101,10 +122,13 @@ function keyboardHandler(ev)
 	if (!handled && focusRowNumber) {	// Only handle these keys if there is a focus row
 		switch (ev.code) {
 			case 'KeyX':
-				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
-				document.getElementById('obsIds' + focusRowNumber).checked = XcheckBox.checked ? false : true;
 				setRowBackground(focusRowNumber);
-				if (!XcheckBox.checked) {
+				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
+				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
+				if (XcheckBox.checked) {
+					XcheckBox.classList.add('Kchecked');
+				} else {
+					XcheckBox.classList.remove('Kchecked');
 					document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
 				}
 				break;
@@ -179,19 +203,26 @@ function setRowBackground(rowNumber) {	// set or remove focus color / select col
 	}
 }
 
-function colorSelectAll() {	// Set row background color when select all is toggled
-	let mainTable = document.getElementById('contents');
-	mainTable.querySelectorAll('tr').forEach(function (elTr) {
-		let td = elTr.querySelector('td');
-		if (td) {
-			let input = td.querySelector('input');
-			if (input) {
-				let rowNumber = input.id.substring(6);
-				setRowBackground(rowNumber);
-				if (rowNumber == focusRowNumber) {
-					document.getElementById('rowid' + rowNumber).style.background = focusColor;
+function colorSelectAll(check = 'none') {	// Set row background color when select all is toggled. Optionally toggle checkboxes.
+  document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
+		switch (check) {
+			case 'none':
+				input.classList.remove('Kchecked');
+				break;
+			case true:
+				input.checked = true;
+				break;
+			case false:
+				if (!input.classList.contains('Kchecked')) {
+					input.checked = false;
 				}
-			}
+				break;
+		}
+		
+		let rowNumber = input.id.substring(6);
+		setRowBackground(rowNumber);
+		if (rowNumber == focusRowNumber) {
+			document.getElementById('rowid' + rowNumber).style.background = focusColor;
 		}
 	});
 }
@@ -292,12 +323,14 @@ function regularReview() {
 			bulkactions.addEventListener('focusout', () => { document.addEventListener('keydown', keyboardHandler) });
 		}
 
+		mainTable.querySelector('tr').setAttribute('id', 'tableHeader');	// Label header row for future reference
+		
 		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
 		// Handler for when select all is checked
-		mainTable.querySelector('th').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
+		mainTable.querySelector('input.checkbox').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
 		let oopsText = createRecallText();
 		oopsText.style.position = 'absolute';
@@ -621,6 +654,29 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		let Class, html, el;
 		let speciesCell;
 
+		if (!doHeaders) {	// Skip header row
+			// Extra steps for keyboard focus, not part of building CSV.
+			elTr.addEventListener('mouseenter', (ev) => { mouseRow = ev.target.id; });
+			elTr.addEventListener('click', (ev) => {
+				let mouseRowNumber = mouseRow.substring(5);
+				if (focusRowNumber) {	// If keyboard focus is initialized
+					setRowBackground(focusRowNumber);
+					focusRow = document.getElementById(mouseRow);
+					keepInView(focusRow, 'click handler for mouse row');
+					focusRow.style.background = focusColor;
+					focusRowNumber = mouseRowNumber;
+					sessionStorage.setItem('focusRowNumber', focusRowNumber);
+				} else {	// Set green background when keyboard focus uninitialized
+					let thisRow = document.getElementById('rowid' + mouseRowNumber);
+					if (document.getElementById('obsIds' + mouseRowNumber).checked) {
+						thisRow.style.background = greenBackground;
+					} else {
+						thisRow.style.removeProperty("background");
+					}
+				}
+			});
+		}
+
 		elTr.querySelectorAll('td').forEach(function (Cell) {
 			// Look at each column cell in this row of the table
 			Class = Cell.getAttribute('class').split(' ')[0];
@@ -639,28 +695,13 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				case "select":
 					// "select" column, do nothing
 					OBS = el.getAttribute('value');
-					// Extra steps for background coloring, not part of building CSV.
-					let checkBoxId = el.getAttribute('id');
-					let rowNumber = checkBoxId.substring(6);
-					el.addEventListener('change', () => { setRowBackground(rowNumber) });
 					// Extra steps for keyboard focus, not part of building CSV.
-					elTr.addEventListener('mouseenter', (ev) => { mouseRow = ev.target.id; });
-					elTr.addEventListener('click', (ev) => {
-						let mouseRowNumber = mouseRow.substring(5);
-						if (focusRowNumber) {	// If keyboard focus is initialized
-							setRowBackground(focusRowNumber);
-							focusRow = document.getElementById(mouseRow);
-							keepInView(focusRow, 'click handler for mouse row');
-							focusRow.style.background = focusColor;
-							focusRowNumber = mouseRowNumber;
-							sessionStorage.setItem('focusRowNumber', focusRowNumber);
-						} else {	// Set green background when keyboard focus uninitialized
-							let thisRow = document.getElementById('rowid' + mouseRowNumber);
-							if (document.getElementById('obsIds' + mouseRowNumber).checked) {
-								thisRow.style.background = greenBackground;
-							} else {
-								thisRow.style.removeProperty("background");
-							}
+					Cell.addEventListener('click', () => {
+						let cellInput = Cell.querySelector('input');
+						if (cellInput.checked) {
+							cellInput.classList.add('Kchecked');
+						} else {
+							cellInput.classList.remove('Kchecked');
 						}
 					});
 					break;
