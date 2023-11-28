@@ -6,7 +6,7 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 
 	var lookup = {};	// global
 	var focusRow, focusRowNumber, numRows = 0, mouseRow = 0, firstDisplayedRow, lastDisplayedRow;
-	
+
 	cssAdjustments();
 
 	formListener();	// If there is a form, set up a submit listener to capture posted data.
@@ -29,217 +29,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 	}
 }
 ///////////	End of mainline code
-
-function keyboardHandler(ev)
-{
-	if (focusRowNumber == -1) { // keyboard select all is active
-		if (ev.code == 'KeyJ') {  // J is the only suppported key before deactivation
-			document.getElementById('resultingValid').focus();
-			window.scrollTo(0, 0);
-		}
-		else {  // Any other key, deactivate the select all
-			document.getElementById('tableHeader').style.removeProperty("background");
-			document.getElementById('selectalltop').querySelector('input.checkbox').checked = false;
-			colorSelectAll(false);
-			focusRowNumber = 0;
-		}
-	}
-	if (focusRowNumber) {
-		focusRow = document.getElementById('rowid' + focusRowNumber);
-	} else {
-		focusRowNumber = 0;
-	}
-	let direction = 'up';
-	let handled = true;
-	switch (ev.code) {
-		case 'Home':
-			setRowBackground(focusRowNumber);
-			focusRowNumber = 0;
-			while (firstDisplayedRow) {	// Skip if no rows displayed
-				focusRowNumber++;
-				focusRow = document.getElementById('rowid' + focusRowNumber);
-				keepInView(focusRow, 'keyboardHandler');
-				if (focusRow.style.display != 'none') {
-					focusRow.style.background = focusColor;
-					break;
-				}
-			}
-			break;
-		case 'End':
-			setRowBackground(focusRowNumber);
-			focusRowNumber = numRows + 1;
-			while (firstDisplayedRow) {	// Skip if no rows displayed
-				focusRowNumber--;
-				focusRow = document.getElementById('rowid' + focusRowNumber);
-				keepInView(focusRow, 'keyboardHandler');
-				if (focusRow.style.display != 'none') {
-					focusRow.style.background = focusColor;
-					break;
-				}
-			}
-			break;
-		case 'ArrowDown':
-			direction = 'down';
-		case 'ArrowUp':
-			if (focusRow) {
-				setRowBackground(focusRowNumber);
-			}
-
-			while (firstDisplayedRow) {	// Skip if no rows displayed
-				if (direction == 'down') {
-					if (++focusRowNumber > lastDisplayedRow) {
-						focusRowNumber = lastDisplayedRow;
-					}
-				} else {	// 'up'
-					if (--focusRowNumber < firstDisplayedRow) {
-						focusRowNumber = firstDisplayedRow;
-						let checkbox = document.getElementById('selectalltop').querySelector('input.checkbox');
-						if (!checkbox.disabled) {	// Activate select all
-							document.getElementById('tableHeader').style.backgroundColor = '#fe8';
-							focusRow = document.getElementById('tableHeader');
-							focusRowNumber = -1;
-							checkbox.checked = true;
-							colorSelectAll(true);
-							break;
-						}
-					}
-				}
-				focusRow = document.getElementById('rowid' + focusRowNumber);
-				keepInView(focusRow, 'keyboardHandler');
-				if (focusRowNumber && focusRow.style.display != 'none') {
-					focusRow.style.background = focusColor;
-					break;
-				}
-			}
-			break;
-		default:
-			handled = false;
-			break;
-	}
-
-	sessionStorage.setItem('focusRowNumber', focusRowNumber);
-
-	if (!handled && focusRowNumber) {	// Only handle these keys if there is a focus row
-		switch (ev.code) {
-			case 'KeyX':
-				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
-				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
-				setRowBackground(focusRowNumber);
-				if (XcheckBox.checked) {
-					XcheckBox.classList.add('Kchecked');
-				} else {
-					XcheckBox.classList.remove('Kchecked');
-					document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
-				}
-				break;
-			case 'KeyJ':
-				document.getElementById('resultingValid').focus();
-				window.scrollTo(0, 0);
-				break;
-			case 'Enter':
-				ev.preventDefault();
-				toggleMediaRows(focusRow);
-				break;
-			case 'KeyS':
-				hrefFromKey('.subID', 0, ev.ctrlKey);
-				break;
-			case 'KeyB':
-				hrefFromKey('.species', 0, ev.ctrlKey);
-				break;
-			case 'KeyF':
-				hrefFromKey('.details', 0, ev.ctrlKey);
-				break;
-			case 'KeyH':
-				hrefFromKey('.details', 1, ev.ctrlKey);
-				break;
-			case 'KeyC':
-				hrefFromKey('.KeBird', 0, ev.ctrlKey);
-				break;
-			case 'KeyQ':
-				hrefFromKey('.user', 1, ev.ctrlKey);
-				break;
-			case 'KeyU':
-				userWindow();
-				break;
-			case 'Escape':	// Disable keyboard focus
-				setRowBackground(focusRowNumber);
-				focusRowNumber = false;
-				break;
-			default:
-//			console.log('Unhandled key: ' + ev.code);
-		}
-	}
-}
-
-function hrefFromKey(selector, index, ctrlKey) {  // Open a page according to the key pressed
-	let td = focusRow.querySelector(selector);
-	let a = td.querySelectorAll('A')[index];
-	let target = '_blank';
-	let href = a.getAttribute('href');
-	if (href.substring(0, 8) != 'https://') {
-		href = location.origin + '/admin/' + href
-		target = ctrlKey ? '_blank' : '_self';
-	}
-	window.open(href, target);
-}
-
-function userWindow() { // Open the user window
-	let td = focusRow.querySelector('.user');
-	let a = td.querySelector('A');
-	let onclick = a.getAttribute('onclick');
-	let user = onclick.substring(onclick.indexOf("('") + 2);
-	user = user.substring(0,user.indexOf("'"));
-	let targetWindow = window.open(user, "poppedWindow", "toolbar=0,status=0,width=465,height=500,directories=0,scrollbars=1,location=0,resizable=1,menubar=0");
-}
-
-function setRowBackground(rowNumber) {	// set or remove focus color / select color
-	if (document.getElementById('obsIds' + rowNumber)) {
-		let Row = document.getElementById('rowid' + rowNumber);		
-		if (document.getElementById('obsIds' + rowNumber).checked) {
-			Row.style.background = greenBackground;
-		} else {
-			Row.style.removeProperty("background");
-		}
-	}
-}
-
-function colorSelectAll(check = 'none') {	// Set row background color when select all is toggled. Optionally toggle checkboxes.
-  document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
-		switch (check) {
-			case 'none':
-				input.classList.remove('Kchecked');
-				break;
-			case true:
-				input.checked = true;
-				break;
-			case false:
-				if (!input.classList.contains('Kchecked')) {
-					input.checked = false;
-				}
-				break;
-		}
-		
-		let rowNumber = input.id.substring(6);
-		setRowBackground(rowNumber);
-		if (rowNumber == focusRowNumber) {
-			document.getElementById('rowid' + rowNumber).style.background = focusColor;
-		}
-	});
-}
-
-function keepInView(element,caller) {
-	if (element) {
-		let rect = element.getBoundingClientRect();
-		let fudge = 150;
-		if (rect.top < 70) {
-			let scroll = rect.top - fudge;
-			window.scrollBy(0, scroll);
-		} else if (rect.bottom + 50 > document.documentElement.clientHeight) {
-			let scroll = rect.top - document.documentElement.clientHeight + fudge;
-			window.scrollBy(0, scroll);
-		}
-	} 
-}
 
 function cssAdjustments() {	// Adjust the widths of "Review decision", "Reason", and "Notes" inputs
 	//
@@ -273,7 +62,7 @@ function cssAdjustments() {	// Adjust the widths of "Review decision", "Reason",
 			notesList[i].style = 'width:300px';
 		}
 	}
-	// Adjust background of Change button when in focus 
+	// Adjust background of Change button when in focus
 	let changeButton = document.getElementsByClassName('inputsubmit');
 	if (changeButton.length) {
 		changeButton[changeButton.length - 1].addEventListener('focus', (ev) => {
@@ -310,7 +99,7 @@ function regularReview() {
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
 		document.addEventListener('keydown', keyboardHandler);
-	
+
 		let filterForm = document.getElementById('filterwrapper');
 		if (filterForm) {	// Turn off keyboard handling when in filter form; turn it back on when leaving.
 			filterForm.addEventListener('focusin', () => { document.removeEventListener('keydown', keyboardHandler) });
@@ -324,7 +113,7 @@ function regularReview() {
 		}
 
 		mainTable.querySelector('tr').setAttribute('id', 'tableHeader');	// Label header row for future reference
-		
+
 		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
@@ -340,7 +129,7 @@ function regularReview() {
 	}
 	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
 	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
-	
+
 	hyperlink['Extension'] = document.createElement('a');
 	hyperlink['Extension'].appendChild(document.createTextNode("Extension documentation"));
 	hyperlink['Extension'].appendChild(document.createElement('br'));
@@ -361,7 +150,7 @@ function regularReview() {
 	hyperlink['WhatsNew'].setAttribute("href", chrome.runtime.getManifest().homepage_url + "#whatsnew");
 	hyperlink['WhatsNew'].setAttribute("target", "_blank");
 	hyperlink['WhatsNew'].style.color = 'red';
-	
+
 	pulldownHyperlinks(hyperlink);
 
 	// Initialize focus row from stored value, if any
@@ -380,8 +169,45 @@ function regularReview() {
 	}
 }
 
-function pulldownHyperlinks(hyperlink) {
+function colorSelectAll(check = 'none') {	// Set row background color when select all is toggled. Optionally toggle checkboxes.
+	document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
+		switch (check) {
+			case 'none':
+				input.classList.remove('Kchecked');
+				break;
+			case true:
+				input.checked = true;
+				break;
+			case false:
+				if (!input.classList.contains('Kchecked')) {
+					input.checked = false;
+				}
+				break;
+		}
 
+		let rowNumber = input.id.substring(6);
+		setRowBackground(rowNumber);
+		if (rowNumber == focusRowNumber) {
+			document.getElementById('rowid' + rowNumber).style.background = focusColor;
+		}
+	});
+}
+
+function keepInView(element,caller) {
+	if (element) {
+		let rect = element.getBoundingClientRect();
+		let fudge = 150;
+		if (rect.top < 70) {
+			let scroll = rect.top - fudge;
+			window.scrollBy(0, scroll);
+		} else if (rect.bottom + 50 > document.documentElement.clientHeight) {
+			let scroll = rect.top - document.documentElement.clientHeight + fudge;
+			window.scrollBy(0, scroll);
+		}
+	}
+}
+
+function pulldownHyperlinks(hyperlink) {
 	// Create a paragraph to contain the pulldown button
 	let hyperlinkPulldownButton = document.createElement('p');
 	hyperlinkPulldownButton.setAttribute('id', 'PullDown');
@@ -438,7 +264,7 @@ function pulldownHyperlinks(hyperlink) {
 	hyperlinkDiv.addEventListener('mouseenter', function () {
 		clearTimeout(timeoutID);
 		hyperlinkDiv.addEventListener('mouseleave', () => { hyperlinkDiv.style.display = 'none'; });
-	});	
+	});
 }
 
 function addonLink(addonUL, addon, clear, hyperlinkDiv) {
@@ -1022,7 +848,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	toggleStatusDiv.style.position = 'absolute';
 	toggleStatusDiv.style.left = '300px';
 	toggleStatusDiv.style.top = '70px';
-	toggleStatusDiv.style.border = 'medium solid ' + greenBackground; 
+	toggleStatusDiv.style.border = 'medium solid ' + greenBackground;
 	toggleStatusDiv.style.backgroundColor = '#edf4fe';
 	toggleStatusDiv.style.padding = '1em';
 	toggleStatusDiv.style.display = 'none';
@@ -1061,7 +887,7 @@ function performDeferToggle(mainTable) {
 	mainTable.querySelectorAll('.expanded').forEach(function (Row) {
 		Row.style.display = 'none';
 	});
-	
+
 	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
 
 	let checkAll = mainTable.querySelector('input.checkbox');
@@ -1149,7 +975,7 @@ function setToggleStatus() {
 				toggleStatus.textContent = '';
 				toggleStatusDiv.style.display = 'none';
 		}
-	} 
+	}
 }
 
 function historyWindow() {
@@ -1219,5 +1045,178 @@ function submissionWindow() {
 				}
 			});
 		});
+	}
+}
+
+function keyboardHandler(ev)
+{
+	if (focusRowNumber == -1) { // keyboard select all is active
+		if (ev.code == 'KeyJ') {  // J is the only suppported key before deactivation
+			document.getElementById('resultingValid').focus();
+			window.scrollTo(0, 0);
+		}
+		else {  // Any other key, deactivate the select all
+			document.getElementById('tableHeader').style.removeProperty("background");
+			document.getElementById('selectalltop').querySelector('input.checkbox').checked = false;
+			colorSelectAll(false);
+			focusRowNumber = 0;
+		}
+	}
+	if (focusRowNumber) {
+		focusRow = document.getElementById('rowid' + focusRowNumber);
+	} else {
+		focusRowNumber = 0;
+	}
+	let direction = 'up';
+	let handled = true;
+	switch (ev.code) {
+		case 'Home':
+			setRowBackground(focusRowNumber);
+			focusRowNumber = 0;
+			while (firstDisplayedRow) {	// Skip if no rows displayed
+				focusRowNumber++;
+				focusRow = document.getElementById('rowid' + focusRowNumber);
+				keepInView(focusRow, 'keyboardHandler');
+				if (focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		case 'End':
+			setRowBackground(focusRowNumber);
+			focusRowNumber = numRows + 1;
+			while (firstDisplayedRow) {	// Skip if no rows displayed
+				focusRowNumber--;
+				focusRow = document.getElementById('rowid' + focusRowNumber);
+				keepInView(focusRow, 'keyboardHandler');
+				if (focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		case 'ArrowDown':
+			direction = 'down';
+		case 'ArrowUp':
+			if (focusRow) {
+				setRowBackground(focusRowNumber);
+			}
+
+			while (firstDisplayedRow) {	// Skip if no rows displayed
+				if (direction == 'down') {
+					if (++focusRowNumber > lastDisplayedRow) {
+						focusRowNumber = lastDisplayedRow;
+					}
+				} else {	// 'up'
+					if (--focusRowNumber < firstDisplayedRow) {
+						focusRowNumber = firstDisplayedRow;
+						let checkbox = document.getElementById('selectalltop').querySelector('input.checkbox');
+						if (!checkbox.disabled) {	// Activate select all
+							document.getElementById('tableHeader').style.backgroundColor = '#fe8';
+							focusRow = document.getElementById('tableHeader');
+							focusRowNumber = -1;
+							checkbox.checked = true;
+							colorSelectAll(true);
+							break;
+						}
+					}
+				}
+				focusRow = document.getElementById('rowid' + focusRowNumber);
+				keepInView(focusRow, 'keyboardHandler');
+				if (focusRowNumber && focusRow.style.display != 'none') {
+					focusRow.style.background = focusColor;
+					break;
+				}
+			}
+			break;
+		default:
+			handled = false;
+			break;
+	}
+
+	sessionStorage.setItem('focusRowNumber', focusRowNumber);
+
+	if (!handled && focusRowNumber) {	// Only handle these keys if there is a focus row
+		switch (ev.code) {
+			case 'KeyX':
+				let XcheckBox = document.getElementById('obsIds' + focusRowNumber);
+				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
+				setRowBackground(focusRowNumber);
+				if (XcheckBox.checked) {
+					XcheckBox.classList.add('Kchecked');
+				} else {
+					XcheckBox.classList.remove('Kchecked');
+					document.getElementById('rowid' + focusRowNumber).style.background = focusColor;
+				}
+				break;
+			case 'KeyJ':
+				document.getElementById('resultingValid').focus();
+				window.scrollTo(0, 0);
+				break;
+			case 'Enter':
+				ev.preventDefault();
+				toggleMediaRows(focusRow);
+				break;
+			case 'KeyS':
+				hrefFromKey('.subID', 0, ev.ctrlKey);
+				break;
+			case 'KeyB':
+				hrefFromKey('.species', 0, ev.ctrlKey);
+				break;
+			case 'KeyF':
+				hrefFromKey('.details', 0, ev.ctrlKey);
+				break;
+			case 'KeyH':
+				hrefFromKey('.details', 1, ev.ctrlKey);
+				break;
+			case 'KeyC':
+				hrefFromKey('.KeBird', 0, ev.ctrlKey);
+				break;
+			case 'KeyQ':
+				hrefFromKey('.user', 1, ev.ctrlKey);
+				break;
+			case 'KeyU':
+				userWindow();
+				break;
+			case 'Escape':	// Disable keyboard focus
+				setRowBackground(focusRowNumber);
+				focusRowNumber = false;
+				break;
+			default:
+//			console.log('Unhandled key: ' + ev.code);
+		}
+	}
+}
+
+function hrefFromKey(selector, index, ctrlKey) {  // Open a page according to the key pressed
+	let td = focusRow.querySelector(selector);
+	let a = td.querySelectorAll('A')[index];
+	let target = '_blank';
+	let href = a.getAttribute('href');
+	if (href.substring(0, 8) != 'https://') {
+		href = location.origin + '/admin/' + href
+		target = ctrlKey ? '_blank' : '_self';
+	}
+	window.open(href, target);
+}
+
+function userWindow() { // Open the user window
+	let td = focusRow.querySelector('.user');
+	let a = td.querySelector('A');
+	let onclick = a.getAttribute('onclick');
+	let user = onclick.substring(onclick.indexOf("('") + 2);
+	user = user.substring(0,user.indexOf("'"));
+	let targetWindow = window.open(user, "poppedWindow", "toolbar=0,status=0,width=465,height=500,directories=0,scrollbars=1,location=0,resizable=1,menubar=0");
+}
+
+function setRowBackground(rowNumber) {	// set or remove focus color / select color
+	if (document.getElementById('obsIds' + rowNumber)) {
+		let Row = document.getElementById('rowid' + rowNumber);
+		if (document.getElementById('obsIds' + rowNumber).checked) {
+			Row.style.background = greenBackground;
+		} else {
+			Row.style.removeProperty("background");
+		}
 	}
 }
