@@ -857,6 +857,13 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	let toggleStatus = document.createElement('p');	// Paragraph for displaying toggle status
 	toggleStatusDiv.appendChild(toggleStatus);
 	toggleStatus.setAttribute('id', 'toggleStatus');
+	toggleStatus.style.color = 'blue';
+	toggleStatusDiv.onclick = function () {
+		let deferToggle = Number(sessionStorage.getItem('deferToggle'));
+		deferToggle = ++deferToggle % 4;	// Cycle through four different views
+		sessionStorage.setItem('deferToggle', deferToggle);
+		performDeferToggle(mainTable);
+	}
 
 	setToggleStatus();
 
