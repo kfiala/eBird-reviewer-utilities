@@ -75,7 +75,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 //	Get the numeric month of the observation date
 	const month = parseInt(ISOdate.split('-')[1]);
 	let Bmonth = (month > 1) ? month - 1 : 12;
-	let Emonth = (month < 12) ? month + 1 : 1;
+	let Emonth = (month < 12) ? month + 1 : /*1*/ 12;	// If end month should be 1, use 12 instead due to eBird bug
 //	Get coordinates
 	const coords = GPS.split(',');
 	const Y = parseFloat(coords[0]);

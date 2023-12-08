@@ -373,7 +373,7 @@ async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which h
 	//	Get the numeric month of the observation date from the ISO date
 	const month = parseInt(ISOdate.split('-')[1]);
 	let Bmonth = (month > 1) ? month - 1 : 12;
-	let Emonth = (month < 12) ? month + 1 : 1;
+	let Emonth = (month < 12) ? month + 1 : /*1*/ 12;	// If end month should be 1, use 12 instead due to eBird bug
 	let URLend =
 		'&bmo=' + Bmonth +
 		'&emo=' + Emonth +
