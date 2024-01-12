@@ -22,7 +22,7 @@ if (document.getElementById("region-name-codes"))
 		td.setAttribute("width","12px");
 		td.appendChild(greenButton);
 
-		greenButton.addEventListener('click', function (event) {
+		greenButton.addEventListener('mouseup', function (event) {
 			let thisYear = new Date().getFullYear();
 			window.open("https://ebird.org/barchart?r="+regionCodes+"&bmo=1&emo=12&byr=1900&eyr=" + thisYear + "&spp="+event.target.name);
 			event.preventDefault();
