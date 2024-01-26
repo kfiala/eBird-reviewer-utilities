@@ -1,10 +1,12 @@
 "use strict";
 // Provides several conveniences for the traditional review queue page.
 const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
+const boxBackgroundColor = '#edf4fe', itemBackgroundColor = '#113245';
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
-	var lookup = {};	// global
+	var lookup = [];	// global
+	var listOfSpecies = [];
 	var focusRow, focusRowNumber, numRows = 0, mouseRow = 0, firstDisplayedRow, lastDisplayedRow;
 
 	cssAdjustments();
@@ -117,6 +119,7 @@ function regularReview() {
 		performDeferToggle(mainTable);
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
+		hyperlink['Species'] = setupSelectSpecies(mainTable); // Set up species selection list
 		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
 		// Handler for when select all is checked
 		mainTable.querySelector('input.checkbox').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
@@ -171,14 +174,22 @@ function regularReview() {
 
 function colorSelectAll(check = 'none') {	// Set row background color when select all is toggled. Optionally toggle checkboxes.
 	document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
+		let displayType;
 		switch (check) {
-			case 'none':
+			case 'none':	// Let built-in code handle checkmarks. Remove class indicating individually checked rows.
 				input.classList.remove('Kchecked');
 				break;
 			case true:
-				input.checked = true;
+				if (input.parentNode.tagName == 'TD') {	// Skip the header row, which has TH instead of TD, and no display-type set
+					displayType = input.parentNode.parentNode.style.display;	// display type for the row
+				} else {
+					displayType = '';
+				}
+				// Check all rows that are visible
+				input.checked = (displayType == 'table-row');
+
 				break;
-			case false:
+			case false:	// Remove any checks from a previous call. Leave individually checked rows.
 				if (!input.classList.contains('Kchecked')) {
 					input.checked = false;
 				}
@@ -229,7 +240,7 @@ function pulldownHyperlinks(hyperlink) {
 	}
 	hyperlinkDiv.style.border = 'medium solid ' + greenBackground;
 	hyperlinkDiv.style.width = '15em';
-	hyperlinkDiv.style.backgroundColor = '#edf4fe';
+	hyperlinkDiv.style.backgroundColor = boxBackgroundColor;
 	hyperlinkDiv.style.paddingTop = '1em';
 	hyperlinkDiv.style.paddingBottom = '1em';
 	hyperlinkDiv.style.display = 'none';
@@ -242,12 +253,13 @@ function pulldownHyperlinks(hyperlink) {
 	addonUL.style.marginLeft = '15px';
 	hyperlinkDiv.appendChild(addonUL);
 
-	addonLink(addonUL, hyperlink['Recall'], true, hyperlinkDiv);
-	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv);
-	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv);
-	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv);
-	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv);
-	addonLink(addonUL, hyperlink['WhatsNew'], true, hyperlinkDiv);
+	addonLink(addonUL, hyperlink['Recall'], true, hyperlinkDiv,11);
+	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv,6);
+	addonLink(addonUL, hyperlink['Species'], true, hyperlinkDiv,4);
+	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv,7);
+	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv,7);
+	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv,1);
+	addonLink(addonUL, hyperlink['WhatsNew'], true, hyperlinkDiv,8);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
 		hyperlinkPulldownButton.style.textDecoration = 'underline'
@@ -267,12 +279,22 @@ function pulldownHyperlinks(hyperlink) {
 	});
 }
 
-function addonLink(addonUL, addon, clear, hyperlinkDiv) {
+function addonLink(addonUL, addon, clear, hyperlinkDiv,padRight) {
 	if (addon) {
 		let item = document.createElement('li');
 		item.style.lineHeight = '30px';
 		item.style.paddingLeft = '2em';
 		item.style.textIndent = '-2em';
+
+		addon.style.paddingRight = padRight + 'em';
+		addon.style.paddingTop = '.4em';
+		addon.style.paddingBottom = '.4em';
+
+		item.addEventListener('mouseenter', () => { addon.style.backgroundColor = itemBackgroundColor });
+		item.addEventListener('mouseenter', () => { item.querySelector('a').style.color = 'white' });
+		item.addEventListener('mouseleave', () => { addon.style.backgroundColor = boxBackgroundColor });
+		item.addEventListener('mouseleave', () => { item.querySelector('a').style.color = ' #36c' });
+
 		addonUL.appendChild(item);
 		item.appendChild(addon);
 		if (clear) {
@@ -398,7 +420,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docDiv.style.top = '120px';
 		docDiv.style.border = 'medium solid ' + greenBackground;
 		docDiv.style.width = '15em';
-		docDiv.style.backgroundColor = '#edf4fe';
+		docDiv.style.backgroundColor = boxBackgroundColor;
 		docDiv.style.paddingTop = '1em';
 		docDiv.style.paddingBottom = '1em';
 		docDiv.style.display = 'none';
@@ -544,6 +566,9 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 						species = el.textContent.trim();
 						lookup[OBS] = species;
 						speciesCell = Cell;
+						if (!listOfSpecies.includes(species)) {
+							listOfSpecies.push(species);
+						}
 					}
 					break;
 				case "evidence":
@@ -645,26 +670,19 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 
 	// For a search, the result count will be displayed in the form "Showing 1 - 500" regardless of the actual count.
 	// If the actual count is less than 500, we want to display the correct number, e.g. "Showing 1 - 13"
-	let mainType = document.getElementById("screentitle").getElementsByTagName("h2")[0].textContent; // "Search Results" or "Review Observations"
-	if (mainType == 'Search Results') {
-		let Fwebring = document.getElementById("listnav").querySelector('.webring');
-		if (Fwebring) {
-			let rangeText = Fwebring.getElementsByTagName("p")[0].textContent;	// result count
-			// Parse out the tokens from result count
-			let tokens = rangeText.split(" ");
-			let rangeEnd = tokens[tokens.length - 1];
-			let rangeStart = tokens[tokens.length - 3];
-			let actualRangeEnd = Number(rangeStart) + rowCounter - 1;
-			let actualRange = rangeStart + " - " + actualRangeEnd;
+	let Fwebring = document.getElementById("listnav").querySelector('.webring');
+	if (Fwebring) {
+		let showing = Fwebring.querySelector('p');
+		let actual = document.createElement('p');
+		actual.setAttribute('id', 'actualShow');
+		showing.after(actual);
 
-			if (rangeEnd !=  actualRangeEnd ) {
-				let countPara = document.createElement('p');	// Create new paragraph to contain actual result count
-				let countText = document.createTextNode('Actually showing ' + actualRange);
-				countPara.appendChild(countText);
-				// Insert new paragraph before the second paragraph
-				Fwebring.insertBefore(countPara, Fwebring.querySelectorAll('p')[1]);
-			}
-		}
+		let rangeTextP = Fwebring.getElementsByTagName("p")[0]
+		let rangeText = rangeTextP.textContent;	// result count
+		rangeTextP.setAttribute('id', 'CLOrangeText');
+
+		let message = setActualRange(rowCounter);
+		actual.textContent = message;
 	}
 
 	// All done building the CSV, now set up the hyperlink for it.
@@ -849,7 +867,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	toggleStatusDiv.style.left = '300px';
 	toggleStatusDiv.style.top = '70px';
 	toggleStatusDiv.style.border = 'medium solid ' + greenBackground;
-	toggleStatusDiv.style.backgroundColor = '#edf4fe';
+	toggleStatusDiv.style.backgroundColor = boxBackgroundColor;
 	toggleStatusDiv.style.padding = '1em';
 	toggleStatusDiv.style.display = 'none';
 	toggleStatusDiv.style.zIndex = 1;
@@ -906,50 +924,17 @@ function performDeferToggle(mainTable) {
 
 	setToggleStatus();
 
+	let speciesToggleInEffect = sessionStorage.getItem('species');
+	if (speciesToggleInEffect === undefined || speciesToggleInEffect == 'All species') {
+		speciesToggleInEffect = false;
+	}
+
 	let recordCount = 0;
 	firstDisplayedRow = -1;
 	for (let i = 0; i < reviewRows.length; i++) {
-		switch (deferToggle) {
-			case 0:	// Display all rows
-				reviewRows[i].parentNode.style.display = 'table-row';
-				lastDisplayedRow = i;
-				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
-				recordCount++;
-				break;
-			case 1:	// Display only non-deferred observations
-				if (reviewRows[i].classList.contains('deferred')) {
-					reviewRows[i].parentNode.style.display = 'none';
-				}
-				else {
-					reviewRows[i].parentNode.style.display = 'table-row';
-					lastDisplayedRow = i;
-					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
-				}
-				recordCount++;
-				break;
-			case 2:	// Display only Deferred observations
-				if (reviewRows[i].classList.contains('deferred')) {
-					reviewRows[i].parentNode.style.display = 'table-row';
-					lastDisplayedRow = i;
-					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
-				}
-				else {
-					reviewRows[i].parentNode.style.display = 'none';
-				}
-				recordCount++;
-				break;
-			case 3:	// Display only inreview rows
-				if (reviewRows[i].classList.contains('inreview')) {
-					reviewRows[i].parentNode.style.display = 'table-row';
-					lastDisplayedRow = i;
-					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
-					recordCount++;
-				}
-				else {
-					reviewRows[i].parentNode.style.display = 'none';
-				}
-				break;
-			default:
+		let thisSpecies = reviewRows[i].parentNode.querySelector('td.species').textContent.trim();
+		if (!speciesToggleInEffect || speciesToggleInEffect == thisSpecies) {
+			if (deferMatch(i, reviewRows, deferToggle)) recordCount++;
 		}
 	}
 	lastDisplayedRow++; // zero-based to one-based;
@@ -958,6 +943,56 @@ function performDeferToggle(mainTable) {
 		sessionStorage.setItem('deferToggle', 0);
 		performDeferToggle(mainTable);
 	}
+
+	visibleCount();
+}
+
+function deferMatch(i, reviewRows, deferToggle) {
+	// Determine whether record i should be displayed based on defer status and filtering
+	let displayRecord = false;
+	switch (deferToggle) {
+		case 0:	// Display all rows
+			reviewRows[i].parentNode.style.display = 'table-row';
+			lastDisplayedRow = i;
+			if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+			displayRecord = true;
+			break;
+		case 1:	// Display only non-deferred observations
+			if (reviewRows[i].classList.contains('deferred')) {
+				reviewRows[i].parentNode.style.display = 'none';
+			}
+			else {
+				reviewRows[i].parentNode.style.display = 'table-row';
+				lastDisplayedRow = i;
+				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+				displayRecord = true;
+			}
+			break;
+		case 2:	// Display only Deferred observations
+			if (reviewRows[i].classList.contains('deferred')) {
+				reviewRows[i].parentNode.style.display = 'table-row';
+				lastDisplayedRow = i;
+				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+				displayRecord = true;
+			}
+			else {
+				reviewRows[i].parentNode.style.display = 'none';
+			}
+			break;
+		case 3:	// Display only inreview rows
+			if (reviewRows[i].classList.contains('inreview')) {
+				reviewRows[i].parentNode.style.display = 'table-row';
+				lastDisplayedRow = i;
+				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+				displayRecord = true;
+			}
+			else {
+				reviewRows[i].parentNode.style.display = 'none';
+			}
+			break;
+		default:
+	}
+	return displayRecord;
 }
 
 function setToggleStatus() {
@@ -982,6 +1017,193 @@ function setToggleStatus() {
 				toggleStatus.textContent = '';
 				toggleStatusDiv.style.display = 'none';
 		}
+	}
+}
+
+function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, and create the list of species
+	// Set up a div to contain the species list
+	let toggleSpeciesDiv = document.createElement('div');
+	toggleSpeciesDiv.setAttribute("id", 'toggleSpeciesDiv');
+	toggleSpeciesDiv.style.position = 'absolute';
+	toggleSpeciesDiv.style.left = '500px';
+	toggleSpeciesDiv.style.top = '70px';
+	toggleSpeciesDiv.style.border = 'medium solid ' + greenBackground;
+	toggleSpeciesDiv.style.backgroundColor = boxBackgroundColor;
+	toggleSpeciesDiv.style.padding = '1em';
+	toggleSpeciesDiv.style.display = 'none';
+	toggleSpeciesDiv.style.zIndex = 1;
+	toggleSpeciesDiv.addEventListener('mouseleave', () => { toggleSpeciesDiv.style.display = 'none' });
+	document.getElementById("listnav").appendChild(toggleSpeciesDiv);
+	let speciesUL = document.createElement('ul');	// list of species
+	speciesUL.style.listStyle = 'none';
+	speciesUL.style.marginLeft = '5px';
+	toggleSpeciesDiv.appendChild(speciesUL);
+	speciesUL.setAttribute('id', 'speciesUL');
+
+	let item = [];
+	listOfSpecies.unshift('All species');
+	for (let i = 0; i < listOfSpecies.length; i++) {
+		item[i] = document.createElement('li');
+		item[i].addEventListener('mouseenter', () => { item[i].style.backgroundColor = itemBackgroundColor });
+		item[i].addEventListener('mouseenter', () => { item[i].style.color = 'white' });
+		item[i].addEventListener('mouseleave', () => { item[i].style.backgroundColor = boxBackgroundColor });
+		item[i].addEventListener('mouseleave', () => { item[i].style.color = 'black' });
+		item[i].addEventListener('click', (ev) => { performSelectSpecies(mainTable, ev.target.textContent); });
+		speciesUL.appendChild(item[i]);
+		item[i].appendChild(document.createTextNode(listOfSpecies[i]));
+	}
+
+	// Create an anchor element
+	let ae = document.createElement('a');
+	ae.setAttribute("id", 'listSpeciesAnchor');
+	ae.appendChild(document.createTextNode("Select species"));
+	let newspan = document.createElement('span');
+	newspan.appendChild(document.createTextNode(" NEW"));
+	newspan.style.color = 'red';
+	ae.appendChild(newspan);
+	ae.setAttribute("href", "#");
+
+	ae.onclick = function () {
+		document.getElementById('toggleSpeciesDiv').style.display = 'block';
+	}
+
+	let previousSpecies = sessionStorage.getItem('species');
+	if (previousSpecies) {
+		let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+		performSelectSpecies(mainTable, previousSpecies);
+		let displayCount = visibleCount();
+		if (displayCount == 0) {
+			firstDisplayedRow = -1;
+			// Reset, showing all species, but check for defer filtering
+			let deferToggleInEffect = Number(sessionStorage.getItem('deferToggle'));
+			for (let i = 0; i < reviewRows.length; i++) {
+				if (!deferToggleInEffect) {
+					reviewRows[i].parentNode.style.display = 'table-row';
+				} else {
+					deferMatch(i, reviewRows, deferToggleInEffect);
+				}
+				if (reviewRows[i].parentNode.style.display == 'table-row') {
+					lastDisplayedRow = i;
+					if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+				}
+			}
+			lastDisplayedRow++; // zero-based to one-based;
+			firstDisplayedRow++;
+
+			sessionStorage.removeItem('species');
+			visibleCount();
+		} else {
+		}
+	} else {
+	}
+
+	return (ae);
+}
+
+function performSelectSpecies(mainTable, targetSpecies) {
+	sessionStorage.setItem('species', targetSpecies);
+
+	document.getElementById('toggleSpeciesDiv').style.display = 'none';
+
+	// Hide any rows expanded with comments or media
+	mainTable.querySelectorAll('.expanded').forEach(function (Row) {
+		Row.style.display = 'none';
+	});
+
+	let showAll = (targetSpecies == 'All species');
+
+	let checkAll = mainTable.querySelector('input.checkbox');
+	if (showAll) {
+		checkAll.disabled = false;
+	} else {
+		checkAll.disabled = true;
+	}
+
+	// if deferToggleInEffect,
+	//		performSelectSpecies leaves visibility of selected species unchanged,
+	//		all non-selected species hidden
+	let deferToggleInEffect = Number(sessionStorage.getItem('deferToggle'));
+
+	firstDisplayedRow = -1;
+	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+	for (let i = 0; i < reviewRows.length; i++) {
+		let thisSpecies = reviewRows[i].parentNode.querySelector('td.species').textContent.trim();
+		if (thisSpecies == targetSpecies || showAll) {
+			if (!deferToggleInEffect) {
+				reviewRows[i].parentNode.style.display = 'table-row';
+			} else {
+				deferMatch(i, reviewRows, deferToggleInEffect);
+			}
+			if (reviewRows[i].parentNode.style.display == 'table-row') {
+				lastDisplayedRow = i;
+				if (firstDisplayedRow < 0) { firstDisplayedRow = i }
+			}
+		} else {
+			reviewRows[i].parentNode.style.display = 'none';
+		}
+	}
+	lastDisplayedRow++; // zero-based to one-based;
+	firstDisplayedRow++;
+
+	visibleCount();
+}
+
+function visibleCount() {
+	let targetSpecies = sessionStorage.getItem('species');
+	let deferToggle = sessionStorage.getItem('deferToggle');
+	let everFiltered = targetSpecies != null || deferToggle != null;
+
+	if (targetSpecies == 'All species' || targetSpecies == null)
+		targetSpecies = '';
+	deferToggle = Number(deferToggle);
+
+	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
+	let displayCount = 0;
+	let visibleP = document.getElementById('actualShow');
+	let message;
+	if (everFiltered) {	// If any rows might be hidden
+		const colors = [boxBackgroundColor, '#ffffff'];
+		let colorCursor = 0;
+		for (let i = 0; i < reviewRows.length; i++) {
+			if (reviewRows[i].parentNode.style.display == 'table-row') {
+				displayCount++;
+				// Set background colors so they alternate
+				reviewRows[i].parentNode.style.backgroundColor = colors[colorCursor];
+				colorCursor = ++colorCursor % 2;
+			}
+		}
+		message = displayCount + ' ' + targetSpecies + ' visible';
+	} else {
+		displayCount = reviewRows.length;
+	}
+
+	if (displayCount == reviewRows.length) {
+		message = setActualRange(displayCount);
+	}
+
+	if (visibleP) {
+		visibleP.textContent = message;
+	}
+	return displayCount;
+}
+
+function setActualRange(rowCounter) {
+	if (!document.getElementById('CLOrangeText')) return false;
+
+	let rangeText = document.getElementById('CLOrangeText').textContent;
+	// Parse out the tokens from result count
+	let tokens = rangeText.split(" ");
+	let rangeEnd = tokens[tokens.length - 1];
+	let rangeStart = tokens[tokens.length - 3];
+	let actualRangeEnd = Number(rangeStart) + rowCounter - 1;
+	let actualRange = rangeStart + " - " + actualRangeEnd;
+
+	rangeEnd = rangeEnd.replace(/\)$/, ''); // Delete last character if it's a right parenthesis.
+
+	if (rangeEnd != actualRangeEnd) {
+		return ('Actually showing ' + actualRange);
+	} else {
+		return ('');
 	}
 }
 
@@ -1118,15 +1340,11 @@ function keyboardHandler(ev)
 				} else {	// 'up'
 					if (--focusRowNumber < firstDisplayedRow) {
 						focusRowNumber = firstDisplayedRow;
-						let checkbox = document.getElementById('selectalltop').querySelector('input.checkbox');
-						if (!checkbox.disabled) {	// Activate select all
-							document.getElementById('tableHeader').style.backgroundColor = '#fe8';
-							focusRow = document.getElementById('tableHeader');
-							focusRowNumber = -1;
-							checkbox.checked = true;
-							colorSelectAll(true);
-							break;
-						}
+						document.getElementById('tableHeader').style.backgroundColor = '#fe8';
+						focusRow = document.getElementById('tableHeader');
+						focusRowNumber = -1;
+						colorSelectAll(true);
+						break;
 					}
 				}
 				focusRow = document.getElementById('rowid' + focusRowNumber);
