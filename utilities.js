@@ -600,6 +600,8 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					}
 					break;
 				case "locname": locname = Cell.innerHTML;
+					Cell.setAttribute('id', OBS + 'location');
+					checkIfHotspot(OBS);	// Hyperlink it if a hotspot
 					break;
 				case "county": county = Cell.innerHTML;
 					break;
@@ -755,13 +757,29 @@ function toggleMediaRows(tr) {
 }
 
 async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
+	const parser = new DOMParser();
+
 	let response = await fetch('https://review.ebird.org/admin/reviewServices/getObsComments.do?obsId=' + OBS);
 	let comments = await response.text();
 	comments = comments.replace(/\\"/g, '"');	// unescape internal quotes
 	comments = comments.slice(1, comments.length - 1);	// strip enclosing quotes.
 
+	let checklistComments = false;
+	response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+	let json = await response.json();
+	if (json.sub.comments) {
+		checklistComments = true;
+		const clComment = parser.parseFromString('Checklist comments: ' + json.sub.comments, 'text/html');
+		commentTD.append(clComment.body);
+	}
+
+
 	if (comments.length) {
-		commentTD.textContent = comments;
+		if (checklistComments)
+			comments = 'Observation comments: ' + comments;
+		const htmlComment = parser.parseFromString(comments, 'text/html');
+		commentTD.append(htmlComment.body);
+
 		let mediaIcon = document.createElement('i');
 		mediaIcon.setAttribute('class', 'icon icon-ev-N');
 		mediaIcon.appendChild(document.createTextNode('N'));
@@ -771,7 +789,7 @@ async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 	let mediaType = '';
 	response = await fetch('https://review.ebird.org/admin/reviewServices/getObsMedia.do?obsId=' + OBS);
 
-	let json = await response.json();
+	json = await response.json();
 	if (json.length > 0) {
 		const asset = [];		// Macaulay id
 		for (let index in json) {
@@ -795,8 +813,6 @@ async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 			mediaCell.appendChild(mediaIcon);
 		}
 	}
-
-
 }
 
 async function getMedia(mediaTD) {
@@ -856,6 +872,21 @@ async function getMedia(mediaTD) {
 			mediaTD.classList.add('expanded');
 			mediaTD.appendChild(mediaDiv);
 		}
+	}
+}
+
+async function checkIfHotspot(OBS) {
+	// If the location is a hotspot, make a clickable link to hotspot page
+	let response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+	let json = await response.json();
+	if (json.loc.isHotspot) {
+		let anchor = document.createElement('a');
+		anchor.href = 'https://ebird.org/hotspot/' + json.sub.locId;
+		anchor.setAttribute('target', '_blank');
+		let locationTD = document.getElementById(OBS + 'location');
+		anchor.textContent = locationTD.textContent;
+		locationTD.textContent = '';
+		locationTD.append(anchor);
 	}
 }
 
