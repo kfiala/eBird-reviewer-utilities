@@ -1088,10 +1088,6 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	let ae = document.createElement('a');
 	ae.setAttribute("id", 'listSpeciesAnchor');
 	ae.appendChild(document.createTextNode("Select species"));
-	let newspan = document.createElement('span');
-	newspan.appendChild(document.createTextNode(" NEW"));
-	newspan.style.color = 'red';
-	ae.appendChild(newspan);
 	ae.setAttribute("href", "#");
 
 	ae.onclick = function () {
