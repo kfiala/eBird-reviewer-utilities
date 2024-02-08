@@ -28,6 +28,20 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 			buttons[b].addEventListener('click', secondWait);	// When a button is clicked, wait for more DOM that we will need
 		}
 	}
+	
+	let skipAnchor = document.getElementById('qr-obs-title').querySelector('a.Button');
+	skipAnchor.addEventListener('click', () => { storeHistory(); });
+	skipAnchor.setAttribute('id', 'skipAnchor');
+	let backButton = document.createElement('a');
+	backButton.href = '#';
+	backButton.setAttribute('class', 'Button');
+	backButton.classList.add('Button--small');
+	backButton.classList.add('Button--secondary');
+	backButton.classList.add('u-margin-none');
+	backButton.style.marginRight = '1em';
+	backButton.append('Back');
+	skipAnchor.insertAdjacentElement('beforebegin', backButton);
+	backButton.addEventListener('click', goBack);
 
 //	Create our private div and insert it.
 	let kdiv = document.createElement('div');
@@ -220,6 +234,36 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 
 function storeChange() {
 	localStorage.setItem('lastChange', OBS + '/' + TAXON);
+	storeHistory();
+}
+
+function storeHistory() {
+	const MAXQUEUE = 25;
+	let historyQueue = JSON.parse(sessionStorage.getItem('historyQueue'));
+	if (!historyQueue) historyQueue = [];
+	if (!historyQueue.includes(OBS)) {
+		historyQueue.push(OBS);
+		if (historyQueue.length > MAXQUEUE) {
+			historyQueue.shift();
+		}
+		sessionStorage.setItem('historyQueue', JSON.stringify(historyQueue));
+	}
+}
+
+function goBack() {
+	let observation;
+	let historyQueue = JSON.parse(sessionStorage.getItem('historyQueue'));
+	if (historyQueue) {
+		observation = historyQueue.pop();
+		sessionStorage.setItem('historyQueue', JSON.stringify(historyQueue));
+	}
+	let newHref;
+	if (observation === undefined) {	// Empty queue
+		newHref = 'review.htm';
+	} else {
+		newHref = 'qr.htm?obsId=' + observation + '&redirectPath=review.htm';
+	}
+	location.href = newHref;
 }
 
 function emailWait() {
