@@ -10,13 +10,25 @@ function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setu
 	if (!document.getElementById('qr-obs-documentation')) {
 		setTimeout(wait,100);
 	} else {
-		document.body.addEventListener('mouseenter', () => {
-			if (!document.getElementById('kdiv')) {
-				wait();
-			}
-		});
-		delayedSetup();
+		if (isMobile()) {
+			setTimeout(keepAlive, 500);
+		} else {
+			document.body.addEventListener('mouseenter', () => {
+				if (!document.getElementById('kdiv')) {
+					wait();
+				}
+			});
+			delayedSetup();
+		}
 	}
+}
+
+function keepAlive() {
+	console.log('Blip');
+	if (!document.getElementById('kdiv')) {
+		if (document.getElementById('qr-obs-title')) delayedSetup();
+	}
+	setTimeout(keepAlive, 500);
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
@@ -178,7 +190,9 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 
 function reviewReasonAndNotesSetup() {
 	let reasonPage = document.getElementById('reasonPage');
-	reasonPage.style.top = 'calc(100% - 175px)';
+	if (!isMobile())
+		reasonPage.style.top = 'calc(100% - 175px)';	
+
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
 	let label;
@@ -503,3 +517,7 @@ async function getMediaCounts(OBS) {
 
 }
 
+function isMobile() {
+	// True if screen is narrow (presumed mobile)
+	return !window.matchMedia("(min-width: 48em)").matches;
+}

@@ -226,7 +226,7 @@ function pulldownHyperlinks(hyperlink) {
 	hyperlinkPulldownButton.textContent = "Add-ons";
 	hyperlinkPulldownButton.style.color = '#3366cc';
 
-	document.getElementById("listnav").insertBefore(hyperlinkPulldownButton, null);
+	document.getElementById('optiontoggler').insertAdjacentElement('afterend', hyperlinkPulldownButton);
 
 	// Create a div to contain the list
 	let hyperlinkDiv = document.createElement('div');
@@ -282,7 +282,11 @@ function pulldownHyperlinks(hyperlink) {
 function addonLink(addonUL, addon, clear, hyperlinkDiv,padRight) {
 	if (addon) {
 		let item = document.createElement('li');
-		item.style.lineHeight = '30px';
+		if (isMobile()) {
+			item.style.lineHeight = '35px';
+		} else {
+			item.style.lineHeight = '30px';
+		}
 		item.style.paddingLeft = '2em';
 		item.style.textIndent = '-2em';
 
@@ -416,8 +420,8 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		let docDiv = document.createElement('div');
 		docDiv.setAttribute("id", 'docDiv');
 		docDiv.style.position = 'absolute';
-		docDiv.style.left = '450px';
-		docDiv.style.top = '120px';
+		docDiv.style.left = '130px';
+		docDiv.style.top = '200px';
 		docDiv.style.border = 'medium solid ' + greenBackground;
 		docDiv.style.width = '15em';
 		docDiv.style.backgroundColor = boxBackgroundColor;
@@ -895,7 +899,7 @@ function setupToggleDeferred(mainTable) {	// Set up "Toggle deferred" hyperlink
 	let toggleStatusDiv = document.createElement('div');
 	toggleStatusDiv.setAttribute("id", 'toggleStatusDiv');
 	toggleStatusDiv.style.position = 'absolute';
-	toggleStatusDiv.style.left = '300px';
+	toggleStatusDiv.style.left = '225px';
 	toggleStatusDiv.style.top = '70px';
 	toggleStatusDiv.style.border = 'medium solid ' + greenBackground;
 	toggleStatusDiv.style.backgroundColor = boxBackgroundColor;
@@ -1056,8 +1060,8 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	let toggleSpeciesDiv = document.createElement('div');
 	toggleSpeciesDiv.setAttribute("id", 'toggleSpeciesDiv');
 	toggleSpeciesDiv.style.position = 'absolute';
-	toggleSpeciesDiv.style.left = '500px';
-	toggleSpeciesDiv.style.top = '70px';
+	toggleSpeciesDiv.style.left = '130px';
+	toggleSpeciesDiv.style.top = '200px';
 	toggleSpeciesDiv.style.border = 'medium solid ' + greenBackground;
 	toggleSpeciesDiv.style.backgroundColor = boxBackgroundColor;
 	toggleSpeciesDiv.style.padding = '1em';
@@ -1080,6 +1084,9 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 		item[i].addEventListener('mouseleave', () => { item[i].style.backgroundColor = boxBackgroundColor });
 		item[i].addEventListener('mouseleave', () => { item[i].style.color = 'black' });
 		item[i].addEventListener('click', (ev) => { performSelectSpecies(mainTable, ev.target.textContent); });
+		if (isMobile()) {
+			item[i].style.lineHeight = '35px';
+		}
 		speciesUL.appendChild(item[i]);
 		item[i].appendChild(document.createTextNode(listOfSpecies[i]));
 	}
@@ -1471,4 +1478,9 @@ function setRowBackground(rowNumber) {	// set or remove focus color / select col
 			Row.style.removeProperty("background");
 		}
 	}
+}
+
+function isMobile() {
+	// True if screen is narrow (presumed mobile)
+	return !window.matchMedia("(min-width: 48em)").matches;
 }
