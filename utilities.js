@@ -744,17 +744,24 @@ async function checkRecord(RowObject) {
 	}
 
 	function flagCell(Cell) {
-		Cell.style.backgroundColor = 'red';
+		Cell.style.backgroundColor = '#bb2222';
 		let anchor = Cell.querySelector('a');
 		let element = anchor ? anchor : Cell;
 		element.style.color = 'white';
 		element.style.fontWeight = 'bold';
-
+		let emPhrase = Cell.getElementsByTagName('em')[0];
+		if (emPhrase) { // scientific name
+			emPhrase.style.color = 'white';
+		}
 	}
 
+	let commonName = json.taxon.commonName.trim();
+	let sciName = json.taxon.sciName.trim();
+	let fullName = commonName + ' ' + sciName;
+
 	if (json) {
-		if (json.taxon.displayName != species) {
-			console.log('Mismatch for ' + OBS + ', ' + species + ' should be ' + json.taxon.displayName);
+		if ((commonName != species) && (sciName != species) && (fullName != species)) {
+			console.log('Mismatch for ' + OBS + ', "' + species + '" should be "' + fullName + '"');
 			flagCell(RowObject.species);
 		}
 
