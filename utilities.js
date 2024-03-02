@@ -505,6 +505,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		let OBS;
 		let Class, html, el;
 		let speciesCell;
+		let RowObject = new RowClass();
 
 		if (!doHeaders) {	// Skip header row
 			// Extra steps for keyboard focus, not part of building CSV.
@@ -547,6 +548,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				case "select":
 					// "select" column, do nothing
 					OBS = el.getAttribute('value');
+					RowObject.observation = OBS;
 					// Extra steps for keyboard focus, not part of building CSV.
 					Cell.addEventListener('click', () => {
 						let cellInput = Cell.querySelector('input');
@@ -560,7 +562,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				case "subID":
 					// "subID" column, get the report subID and set up the eBird checklist URL
 					if (el.nodeName === 'A') {
-						subid = el.innerHTML;
+						subid = el.textContent;
 						checklist = 'https://ebird.org/checklist/' + subid
 					}
 					break;
@@ -573,6 +575,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 						if (!listOfSpecies.includes(species)) {
 							listOfSpecies.push(species);
 						}
+						RowObject.species = Cell;
 					}
 					break;
 				case "evidence":
@@ -582,36 +585,42 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					if (html) {
 						// "evidence" column, get the code letter for type of details
 						if (el && el.nodeName === 'A') {
-							let ev = parser.parseFromString(el.innerHTML, "text/html");
-							evidence = ev.body.firstChild.innerHTML;
+							let ev = parser.parseFromString(el.textContent, "text/html");
+							evidence = ev.body.firstChild.textContent;
 						}
 					}
 					break;
-				case "count": count = Cell.innerHTML;
+				case "count": count = Cell.textContent;
+					RowObject.count = Cell;
 					break;
 				case "obsdate": {
 					// Get the observation date, also format a copy of the date as day of year (without the year)
-					obsdate = Cell.innerHTML;
+					obsdate = Cell.textContent;
 					let date = new Date(obsdate);
 					let day = String(date.getDate()).padStart(2, '0');
 					let month = String(date.getMonth() + 1).padStart(2, '0');
 					dayOfYear = month + ' ' + day;
+					RowObject.obsdate = Cell;
 				}
 					break;
 				case "user":	// Get the user's name
 					if (el.nodeName === 'A' && el.getAttribute('class') === 'userprofile') {
-						user = el.innerHTML;
+						user = el.textContent;
+						RowObject.user = Cell;
 					}
 					break;
-				case "locname": locname = Cell.innerHTML;
+				case "locname": locname = Cell.textContent;
 					Cell.setAttribute('id', OBS + 'location');
 					checkIfHotspot(OBS);	// Hyperlink it if a hotspot
+					RowObject.locname = Cell;
 					break;
-				case "county": county = Cell.innerHTML;
+				case "county": county = Cell.textContent;
+					RowObject.county = Cell;
 					break;
 				case "state":
 					if (el.nodeName === '#text') {
 						state = el.nodeValue;
+						RowObject.state = Cell;
 					}
 					break;
 				case "validity": validity = Cell.textContent;
@@ -646,7 +655,9 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				// turn off flag for saving headers.
 				spreadSheet.push(headers.join());
 				doHeaders = false;
-			}
+			} 
+			checkRecord(RowObject);
+
 			spreadSheet.push(row.join());	// Add this row to spreadsheet
 
 			// Create a new table cell at the end of the row, for the eBird hyperlink
@@ -708,6 +719,87 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	a.href = window.URL.createObjectURL(new Blob(['\ufeff', spreadSheet.join('\r\n')], { type: 'text/csv' }));
 	return (a);
 	// All done with the CSV stuff, now on to the next feature
+}
+
+function RowClass() { this.name = 'RowObject' };
+
+async function checkRecord(RowObject) {
+	let OBS = RowObject.observation;
+	let species = RowObject.species.textContent.trim();
+	let count = RowObject.count.textContent;
+	let obsdate = RowObject.obsdate.textContent;
+	let user = RowObject.user.querySelector('a').textContent;
+	let locname = RowObject.locname.textContent;
+	let county = RowObject.county.textContent;
+	let state = RowObject.state.textContent;
+	let json;
+
+	try {
+		const response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+		if (!response.ok) { throw new Error("Bad response"); }
+		json = await response.json();
+	} catch (error) {
+		console.log("Fetch failed for " + OBS + ' (' + species + ')');
+		flagCell(RowObject.species);
+	}
+
+	function flagCell(Cell) {
+		Cell.style.backgroundColor = '#bb2222';
+		let anchor = Cell.querySelector('a');
+		let element = anchor ? anchor : Cell;
+		element.style.color = 'white';
+		element.style.fontWeight = 'bold';
+		let emPhrase = Cell.getElementsByTagName('em')[0];
+		if (emPhrase) { // scientific name
+			emPhrase.style.color = 'white';
+		}
+	}
+
+	let commonName = json.taxon.commonName.trim();
+	let sciName = json.taxon.sciName.trim();
+	let fullName = commonName + ' ' + sciName;
+
+	if (json) {
+		if ((commonName != species) && (sciName != species) && (fullName != species)) {
+			console.log('Mismatch for ' + OBS + ', "' + species + '" should be "' + fullName + '"');
+			flagCell(RowObject.species);
+		}
+
+		if (json.obs.howManyStr.toLowerCase() != count.toLowerCase()) {
+			console.log('Mismatch for ' + OBS + ', count of ' + count + ' should be ' + json.obs.howManyStr);
+			flagCell(RowObject.count);
+		}
+
+		let date1 = Date.parse(json.sub.obsDt.substring(0, 10) + ' 00:00:00 GMT'); const d1 = new Date(date1);
+		let date2 = Date.parse(obsdate + ' 00:00:00 GMT'); const d2 = new Date(date2);
+
+		if (Date.parse(json.sub.obsDt.substring(0, 10) + ' 00:00:00 GMT') != Date.parse(obsdate + ' 00:00:00 GMT')) {
+			console.log('Mismatch for ' + OBS + ', ' + obsdate + ' should be ' + json.sub.obsDt);
+			flagCell(RowObject.obsdate);
+		}
+
+		if (json.observers[0].alias.trim() != user.trim()) {
+			console.log('Mismatch for ' + OBS + ', "' + user + '" should be "' + json.observers[0].alias + '"');
+			flagCell(RowObject.user);
+		}
+
+		if (json.loc.name != locname) {
+			console.log('Mismatch for ' + OBS + ', ' + locname + ' should be ' + json.loc.name);
+			flagCell(RowObject.locname);
+		}
+
+		if (json.loc.subnational2Name != county) {
+			console.log('Mismatch for ' + OBS + ', ' + county + ' should be ' + json.loc.subnational2Name);
+			flagCell(RowObject.county);
+		}
+
+		let stateArray = json.loc.subnational1Code.split("-");
+		let stateCode = stateArray[1] + ' (' + stateArray[0] + ')';
+		if (stateCode != state) {
+			console.log('Mismatch for ' + OBS + ', ' + state + ' should be ' + stateCode);
+			flagCell(RowObject.state);
+		}
+	}
 }
 
 async function setupMedia(elTr, mediaCell, OBS) {
