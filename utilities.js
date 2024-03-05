@@ -730,7 +730,7 @@ async function checkRecord(RowObject) {
 	let obsdate = RowObject.obsdate.textContent;
 	let user = RowObject.user.querySelector('a').textContent;
 	let locname = RowObject.locname.textContent;
-	let county = RowObject.county.textContent;
+	let county = RowObject.county.textContent.trim();
 	let state = RowObject.state.textContent;
 	let json;
 
@@ -788,6 +788,7 @@ async function checkRecord(RowObject) {
 			flagCell(RowObject.locname);
 		}
 
+		if (typeof json.loc.subnational2Name === "undefined") json.loc.subnational2Name = "";
 		if (json.loc.subnational2Name != county) {
 			console.log('Mismatch for ' + OBS + ', ' + county + ' should be ' + json.loc.subnational2Name);
 			flagCell(RowObject.county);
