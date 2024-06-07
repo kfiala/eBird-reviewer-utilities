@@ -957,6 +957,10 @@ async function getMedia(mediaTD) {
 			mediaDiv.appendChild(mediaAnchor);
 			mediaDiv.style.display = 'inline-block';
 
+			if (mtype == 'Video') {
+				mediaDiv.style.border = 'thick solid blue';
+			}
+
 			if (mtype == 'Audio') {
 				wavAnchor = document.createElement('a');
 				wavAnchor.setAttribute('href', mediaURL[index]);
