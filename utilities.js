@@ -2,6 +2,7 @@
 // Provides several conveniences for the traditional review queue page.
 const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 const boxBackgroundColor = '#edf4fe', itemBackgroundColor = '#113245';
+const flagBackgroundColor = '#bb2222';
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
@@ -12,6 +13,8 @@ if (window.location.href.includes('https://review.ebird.org/admin/review')) {  /
 	cssAdjustments();
 
 	formListener();	// If there is a form, set up a submit listener to capture posted data.
+
+	rowsPerPage();		// Setup to listen for rows per page change; set saved option
 
 	//
 	// Check if we have listnav, and if so get its webring element.
@@ -92,6 +95,46 @@ function formListener() {	// If there is a form, set up a submit listener to cap
 			localStorage.setItem('lastChange', obsList.join());	// Save for later
 		});
 	}
+}
+
+function rowsPerPage() {
+	if (document.getElementById('howmany')) {
+		let searchString = new URLSearchParams(location.search);
+		let parmValue = searchString.get("rowsPerPage");
+		if (!parmValue) {
+			let select = document.getElementById('howmany');
+			let selection = select.selectedIndex;
+			let optionValue = select.options[selection];
+			let options = getOptions('reviewerOptions');
+			let storedValue = options.howmany;
+			if (storedValue) {
+				if (storedValue != optionValue.value) {
+					searchString.set('rowsPerPage', storedValue);
+					let URL = location.origin + location.pathname + '?' + searchString;
+					redirectMessage(storedValue);
+					window.location = URL;
+				}
+			}
+		}
+
+		document.querySelector('#howmany').addEventListener('change', () => {
+			let select = document.getElementById('howmany');
+			let selection = select.selectedIndex;
+			let optionValue = select.options[selection];
+			setOption('reviewerOptions', 'howmany', optionValue.value);
+		});
+	}
+}
+
+function redirectMessage(storedValue) {
+	let Fwebring = document.getElementById("listnav").querySelector('.webring');
+	Fwebring.append(document.createElement('br'));
+	let msgPara = document.createElement('p');
+	msgPara.style.backgroundColor = flagBackgroundColor;
+	msgPara.style.color = 'white';
+	msgPara.style.fontWeight = 'bold';
+	msgPara.append('Restarting with ' + storedValue + ' rows per page...please wait.');
+	Fwebring.append(msgPara);
 }
 
 function regularReview() {
@@ -744,7 +787,7 @@ async function checkRecord(RowObject) {
 	}
 
 	function flagCell(Cell) {
-		Cell.style.backgroundColor = '#bb2222';
+		Cell.style.backgroundColor = flagBackgroundColor;
 		let anchor = Cell.querySelector('a');
 		let element = anchor ? anchor : Cell;
 		element.style.color = 'white';

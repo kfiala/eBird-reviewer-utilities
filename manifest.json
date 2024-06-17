@@ -5,7 +5,7 @@
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/*"],
-      "js": ["utilities.js","qr.js","filterGraph.js","filterExport.js","search.js"]
+      "js": ["commonFunctions.js","utilities.js","qr.js","filterGraph.js","filterExport.js","search.js"]
     }
   ],
   "host_permissions": [
