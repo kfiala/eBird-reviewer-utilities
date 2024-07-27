@@ -1201,7 +1201,7 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	toggleSpeciesDiv.setAttribute("id", 'toggleSpeciesDiv');
 	toggleSpeciesDiv.style.position = 'absolute';
 	toggleSpeciesDiv.style.left = '130px';
-	toggleSpeciesDiv.style.top = '200px';
+	toggleSpeciesDiv.style.top = '175px';
 	toggleSpeciesDiv.style.border = 'medium solid ' + greenBackground;
 	toggleSpeciesDiv.style.backgroundColor = boxBackgroundColor;
 	toggleSpeciesDiv.style.padding = '1em';
