@@ -108,7 +108,7 @@ function rowsPerPage() {
 			let options = getOptions('reviewerOptions');
 			let storedValue = options.howmany;
 			if (storedValue) {
-				if (storedValue != optionValue.value) {
+				if (storedValue != optionValue.value && nRecordsFound() > 25) {
 					searchString.set('rowsPerPage', storedValue);
 					let URL = location.origin + location.pathname + '?' + searchString;
 					redirectMessage(storedValue);
@@ -1379,6 +1379,12 @@ function setActualRange(rowCounter) {
 	} else {
 		return ('');
 	}
+}
+
+function nRecordsFound() {	// In, e.g., "42 found (showing 1 - 25)", return 42
+	let counts = document.getElementsByClassName('totalobs');
+	if (!counts.length) return 0;
+	return (counts[0].textContent.split(" ")[0]);
 }
 
 function historyWindow() {
