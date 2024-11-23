@@ -92,7 +92,9 @@ function formListener() {	// If there is a form, set up a submit listener to cap
 			for (let obs = 0; obs < observation.length; obs++) {
 				obsList.push(observation[obs] + '/' + lookup[observation[obs]]);
 			}
-			localStorage.setItem('lastChange', obsList.join());	// Save for later
+
+			let commaList = obsList.join();
+			storeRecallHistory(commaList);
 		});
 	}
 }
@@ -163,18 +165,18 @@ function regularReview() {
 		hyperlink['Download'] = buildCSV(mainTable);	//	First set up the CSV download
 		hyperlink['Toggle'] = setupToggleDeferred(mainTable);	// Set up "Toggle deferred" hyperlink
 		hyperlink['Species'] = setupSelectSpecies(mainTable); // Set up species selection list
-		mainTable.insertBefore(createRecallText(), mainTable.firstElementChild);	// Set up recall output
+		mainTable.insertBefore(createHistoryDiv(), mainTable.firstElementChild);	// Set up recall output
 		// Handler for when select all is checked
 		mainTable.querySelector('input.checkbox').addEventListener('change', () => { setTimeout(colorSelectAll, 100); });
 	} else {	// Special case when review queue is empty, "Congratulations! You have no more records to review"
-		let oopsText = createRecallText();
-		oopsText.style.position = 'absolute';
-		oopsText.style.left = '230px';
-		oopsText.style.top = '175px';
-		document.getElementById('listnav').insertBefore(oopsText, null);
+		let historyDiv = createHistoryDiv();
+		historyDiv.style.position = 'absolute';
+		historyDiv.style.left = '230px';
+		historyDiv.style.top = '175px';
+		document.getElementById('listnav').insertBefore(historyDiv, null);
 	}
 	hyperlink['DocList'] = makeDocList();	// Set up reviewer documents hyperlink
-	hyperlink['Recall'] = createOopsControl();	// Create recall hyperlink
+	hyperlink['Recall'] = CreateRecallControl();	// Create recall hyperlink
 
 	hyperlink['Extension'] = document.createElement('a');
 	hyperlink['Extension'].appendChild(document.createTextNode("Extension documentation"));
@@ -352,78 +354,26 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv,padRight) {
 	}
 }
 
-function createOopsControl() {
+function CreateRecallControl() {
 	// Create a paragraph to contain the hyperlink
-	// We are going to build <a id=oopsAnchor href=# class=toggler>Recall</a>
+	// We are going to build <a id=recallAnchor href=# class=toggler>Recall</a>
 	// Create an anchor element
-	let oopsAnchor = document.createElement('a');	// This is the actual toggle hyperlink
-	oopsAnchor.setAttribute("id", 'oopsAnchor');		// Not actually used
-	oopsAnchor.appendChild(document.createTextNode("Recall"));
-	oopsAnchor.setAttribute("href", "#");
+	let recallAnchor = document.createElement('a');	// This is the actual toggle hyperlink
+	recallAnchor.setAttribute("id", 'recallAnchor');		// Not actually used
+	recallAnchor.appendChild(document.createTextNode("Recall"));
+	recallAnchor.setAttribute("href", "#");
 
-	// This function will execute when oopsAnchor is clicked.
+	// This function will execute when recallAnchor is clicked.
 	// It toggles the display status of previously updated records.
-	oopsAnchor.onclick = function () {
-		let oops = document.getElementById('oopsText');
-		if (oops.style.display === 'none') {
-			oops.style.display = 'block';
+	recallAnchor.onclick = function () {
+		let recallDiv = document.getElementById('recallDiv');
+		if (recallDiv.style.display === 'none') {
+			recallDiv.style.display = 'block';
 		} else {
-			oops.style.display = 'none';
+			recallDiv.style.display = 'none';
 		}
 	}
-	return (oopsAnchor);
-}
-
-function createRecallText() {
-	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
-	let obsArray = [];
-	if (obsList) {
-		obsArray = obsList.split(",");
-	} else {
-		obsArray[0] = 'None';
-	}
-
-	let oopsText = document.getElementById('oopsText');	// Clear the previous output
-	if (oopsText) oopsText.remove;
-
-	// We are going to build <p id=oopsText style='display:none margin-bottom:1em'>Previously changed records:
-	// <a target=_blank href=https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1>OBS1</a> [, OBS2] ... </p>
-	oopsText = document.createElement('p');	// Paragraph to contain the list of observations
-	oopsText.setAttribute('id', 'oopsText');
-	oopsText.style.display = 'none';	// Initially it is not displayed
-	oopsText.style.marginBottom = '1em';
-	oopsText.style.fontSize = '13px';
-	oopsText.appendChild(document.createTextNode('Previously changed records: '));
-
-	let oopsTextAnchor, pieces, obsID, taxon = '';
-	for (let obs = 0; obs < obsArray.length; obs++) {
-		if (obsArray[0] === 'None') {
-			oopsText.appendChild(document.createTextNode('None'));
-			break;
-		} else {	// Set up the hyperlink for this observation
-			pieces = obsArray[obs].split('/');
-			obsID = pieces[0];
-			if (pieces.length > 1) {
-				taxon = obsArray[obs].substring(obsID.length + 1);	// Might be a slash in the name, can't use split
-			} else {
-				taxon = '';
-			}
-
-			oopsTextAnchor = document.createElement('a');
-			if (taxon) {
-				oopsTextAnchor.appendChild(document.createTextNode(taxon));
-			} else {
-				oopsTextAnchor.appendChild(document.createTextNode(obsArray[obs]));
-			}
-			oopsTextAnchor.setAttribute('target', '_blank');
-			oopsTextAnchor.setAttribute('href', 'https://review.ebird.org/admin/qr.htm?obsId=' + obsID);
-
-			oopsText.appendChild(oopsTextAnchor);
-			if (obs + 1 < obsArray.length)	// Make the list comma-separated
-				oopsText.appendChild(document.createTextNode(', '));
-		}
-	}
-	return oopsText;
+	return (recallAnchor);
 }
 
 async function finishMapURL(URL, OBS) { // Need to get ISO date via api, which has to be done asynchronously

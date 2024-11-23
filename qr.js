@@ -130,7 +130,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	infoCell.setAttribute('id','kInfo');
 
 	document.getElementById('kdiv').appendChild(infoCell);	// Append the span to kdiv
-	document.getElementById('kdiv').appendChild(createRecallText());
+	document.getElementById('kdiv').appendChild(createHistoryDiv());
 
 // Setup for checklist comments
 // Create empty html elements that will be filled in later
@@ -247,7 +247,7 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 }
 
 function storeChange() {
-	localStorage.setItem('lastChange', OBS + '/' + TAXON);
+	storeRecallHistory(OBS + '/' + TAXON);
 	storeHistory();
 }
 
@@ -366,65 +366,13 @@ function createOopsControl() {
 	// This function will execute when oopsAnchor is clicked.
 	// It toggles the display status of previously updated records..
 	oopsAnchor.onclick=function(){
-		let oops = document.getElementById('oopsText');
+		let oops = document.getElementById('recallDiv');
 		if (oops.style.display === 'none') {
 			oops.style.display = 'block';
 		} else {
 			oops.style.display = 'none';
 		}
 	}
-}
-
-function createRecallText() {
-	let obsList = localStorage.getItem('lastChange');	// Get the content for the list of observations
-	let obsArray = [];
-	if (obsList) {
-		obsArray = obsList.split(",");
-	} else {
-		obsArray[0] = 'None';
-	}
-
-	let oopsText = document.getElementById('oopsText');	// Clear the previous output
-	if (oopsText) oopsText.remove;
-
-	// We are going to build <p id=oopsText style='display:none margin-bottom:1em'>Previously changed records:
-	// <a target=_blank href=https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1>OBS1</a> [, OBS2] ... </p>
-	oopsText = document.createElement('p');	// Paragraph to contain the list of observations
-	oopsText.setAttribute('id','oopsText');
-	oopsText.style.display = 'none';	// Initially it is not displayed
-	oopsText.style.marginBottom = '1em';
-	oopsText.style.fontSize = '13px';
-	oopsText.appendChild(document.createTextNode('Previously changed records: '));
-
-	let oopsTextAnchor, pieces, obsID, taxon = '';
-	for (var obs=0; obs<obsArray.length; obs++) {
-		if (obsArray[0] === 'None') {
-			oopsText.appendChild(document.createTextNode('None'));
-			break;
-		} else {	// Set up the hyperlink for this observation
-			pieces = obsArray[obs].split('/');
-			obsID = pieces[0];
-			if (pieces.length > 1) {
-				taxon = obsArray[obs].substring(obsID.length+1);	// Might be a slash in the name, can't use split
-			} else {
-				taxon = '';
-			}
-			
-			oopsTextAnchor = document.createElement('a');
-			if (taxon) {
-				oopsTextAnchor.appendChild(document.createTextNode(taxon));
-			} else {
-				oopsTextAnchor.appendChild(document.createTextNode(obsArray[obs]));
-			}
-			oopsTextAnchor.setAttribute('target','_blank');
-			oopsTextAnchor.setAttribute('href','https://review.ebird.org/admin/qr.htm?obsId=' + obsID);
-
-			oopsText.appendChild(oopsTextAnchor);
-			if (obs+1 < obsArray.length)	// Make the list comma-separated
-				oopsText.appendChild(document.createTextNode(', '));
-		}
-	}
-	return oopsText;
 }
 
 async function obsViewData(OBS) {

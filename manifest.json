@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird reviewer utilities",
-  "version": "1.3.38",
+  "version": "1.3.39",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/*"],
@@ -17,5 +17,14 @@
     "48": "icons/48.png",
     "96": "icons/96.png"
   },
-  "author": "Kent Fiala"
+  "author": "Kent Fiala",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{d7a786d7-c190-48f7-a97d-3044b83b8902}",
+      "strict_min_version": "109.0"
+    },
+    "gecko_android": {
+      "strict_min_version": "128.0"
+    }
+  }
 }
