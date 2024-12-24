@@ -221,6 +221,9 @@ function reviewReasonAndNotesSetup() {
 	// When Reason is set, Send email is automatically checked and the right button gets set to Next but without emailWait
 	// because emailToggle does not get called.  So we set up emailToggle to run when the reason code is set.
 	document.getElementById('review-reason').addEventListener('change', () => { setTimeout(emailToggle, 200) });
+
+	document.getElementById('review-reason').focus();
+
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
