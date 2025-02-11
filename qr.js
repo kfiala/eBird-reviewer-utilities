@@ -6,29 +6,25 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 }
 
 function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
+	console.log('Entering wait()');
 	if (document.getElementById('kdiv')) return;	// Beware of possible double entry
 	if (!document.getElementById('qr-obs-documentation')) {
-		setTimeout(wait,100);
+		console.log("Don't have qr-obs-documentation")
+		setTimeout(wait, 600);
 	} else {
-		if (isMobile()) {
-			setTimeout(keepAlive, 500);
-		} else {
-			document.body.addEventListener('mouseenter', () => {
-				if (!document.getElementById('kdiv')) {
-					wait();
-				}
-			});
-			delayedSetup();
-		}
+		console.log('Calling delayedSetup');
+		delayedSetup();
+		keepAlive();
 	}
 }
 
 function keepAlive() {
 	console.log('Blip');
 	if (!document.getElementById('kdiv')) {
+		console.log('No kdiv')
 		if (document.getElementById('qr-obs-title')) delayedSetup();
 	}
-	setTimeout(keepAlive, 500);
+	setTimeout(keepAlive, 900);
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
@@ -60,8 +56,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	kdiv.setAttribute('id','kdiv');
 	kdiv.style.marginLeft = '1em';
 	let hostdiv = document.getElementById('qr-obs-documentation');
-	hostdiv.insertBefore(kdiv,hostdiv.firstChild);
-
+	hostdiv.insertBefore(kdiv, hostdiv.firstChild);	
 //	Set up the recall link
 	createOopsControl();
 //	Collect information for other links
