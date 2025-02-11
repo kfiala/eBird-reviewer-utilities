@@ -6,25 +6,12 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 }
 
 function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
-	console.log('Entering wait()');
-	if (document.getElementById('kdiv')) return;	// Beware of possible double entry
-	if (!document.getElementById('qr-obs-documentation')) {
-		console.log("Don't have qr-obs-documentation")
-		setTimeout(wait, 600);
-	} else {
-		console.log('Calling delayedSetup');
-		delayedSetup();
-		keepAlive();
-	}
-}
-
-function keepAlive() {
-	console.log('Blip');
 	if (!document.getElementById('kdiv')) {
-		console.log('No kdiv')
-		if (document.getElementById('qr-obs-title')) delayedSetup();
+		if (document.getElementById('qr-obs-documentation')) {
+			delayedSetup();
+		}
 	}
-	setTimeout(keepAlive, 900);
+	setTimeout(wait, 1000);
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
