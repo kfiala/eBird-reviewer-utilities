@@ -10,7 +10,7 @@ function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setu
 		if (document.getElementById('qr-obs-documentation')) {
 			delayedSetup();
 		}
-	}
+}
 	setTimeout(wait, 1000);
 }
 
@@ -118,7 +118,6 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 // Create empty html elements that will be filled in later
 	let commentsP = document.createElement('p');
 	commentsP.style.fontSize = '13px';
-	commentsP.style.color = '#0070b3';
 	commentsP.style.display = 'none';
 	commentsP.setAttribute('id', 'commentsP');
 	let commentSpan0 = document.createElement('span');
@@ -416,7 +415,56 @@ async function obsViewData(OBS) {
 		version = '';
 	}
 	span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
+
+	let Protocols = {};
+
+	Protocols["P22"] = "Traveling";
+	Protocols["P21"] = "Stationary";
+	Protocols["P62"] = "Historical";
+	Protocols["P20"] = "Incidental";
+	Protocols["P23"] = "Area";
+	Protocols["P33"] = "Banding";
+	Protocols["P60"] = "eBird Pelagic Protocol";
+	Protocols["P54"] = "Nocturnal Flight Call Count";
+	Protocols["P52"] = "Oiled Birds";
+	Protocols["P48"] = "Random";
+
+	let protocol = json.sub.protocolId;
+	if (protocol in Protocols) {
+		protocol = Protocols[protocol];
+	} 
+
+	let duration = json.sub.durationHrs;
+	if (duration == undefined)
+		duration = 'N/A';
+	else {
+		let hours = Math.floor(duration);
+		let minutes = ((duration - hours) * 60).toFixed(0);
+		duration = "";
+		if (hours.toString() != "0")
+			duration += " " + hours + ' hours ';
+		if (minutes.toString() != "0")
+			duration += " " + minutes + ' minutes';
+	}
+
+	span.append(document.createElement('br'));
 	
+	span.append(' Duration: ' + duration + ' | ');
+
+	let distance;
+	let km = json.sub.effortDistanceKm;
+	if (km == undefined) {
+		distance = 'N/A';
+	} else {
+		let miles = (km * 0.62137119224).toFixed(2);
+		distance = km + 'km / ' + miles + 'mi';
+	}
+	span.append(' Distance: ' + distance  + ' | ');
+
+	span.append(' Protocol: ' + protocol + ' | ');
+
+	span.append((json.sub.allObsReported ? ' Complete' : ' Incomplete') + ' | ');
+
 	getMediaCounts(OBS);
 	return;
 }
