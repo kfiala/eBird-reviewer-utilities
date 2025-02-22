@@ -154,7 +154,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	document.getElementById('kdiv').appendChild(commentsP);
 	// End of setup for checklist comments
 	if (OBS) {	// Start asynchronous call for observation data
-		obsViewData(OBS);
+		obsViewData(OBS, subId);
 	}
 }
 
@@ -359,7 +359,7 @@ function createOopsControl() {
 	}
 }
 
-async function obsViewData(OBS) {
+async function obsViewData(OBS, subId) {
 	let url = 'https://review.ebird.org/admin/api/v1/obs/view/' + OBS;
 	let response = await fetch(url);
 	let json = await response.json();
@@ -419,6 +419,7 @@ async function obsViewData(OBS) {
 	let mediaSpan = document.createElement('span');
 	mediaSpan.setAttribute('id', 'mediaspan');
 	span.appendChild(mediaSpan);
+	getMediaCounts(OBS);
 
 	let Protocols = {};
 
@@ -469,7 +470,11 @@ async function obsViewData(OBS) {
 
 	span.append((json.sub.allObsReported ? ' Complete' : ' Incomplete') + ' | ');
 
-	getMediaCounts(OBS);
+	let taxaSpan = document.createElement('span');
+	taxaSpan.setAttribute('id', 'taxaspan');
+	span.appendChild(taxaSpan);
+	getSpeciesCounts(subId);
+
 	return;
 }
 
@@ -500,6 +505,22 @@ async function getMediaCounts(OBS) {
 
 	sessionStorage.setItem('mediaCounts', [Pcount, Acount, Vcount]);
 
+}
+
+async function getSpeciesCounts(subid) {
+	const response = await fetch('https://review.ebird.org/admin/reviewSub.htm?subID=' + subid, { redirect: "follow" })
+	const html = await response.text();
+	const parser = new DOMParser();
+	const dom = parser.parseFromString(html, 'text/html');
+	const taxaList = dom.getElementsByClassName("count");
+	let individuals = 0;
+	for (i = 0; i < taxaList.length; i++) {
+		individuals += Number(dom.getElementsByClassName("count")[i].textContent);
+	}
+	const report = taxaList.length + ' taxa, ' + individuals + ' individuals';
+
+	let span = document.getElementById('taxaspan');
+	span.textContent = report;
 }
 
 function isMobile() {
