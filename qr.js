@@ -416,6 +416,10 @@ async function obsViewData(OBS) {
 	}
 	span.appendChild(document.createTextNode( 'Submitted via ' + method + ' ' + version + ' | '));
 
+	let mediaSpan = document.createElement('span');
+	mediaSpan.setAttribute('id', 'mediaspan');
+	span.appendChild(mediaSpan);
+
 	let Protocols = {};
 
 	Protocols["P22"] = "Traveling";
@@ -432,7 +436,7 @@ async function obsViewData(OBS) {
 	let protocol = json.sub.protocolId;
 	if (protocol in Protocols) {
 		protocol = Protocols[protocol];
-	} 
+	}
 
 	let duration = json.sub.durationHrs;
 	if (duration == undefined)
@@ -491,7 +495,7 @@ async function getMediaCounts(OBS) {
 		}
 	}
 
-	let span = document.getElementById('kInfo');
+	let span = document.getElementById('mediaspan');
 	span.appendChild(document.createTextNode(mediaMessage));
 
 	sessionStorage.setItem('mediaCounts', [Pcount, Acount, Vcount]);
