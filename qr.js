@@ -517,7 +517,8 @@ async function getSpeciesCounts(subid) {
 	for (i = 0; i < taxaList.length; i++) {
 		individuals += Number(dom.getElementsByClassName("count")[i].textContent);
 	}
-	const report = taxaList.length + ' taxa, ' + individuals + ' individuals';
+	let report = taxaList.length + (taxaList.length == 1 ? ' taxon, ' : ' taxa, ') + individuals + ' individual';
+	if (individuals > 1) report += 's';
 
 	let span = document.getElementById('taxaspan');
 	span.textContent = report;
