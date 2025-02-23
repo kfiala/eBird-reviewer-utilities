@@ -9,9 +9,18 @@ function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setu
 	if (!document.getElementById('kdiv')) {
 		if (document.getElementById('qr-obs-documentation')) {
 			delayedSetup();
+		} else {
+			setTimeout(wait, 100);
 		}
+	}
 }
-	setTimeout(wait, 1000);
+
+function waitNext() {	// Wait for kdiv to disappear; then wait for its reappearance.
+	if (document.getElementById('kdiv')) {
+		setTimeout(waitNext, 100);
+	} else {
+		wait();
+	}
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
@@ -25,7 +34,8 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	}
 	
 	let skipAnchor = document.getElementById('qr-obs-title').querySelector('a.Button');
-	skipAnchor.addEventListener('click', () => { storeHistory(); });
+	skipAnchor.addEventListener('click', storeHistory);
+	skipAnchor.addEventListener('click', waitNext);
 	skipAnchor.setAttribute('id', 'skipAnchor');
 	let backButton = document.createElement('a');
 	backButton.href = '#';
@@ -183,10 +193,13 @@ function reviewReasonAndNotesSetup() {
 			if (['Next', 'Accept'].includes(label)) {
 				if (document.getElementById('send-email-checkbox').checked) {
 					buttons[b].addEventListener('click', emailWait);	// need to wait for more DOM for emailing
+					buttons[b].addEventListener('click', waitNext);
 				} else {
+					buttons[b].addEventListener('click', waitNext);
 					buttons[b].addEventListener('click', storeChange);
 				}
 			} else {	// Unconfirm, Defer
+				buttons[b].addEventListener('click', waitNext);
 				buttons[b].addEventListener('click', storeChange);
 			}
 		}
@@ -278,6 +291,7 @@ function mailSetup() {
 	for (let b=0; b<buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
+			buttons[b].addEventListener('click', waitNext);
 			buttons[b].addEventListener('click', storeChange);
 			break;
 		}
