@@ -72,6 +72,51 @@ function cssAdjustments() {	// Adjust the widths of "Review decision", "Reason",
 	if (changeButton.length) {
 		changeButton[changeButton.length - 1].addEventListener('focus', (ev) => {
 			ev.target.style.background = '#0d0';
+			/////////////////////////////////////
+			let speciesList = [];
+			document.getElementById('contents').querySelectorAll('td.species').forEach(function (td) {
+				speciesList.push(td.textContent);
+			});
+
+			// If select species is in effect, some rows are hidden. If shift-click is used on the displayed list,
+			// it will select hidden as well as displayed records. Here we look for hidden records that are checked,
+			// and uncheck them.
+			let rowNum = 0;
+			document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
+				if (input.parentNode.tagName == 'TD') {	// Skip the TH row
+					// Debugging
+					let species = speciesList[rowNum];
+					if (input.parentElement.parentElement.style.display == 'none') {
+						if (input.checked) {
+							console.log('Hidden and Checked', rowNum, species);
+							//						input.checked = false;
+							console.log('Will clear', species);
+						}
+						else
+							console.log('Hidden and Not checked', rowNum, species);
+					} else {
+						if (input.checked)
+							console.log('Displayed and Checked', rowNum, species);
+						else
+							console.log('Displayed and Not checked', rowNum, species);
+					}
+					// Production
+					if (input.parentElement.parentElement.style.display == 'none' && input.checked) {
+						input.checked = false;
+						console.log('Cleared', rowNum, species);
+					}
+					rowNum++;
+				}
+			});
+			// debugging
+			/*
+			document.getElementById('contents').querySelectorAll('input.checkbox').forEach(function (input) {
+				if (input.parentNode.tagName == 'TD') {	// Skip the header row, which has TH instead of TD, and no display-type set
+					input.parentNode.parentNode.style.display = 'table-row';	// display type for the row
+				}
+			});
+			*/
+			/////////////////////////////////////
 		});
 		changeButton[changeButton.length - 1].addEventListener('blur', (ev) => {
 			ev.target.style.background = '#090';
