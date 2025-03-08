@@ -528,11 +528,19 @@ async function getSpeciesCounts(subid) {
 	const dom = parser.parseFromString(html, 'text/html');
 	const taxaList = dom.getElementsByClassName("count");
 	let individuals = 0;
+	let Xcount = 0;
 	for (i = 0; i < taxaList.length; i++) {
-		individuals += Number(dom.getElementsByClassName("count")[i].textContent);
+		let count = Number(dom.getElementsByClassName("count")[i].textContent);
+		if (isNaN(count)) {
+			count = 0;
+			Xcount++;
+		}
+		individuals += count;
 	}
 	let report = taxaList.length + (taxaList.length == 1 ? ' taxon, ' : ' taxa, ') + individuals + ' individual';
-	if (individuals > 1) report += 's';
+	if (individuals != 1) report += 's';
+	if (Xcount > 0)
+		report += ', ' + Xcount + " X species";
 
 	let span = document.getElementById('taxaspan');
 	span.textContent = report;
