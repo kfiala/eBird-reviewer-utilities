@@ -505,7 +505,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 		let checklist, chklstCell, chklstLink;
 		let OBS;
 		let Class, html, el;
-		let speciesCell;
+		let speciesCell, submissionCell;
 		let RowObject = new RowClass();
 
 		if (!doHeaders) {	// Skip header row
@@ -565,6 +565,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					if (el.nodeName === 'A') {
 						subid = el.textContent;
 						checklist = 'https://ebird.org/checklist/' + subid
+						submissionCell = Cell;
 					}
 					break;
 				case "species":
@@ -628,8 +629,8 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					break;
 				case "status": status = Cell.textContent;
 					if (status == 'Deferred') {	// Gray out species name on deferred record
-						let speciesAnchor = speciesCell.querySelector('a');
-						speciesAnchor.style.color = '#aaa';
+						speciesCell.querySelector('a').style.color = '#aaa';
+						submissionCell.querySelector('a').style.color = '#ccc'; 
 					}
 					break;
 				case "details": break;	// Don't keep anything from "details" column
