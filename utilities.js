@@ -820,7 +820,7 @@ async function setupMedia(elTr, mediaCell, OBS) {
 	mediaTD.setAttribute('class', 'assetarray');
 	mediaRow.appendChild(mediaTD);
 	mediaTD.style.display = 'none';
-	getDetails(mediaCell, commentTD, mediaTD, OBS);
+	getDetails(elTr, mediaCell, commentTD, mediaTD, OBS);
 	mediaCell.addEventListener('click', (ev) => { toggleMedia(ev); });
 }
 
@@ -855,7 +855,7 @@ function toggleMediaRows(tr) {
 	}
 }
 
-async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
+async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 	const parser = new DOMParser();
 
 	let response = await fetch('https://review.ebird.org/admin/reviewServices/getObsComments.do?obsId=' + OBS);
@@ -883,6 +883,17 @@ async function getDetails(mediaCell, commentTD, mediaTD, OBS) {
 		mediaIcon.setAttribute('class', 'icon icon-ev-N');
 		mediaIcon.appendChild(document.createTextNode('N'));
 		mediaCell.appendChild(mediaIcon);
+	}
+
+	let dateCell = elTr.querySelector('.obsdate');
+	let obsDate = dateCell.textContent;
+	let obsTime = json.sub.obsDt.substring(11);
+	dateCell.setAttribute('title', obsDate + ' ' + obsTime);
+
+	let Nobs = json.observers.length;
+	if (Nobs > 1) {
+		let observerCell = elTr.querySelector('.user');
+		observerCell.append(' +' + (Nobs - 1));
 	}
 
 	let mediaType = '';
