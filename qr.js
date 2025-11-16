@@ -296,6 +296,7 @@ function mailSetup() {
 			break;
 		}
 	}
+	console.log('In mailSetup');
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
 	let URLindex = message.indexOf('\nhttps');
@@ -341,6 +342,40 @@ function mailSetup() {
 
 		newMessage = newMessage.replace('The documentation you have provided shows a', newText);
 		document.getElementById('email-message1').textContent = newMessage;
+	}
+	console.log('Setting up for Turkish');
+	let mailDiv = document.getElementById('qr-language-control');
+	if (mailDiv) {
+		console.log('Found mailDiv');
+		let langUL = mailDiv.querySelector('ul').querySelectorAll('li');
+		for (let index in langUL) {
+			let langItem = langUL[index];
+			if (langItem.textContent == 'Turkish') {
+				console.log('Found Turkish');
+				langItem.addEventListener('click', turkishWait);
+				break;
+			}
+		}
+	}
+}
+
+function turkishWait() {
+	console.log('Entering turkishWait');
+	let messageDiv = document.getElementById('email-message1');
+	if (!messageDiv || !messageDiv.textContent) {
+		console.log('Waiting...');
+		setTimeout(turkishWait, 100);
+	} else {
+		let message = messageDiv.textContent;
+		console.log('Message: ' + message.slice(0, 50));
+		if (!message.slice(0,6).includes('Sayın ')){
+			console.log('Waiting..."', message.slice(0,6), '"');
+			setTimeout(turkishWait, 100);
+		} else {
+			console.log('Modifying message');
+			message = message.replace(/<<<.*>>>/, '');
+			messageDiv.textContent = message;
+		}
 	}
 }
 
