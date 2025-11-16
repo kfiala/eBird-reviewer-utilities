@@ -32,7 +32,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 			buttons[b].addEventListener('click', secondWait);	// When a button is clicked, wait for more DOM that we will need
 		}
 	}
-	
+
 	let skipAnchor = document.getElementById('qr-obs-title').querySelector('a.Button');
 	skipAnchor.addEventListener('click', storeHistory);
 	skipAnchor.addEventListener('click', waitNext);
@@ -53,7 +53,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	kdiv.setAttribute('id','kdiv');
 	kdiv.style.marginLeft = '1em';
 	let hostdiv = document.getElementById('qr-obs-documentation');
-	hostdiv.insertBefore(kdiv, hostdiv.firstChild);	
+	hostdiv.insertBefore(kdiv, hostdiv.firstChild);
 //	Set up the recall link
 	createOopsControl();
 //	Collect information for other links
@@ -72,11 +72,11 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 			sixcode = sixcode.split('&')[0];
 		} else if (url.includes('obsID=')) {			// https://review.ebird.org/admin/reviewObs.htm?obsID=OBS1570434379
 			OBS = url.split('=')[1];
-		}		
+		}
 	}
 	let qrTitle = document.getElementById('qr-obs-title');
 	TAXON = qrTitle.querySelector('span.Heading-main').textContent;
-	
+
 	// Create a new span ("cell") for the eBird checklist hyperlink
 	let chklstCell = document.createElement('span');
 	chklstCell.setAttribute('style','color:#ccc');
@@ -116,7 +116,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 
 	document.getElementById('kdiv').appendChild(map);	// Append the map hyperlink to kdiv
 	kdiv.appendChild(document.createTextNode(' | '));
-	
+
 // 	Last thing in the div is an empty span, just a placeholder for now
 	let infoCell = document.createElement('span');
 	infoCell.setAttribute('id','kInfo');
@@ -182,7 +182,7 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 function reviewReasonAndNotesSetup() {
 	let reasonPage = document.getElementById('reasonPage');
 	if (!isMobile())
-		reasonPage.style.top = 'calc(100% - 175px)';	
+		reasonPage.style.top = 'calc(100% - 175px)';
 
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
@@ -296,7 +296,6 @@ function mailSetup() {
 			break;
 		}
 	}
-	console.log('In mailSetup');
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
 	let URLindex = message.indexOf('\nhttps');
@@ -343,15 +342,13 @@ function mailSetup() {
 		newMessage = newMessage.replace('The documentation you have provided shows a', newText);
 		document.getElementById('email-message1').textContent = newMessage;
 	}
-	console.log('Setting up for Turkish');
+	// Special handling for Turkish language emails
 	let mailDiv = document.getElementById('qr-language-control');
 	if (mailDiv) {
-		console.log('Found mailDiv');
 		let langUL = mailDiv.querySelector('ul').querySelectorAll('li');
 		for (let index in langUL) {
 			let langItem = langUL[index];
 			if (langItem.textContent == 'Turkish') {
-				console.log('Found Turkish');
 				langItem.addEventListener('click', turkishWait);
 				break;
 			}
@@ -360,19 +357,14 @@ function mailSetup() {
 }
 
 function turkishWait() {
-	console.log('Entering turkishWait');
 	let messageDiv = document.getElementById('email-message1');
 	if (!messageDiv || !messageDiv.textContent) {
-		console.log('Waiting...');
 		setTimeout(turkishWait, 100);
 	} else {
 		let message = messageDiv.textContent;
-		console.log('Message: ' + message.slice(0, 50));
 		if (!message.slice(0,6).includes('Sayın ')){
-			console.log('Waiting..."', message.slice(0,6), '"');
 			setTimeout(turkishWait, 100);
 		} else {
-			console.log('Modifying message');
 			message = message.replace(/<<<.*>>>/, '');
 			messageDiv.textContent = message;
 		}
@@ -502,7 +494,7 @@ async function obsViewData(OBS, subId) {
 	}
 
 	span.append(document.createElement('br'));
-	
+
 	span.append(' Duration: ' + duration + ' | ');
 
 	let distance;
