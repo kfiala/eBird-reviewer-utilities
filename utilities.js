@@ -869,7 +869,10 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 	if (json.sub.comments) {
 		checklistComments = true;
 		const clComment = parser.parseFromString('Checklist comments: ' + json.sub.comments, 'text/html');
-		commentTD.append(clComment.body);
+		commentTD.append(clComment.body.textContent);
+		if (comments.length) {
+			commentTD.append(document.createElement('br'));
+		}
 	}
 
 
@@ -877,7 +880,7 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 		if (checklistComments)
 			comments = 'Observation comments: ' + comments;
 		const htmlComment = parser.parseFromString(comments, 'text/html');
-		commentTD.append(htmlComment.body);
+		commentTD.append(htmlComment.body.textContent);
 
 		let mediaIcon = document.createElement('i');
 		mediaIcon.setAttribute('class', 'icon icon-ev-N');
