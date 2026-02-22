@@ -1490,6 +1490,20 @@ function bulkactionsKeyHandler(ev) { // key handler for when bulk actions are ac
 			}
 			keyboardHandler(ev);
 			break;
+		case 'ArrowDown':
+			if (ev.ctrlKey) {
+				document.activeElement.blur();
+				if (firstDisplayedRow) {
+					focusRow = document.getElementById('rowid' + focusRowNumber);
+					keepInView(focusRow, 'keyboardHandler');
+					if (focusRowNumber && focusRow.style.display != 'none') {
+						focusRow.style.background = focusColor;
+						break;
+					}
+				}
+			}
+			break;
+
 		default:
 			break;
 	}
