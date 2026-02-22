@@ -256,6 +256,55 @@ function colorSelectAll(check = 'none') {	// Set row background color when selec
 		}
 	});
 }
+  
+function selectAllChecked(check) {	// hide rows that are not selected
+	const tableBody = document.getElementById('contents').querySelector('tbody');
+
+	if (check) {
+		const checkedList = tableBody.querySelectorAll('input[type="checkbox"]:checked');
+		if (checkedList.length == 0) return;
+	}
+
+	firstDisplayedRow = -1;
+
+	tableBody.querySelectorAll('input.checkbox').forEach(function (input) {
+		let cell = input.parentNode;
+		let row = cell.parentNode;
+		switch (check) {
+			case true:
+				if (!input.checked) {
+					if (row.style.display != 'none') {
+						row.classList.add('Khidden');
+						row.style.display = 'none';
+					}
+					unExpand(); // Hide any rows expanded with comments or media
+				} else { // Checked
+					if (firstDisplayedRow < 0) {
+						firstDisplayedRow = input.id.substring(6);
+					} 
+					lastDisplayedRow = input.id.substring(6);
+				}
+				break;
+			case false:
+				if (row.classList.contains('Khidden')) {
+					row.classList.remove('Khidden');
+					row.style.display = 'table-row';
+
+					if (firstDisplayedRow < 0) {
+						firstDisplayedRow = input.id.substring(6);
+					}
+					lastDisplayedRow = input.id.substring(6);
+				} else if (row.style.display == 'table-row') {
+					lastDisplayedRow = input.id.substring(6);
+				}
+				break;
+			default:
+				break;
+		}
+	});
+	
+	document.getElementById('contents').querySelector('input.checkbox').disabled = check;
+}
 
 function keepInView(element,caller) {
 	if (element) {
@@ -1056,11 +1105,6 @@ function performDeferToggle(mainTable) {
 		deferToggle = 0;
 	}
 
-	// Hide any rows expanded with comments or media
-	mainTable.querySelectorAll('.expanded').forEach(function (Row) {
-		Row.style.display = 'none';
-	});
-
 	let reviewRows = document.getElementsByClassName('status');	// Each row is an observation in the queue
 
 	let checkAll = mainTable.querySelector('input.checkbox');
@@ -1091,6 +1135,9 @@ function performDeferToggle(mainTable) {
 		sessionStorage.setItem('deferToggle', 0);
 		performDeferToggle(mainTable);
 	}
+
+	// Hide any rows expanded with comments or media
+	unExpand();
 
 	visibleCount();
 }
@@ -1252,11 +1299,6 @@ function performSelectSpecies(mainTable, targetSpecies) {
 
 	document.getElementById('toggleSpeciesDiv').style.display = 'none';
 
-	// Hide any rows expanded with comments or media
-	mainTable.querySelectorAll('.expanded').forEach(function (Row) {
-		Row.style.display = 'none';
-	});
-
 	let showAll = (targetSpecies == 'All species');
 
 	let checkAll = mainTable.querySelector('input.checkbox');
@@ -1291,6 +1333,9 @@ function performSelectSpecies(mainTable, targetSpecies) {
 	}
 	lastDisplayedRow++; // zero-based to one-based;
 	firstDisplayedRow++;
+
+	// Hide any rows expanded with comments or media
+	unExpand();
 
 	visibleCount();
 }
@@ -1430,6 +1475,26 @@ function submissionWindow() {
 	}
 }
 
+function bulkactionsKeyHandler(ev) { // key handler for when bulk actions are active after pressing "J"
+	switch (ev.code) {
+		case 'Escape':
+			if (document.activeElement) {
+				document.activeElement.blur();
+			}
+			selectAllChecked(false);
+			document.removeEventListener('keydown', bulkactionsKeyHandler);
+			break;
+		case 'Home':	// To return to the table after pressing "J"
+			if (document.activeElement) {
+				document.activeElement.blur();
+			}
+			keyboardHandler(ev);
+			break;
+		default:
+			break;
+	}
+}
+
 function keyboardHandler(ev)
 {
 	if (focusRowNumber == -1) { // keyboard select all is active
@@ -1529,8 +1594,10 @@ function keyboardHandler(ev)
 				}
 				break;
 			case 'KeyJ':
+				selectAllChecked(true);
 				document.getElementById('resultingValid').focus();
 				window.scrollTo(0, 0);
+				document.addEventListener('keydown', bulkactionsKeyHandler);
 				break;
 			case 'Enter':
 				ev.preventDefault();
@@ -1602,4 +1669,22 @@ function setRowBackground(rowNumber) {	// set or remove focus color / select col
 function isMobile() {
 	// True if screen is narrow (presumed mobile)
 	return !window.matchMedia("(min-width: 48em)").matches;
+}
+
+function unExpand() {	// Close any rows expanded with comments or media if under a row that is hidden
+	document.getElementById('contents').querySelectorAll('.expanded').forEach(function (Cell) {
+		let Row = Cell.parentElement;
+		let failSafe = 3;
+		while (!Row.matches('.row1') && !Row.matches('.row2')) {
+			Row = Row.previousElementSibling;
+			if (--failSafe == 0) {
+				console.log('Failed to find row');
+				return;
+			}
+		}
+		if (Row.style.display == 'none') {
+			Cell.classList.remove('expanded');
+			Cell.style.display = 'none';
+		}
+	});
 }
