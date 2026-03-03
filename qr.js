@@ -166,6 +166,54 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	if (OBS) {	// Start asynchronous call for observation data
 		obsViewData(OBS, subId);
 	}
+	setTimeout(doObsMedia, 1000);
+}
+
+function doObsMedia() {	// Add download links for media, if any
+	const mediaDiv = document.getElementById('qr-obs-media');
+
+	if (mediaDiv) {
+		const galleryRows = mediaDiv.querySelectorAll('div.ResultsGallery-row');
+		galleryRows.forEach(row => {
+			let anchorRow = document.createElement('div');
+			anchorRow.style.marginLeft = '1px';
+			let imgAnchor = document.createElement('a');
+			imgAnchor.setAttribute('href', URL);
+
+			const imgList = row.querySelectorAll('img');
+			let index = 0;
+			imgList.forEach(img => {
+				let last = img.src.lastIndexOf('/');
+				let thing = img.src.slice(last + 1);
+				thingIsNumeric = /^\d+$/.test(thing);
+				let URL;
+				let imgAnchor;
+				if (thingIsNumeric) {
+					URL = img.src.slice(0, last + 1) + '2400';
+					imgAnchor = document.createElement('a');
+					imgAnchor.setAttribute('href', URL);
+					imgAnchor.setAttribute('target', '_blank');
+					imgAnchor.style.display = 'inline-block';
+					if (index < imgList.length - 1) {
+						imgAnchor.style.width = img.style.width.slice(0, -2) - 3 + 'px';
+					} else {
+						imgAnchor.style.width = img.style.width.slice(0, -2) - 6 + 'px';
+					}
+
+						imgAnchor.style.textAlign = 'center';
+					imgAnchor.appendChild(document.createTextNode('Download image'));
+				} else {
+					imgAnchor = document.createElement('span');
+					imgAnchor.style.display = 'inline-block';
+					imgAnchor.style.width = img.style.width.slice(0, -2) - 3 + 'px';
+					imgAnchor.appendChild(document.createTextNode(''));
+				}
+				anchorRow.appendChild(imgAnchor);
+				index++;
+			});
+			row.after(anchorRow);
+		});
+	}
 }
 
 function secondWait(e) { //	After a top-level button is clicked, wait for the "Review reason and notes" panel to be ready.
