@@ -988,12 +988,14 @@ async function getMedia(mediaTD) {
 		const previewURL = [];
 		const largeURL = [];
 		const mediaURL = [];
+		const downloadURL = [];
 		const userDisplayName = [];	// eBirder
 		const catalogId = [];
 		for (let index in json.results.content) {
 			previewURL.push(json.results.content[index].previewUrl);
 			largeURL.push(json.results.content[index].largeUrl);
 			mediaURL.push(json.results.content[index].mediaUrl);
+			downloadURL.push(json.results.content[index].previewUrl + '2400');
 			userDisplayName.push(json.results.content[index].userDisplayName);
 			catalogId.push(json.results.content[index].catalogId);
 		}
@@ -1022,6 +1024,17 @@ async function getMedia(mediaTD) {
 			mediaDiv.appendChild(mediaAnchor);
 			mediaDiv.style.display = 'inline-block';
 
+			if (mtype == 'Photo') {
+				let newDiv = document.createElement('div');
+				let downloadAnchor = document.createElement('a');
+				downloadAnchor.setAttribute('href', downloadURL[index]);
+				downloadAnchor.setAttribute('target', '_blank');
+				downloadAnchor.appendChild(document.createTextNode('Download Image'));
+				newDiv.appendChild(downloadAnchor);
+
+				mediaDiv.appendChild(newDiv);
+			}
+
 			if (mtype == 'Video') {
 				mediaDiv.style.border = 'thick solid blue';
 			}
@@ -1029,7 +1042,8 @@ async function getMedia(mediaTD) {
 			if (mtype == 'Audio') {
 				wavAnchor = document.createElement('a');
 				wavAnchor.setAttribute('href', mediaURL[index]);
-				wavAnchor.appendChild(document.createTextNode('.mp3'));
+				wavAnchor.setAttribute('target', '_blank');
+				wavAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
 
 				mediaDiv.appendChild(document.createElement('br'));
 				mediaDiv.appendChild(wavAnchor);

@@ -188,8 +188,12 @@ function doObsMedia() {	// Add download links for media, if any
 				thingIsNumeric = /^\d+$/.test(thing);
 				let URL;
 				let imgAnchor;
-				if (thingIsNumeric) {
-					URL = img.src.slice(0, last + 1) + '2400';
+				if (thingIsNumeric || thing == 'poster') {
+					if (thingIsNumeric) {
+						URL = img.src.slice(0, last + 1) + '2400';
+					} else if (thing == 'poster') {
+						URL = img.src.slice(0, last + 1) + 'audio';
+					}
 					imgAnchor = document.createElement('a');
 					imgAnchor.setAttribute('href', URL);
 					imgAnchor.setAttribute('target', '_blank');
@@ -199,9 +203,12 @@ function doObsMedia() {	// Add download links for media, if any
 					} else {
 						imgAnchor.style.width = img.style.width.slice(0, -2) - 6 + 'px';
 					}
-
-						imgAnchor.style.textAlign = 'center';
-					imgAnchor.appendChild(document.createTextNode('Download image'));
+					imgAnchor.style.textAlign = 'center';
+					if (thingIsNumeric) {
+						imgAnchor.appendChild(document.createTextNode('Download image'));
+					} else if (thing == 'poster') {
+						imgAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
+					}
 				} else {
 					imgAnchor = document.createElement('span');
 					imgAnchor.style.display = 'inline-block';
