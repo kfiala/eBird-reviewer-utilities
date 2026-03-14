@@ -1,25 +1,31 @@
 // Enhancements for Quick Review
-var OBS, TAXON, mainButton;
+var OBS, TAXON, mainButton, reasonActive;
+var isInDOM, newInDom;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
-	wait();
+	wait('init');
 }
 
-function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
+function wait(state) {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
+	console.log('In wait function, state: ' + state);
 	if (!document.getElementById('kdiv')) {
 		if (document.getElementById('qr-obs-documentation')) {
 			delayedSetup();
+			initKeyboardHandlers();
 		} else {
-			setTimeout(wait, 100);
+			setTimeout(wait, 100, 'waiting');
 		}
 	}
 }
 
 function waitNext() {	// Wait for kdiv to disappear; then wait for its reappearance.
-	if (document.getElementById('kdiv')) {
+	console.log('At entry to waitNext, newInDom is: ' + newInDom);
+	if (!newInDom) {
+		console.log('waiting for new qr-obs-documentation, isInDOM is: ' + isInDOM);
 		setTimeout(waitNext, 100);
 	} else {
-		wait();
+		console.log('ready to wait for kdiv');
+		wait('next');
 	}
 }
 
@@ -167,6 +173,53 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		obsViewData(OBS, subId);
 	}
 	setTimeout(doObsMedia, 1000);
+	// Keep an eye on kdiv
+	const el = document.querySelector('#qr-obs-documentation');
+	isInDOM = document.body.contains(el);
+	newInDom = false;
+
+	const observer = new MutationObserver((mutations) => {
+		for (const m of mutations) {
+		// --- Detect removal ---  
+			m.removedNodes.forEach(node => {
+				if (node.contains(el)) {
+					isInDOM = false;
+					console.log('Element or one of its ancestors was removed');
+				}
+			});
+
+			// --- Detect addition ---
+			let newel = document.querySelector('#qr-obs-documentation');
+			m.addedNodes.forEach(node => {
+				// Case 1: the element itself was added
+				if (node === newel) {
+					isInDOM = true;
+					console.log('Element was added back');
+				}
+
+				// Case 2: the element was added inside a subtree
+				if (!isInDOM && node.contains(newel)) {
+					isInDOM = true;
+					newInDom = true;
+					console.log('Element was added back (inside subtree)');
+				}
+			});
+
+	
+		}
+	});
+
+	observer.observe(document.body, {
+		childList: true,
+		subtree: true
+	});
+
+}
+
+function initKeyboardHandlers() {
+	console.log('Setting up main level and title level keyboard listeners');
+	document.addEventListener('keydown', mainKeyboardHandler);
+	document.addEventListener('keydown', titleKeyboardHandler);
 }
 
 function doObsMedia() {	// Add download links for media, if any
@@ -273,6 +326,9 @@ function reviewReasonAndNotesSetup() {
 
 	document.getElementById('review-reason').focus();
 
+	console.log('Setting up reason page keyboard listener in reviewReasonAndNotesSetup');
+	document.addEventListener('keydown', reasonPageKeyboardHandler);
+	reasonActive = 'yes';
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
@@ -340,6 +396,11 @@ function emailWait() {
 	}
 }
 
+function nullreasonActive() {
+	console.log('In nullreasonActive, reasonActive set undefined');
+	reasonActive = void(0);
+}
+
 function mailSetup() {
 	const targetLabels = ['Send email'];
 	let buttons = document.querySelectorAll('button');
@@ -348,9 +409,16 @@ function mailSetup() {
 		if (targetLabels.includes(label)) {
 			buttons[b].addEventListener('click', waitNext);
 			buttons[b].addEventListener('click', storeChange);
+			buttons[b].addEventListener('click', nullreasonActive);
 			break;
+		} else if (label == 'Cancel') {
+			buttons[b].addEventListener('click', nullreasonActive);
 		}
 	}
+	
+	let topCancel = document.getElementById('emailDialog').querySelector('a.Toolbar-item-button'); // Set up cancel link at top right
+	topCancel.addEventListener('click', nullreasonActive);
+
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
 	let URLindex = message.indexOf('\nhttps');
@@ -587,7 +655,7 @@ async function getMediaCounts(OBS) {
 			switch (json[index].mediaType) {
 				case 'P': Pcount++; break;
 				case 'A': Acount++; break;
-				case 'V': Vcount++;  break;
+				case 'V': Vcount++; break;
 				default: anyMedia--;
 			}
 		}
@@ -631,4 +699,199 @@ async function getSpeciesCounts(subid) {
 function isMobile() {
 	// True if screen is narrow (presumed mobile)
 	return !window.matchMedia("(min-width: 48em)").matches;
+}
+
+
+function mainKeyboardHandler(ev) {
+	if (reasonActive) {
+		console.log('In main keyboard handler, reasonActive is truthy so returning without handling key presses');
+		return;
+	}
+	let qrFooter = document.getElementById('qr-footer');
+	let buttons = qrFooter.querySelectorAll('button');
+	let buttonList = [];
+	for (const button of buttons) {
+		if (button.textContent == 'Unconfirm') {
+			buttonList['Unconfirm'] = button;
+		} else if (button.textContent == 'Defer') {
+			buttonList['Defer'] = button;
+		} else if (button.textContent == 'Accept') {
+			buttonList['Accept'] = button;
+		}
+	}
+
+	let handled = true;
+	switch (ev.code) {
+		case 'KeyU':
+			buttonList['Unconfirm'].click();
+			console.log('At main level, Handled key: ' + ev.code + ' by clicking Unconfirm');
+			break;
+		case 'KeyD':
+			buttonList['Defer'].click();
+			console.log('At main level, Handled key: ' + ev.code + ' by clicking Defer');
+			break;
+		case 'KeyA':
+			buttonList['Accept'].click();
+			console.log('At main level, Handled key: ' + ev.code + ' by clicking Accept');
+			break;
+		default:
+			handled = false;
+//			console.log('At main level, Unhandled key: ' + ev.code);
+	}
+/*	
+	if (handled) {
+		console.log('Removing main keyboard handler because handled key: ' + ev.code);
+		document.removeEventListener('keydown', mainKeyboardHandler);
+	}
+*/
+}
+
+
+function reasonPageKeyboardHandler(ev) {
+	/* Only one button is ever clicked here. Every button leads to a return to the main panel, except for "Next" which leads to the email dialog. */
+	let reasonPage = document.getElementById('reasonPage');
+	let buttons = reasonPage.querySelectorAll('button');
+	let buttonList = [];
+	for (const button of buttons) {
+		if (button.textContent == 'Cancel') {
+			buttonList['Cancel'] = button;
+		} else if (button.textContent == 'Accept') {
+			buttonList['Accept'] = button;
+		} else if (button.textContent == 'Next') {
+			buttonList['Next'] = button;
+		} else if (button.textContent == 'Unconfirm') {
+			buttonList['Unconfirm'] = button;
+		} else if (button.textContent == 'Defer') {
+			buttonList['Defer'] = button;
+		}
+	}
+	let handled = true;
+	let checkBox = false;
+	let keepReasonActive = false;
+	let ignoreControls = ['TEXTAREA'];
+	if (!ignoreControls.includes(document.activeElement.tagName)) {
+		switch (ev.code) {
+			case 'KeyU':
+				if (buttonList['Unconfirm']) {
+					buttonList['Unconfirm'].click();
+					console.log('In reason page, handled key: ' + ev.code + ' by clicking Unconfirm'); 
+				} else {
+					console.log('In reason page, did not handle key: ' + ev.code + ' because Unconfirm button is not present');
+					handled = false;
+				}
+				break;
+			case 'KeyD':
+				if (buttonList['Defer']) {
+					buttonList['Defer'].click();
+					console.log('In reason page, handled key: ' + ev.code + ' by clicking Defer');
+				} else {
+					console.log('In reason page, did not handle key: ' + ev.code + ' because Defer button is not present');
+					handled = false;
+				}
+				break;
+			case 'KeyA':
+				if (buttonList['Accept']) {
+					buttonList['Accept'].click();
+					console.log('In reason page, handled key: ' + ev.code + ' by clicking Accept');
+				} else {
+					console.log('In reason page, did not handle key: ' + ev.code + ' because Accept button is not present');
+					handled = false;
+				}
+				break;
+			case 'KeyN':
+				if (buttonList['Next']) {
+					buttonList['Next'].click();
+					console.log('In reason page, handled key: ' + ev.code + ' by clicking Next');
+					// Don't set nullreasonActive() here because we need to continue blocking higher-level keyboard handlers 
+					keepReasonActive = true;
+				} else {
+					console.log('In reason page, did not handle key: ' + ev.code + ' because Next button is not present');
+					handled = false;
+				}
+				break;
+			case 'KeyC':
+				if (buttonList['Cancel']) {
+					buttonList['Cancel'].click();
+					console.log('In reason page, handled key: ' + ev.code + ' by clicking Cancel.'); 
+				} else {
+					console.log('In reason page, did not handle key: ' + ev.code + ' because Cancel button is not present');
+					handled = false;
+				}
+				break;
+			case 'KeyX':
+				checkBox = true;
+				let XcheckBox = document.getElementById('send-email-checkbox');
+				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
+				console.log('In reason page, handled key: ' + ev.code + ' by toggling Send email checkbox to ' + XcheckBox.checked);
+				break;
+			default:
+				handled = false;
+		}
+	} else {
+		handled = false;
+//		console.log('In reason page, unhandled key: ' + ev.code + ' because focus is on ' + document.activeElement.tagName);
+	}
+	if (handled && !checkBox) {
+		console.log('Removing reason page keyboard handler because handled key: ' + ev.code);
+		document.removeEventListener('keydown', reasonPageKeyboardHandler);
+		if (!keepReasonActive) {
+			console.log('Also setting reasonActive to undefined');
+			nullreasonActive();
+		} else console.log('Keeping reasonActive truthy because of email dialog');
+	}
+}
+
+function titleKeyboardHandler(ev) {
+	if (reasonActive) {
+		console.log('In title keyboard handler, reasonActive is truthy so returning without handling key presses');
+		return;
+	}
+	let buttonList = [];
+
+	let buttons = document.getElementById('qr-obs-title').querySelectorAll('a.Button');
+	let headerButtons = document.getElementById('qr-header').querySelectorAll('a.Toolbar-item-button');
+
+	for (const button of buttons) {
+		if (button.textContent == 'Skip') {
+			buttonList['Skip'] = button;
+		} else if (button.textContent == 'Back') {
+			buttonList['Back'] = button;
+		}
+	}
+	for (const button of headerButtons) {
+		if (button.textContent == 'Home') {
+			buttonList['Home'] = button;
+		}
+	}
+
+	handled = true;
+	let ignoreControls = ['TEXTAREA', 'SELECT'];
+	if (!ignoreControls.includes(document.activeElement.tagName)) {
+		switch (ev.code) {
+			case 'KeyS':
+				buttonList['Skip'].click();
+				console.log('At title level, Handled key: ' + ev.code + ' by clicking Skip: ' + buttonList['Skip'].textContent);
+				break;
+			case 'KeyB':
+				buttonList['Back'].click();
+				console.log('At title level, Handled key: ' + ev.code + ' by clicking Back: ' + buttonList['Back'].textContent);
+				break;
+			case 'KeyH':
+				buttonList['Home'].click();
+				console.log('At title level, Handled key: ' + ev.code + ' by clicking Home: ' + buttonList['Home'].textContent);
+				break;
+			default:
+				handled = false;
+//				console.log('At title level, Unhandled key: ' + ev.code);
+		}
+	} else {
+		handled = false;
+//		console.log('In title handler, unhandled key: ' + ev.code + ' because focus is on ' + document.activeElement.tagName);
+	}
+/*
+	if (handled) {
+		console.log('Removing title keyboard handler');
+		document.removeEventListener('keydown', titleKeyboardHandler);
+	} else console.log('Not removing title keyboard handler because key was not handled');
+*/
 }
