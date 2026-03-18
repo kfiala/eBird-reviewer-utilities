@@ -21,7 +21,28 @@ if (document.getElementById("region-name-codes"))
 		tr = document.getElementById(sixcode);
 		td = tr.insertCell(-1);
 		td.setAttribute("width","22px");
+		td.setAttribute("id", "K_"+sixcode);
 		td.appendChild(greenButton);
+
+		let addButton = srh[i].querySelector('button.btn-add-range');
+		addButton.addEventListener('click', function (event) {
+			let target = event.target;
+			if (target.classList.contains('icon-plus')) {
+				target = target.closest('button');
+			}
+			let sixcode = target.id.substring(0, target.id.length - 4);
+			let td = document.getElementById("K_" + sixcode);
+			if (td.style.display === "none") {
+				td.style.display = "block";
+			} else {	
+				td.style.display = "none";
+				let closeButton = document.getElementById('arg-cancel');
+				closeButton.addEventListener('click', function () {
+						td.style.display = "block";
+					},	{ once: true }
+				);
+			}
+		});
 
 		greenButton.addEventListener('mouseup', function (event) {
 			// Has to be mouseup rather than click to prevent "enter" in the filter from having the same effect
