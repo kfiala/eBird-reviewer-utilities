@@ -1,32 +1,53 @@
-// Enhancements for Quick Review
-var OBS, TAXON, mainButton, reasonActive;
-var isInDOM, newInDom;
+ // Enhancements for Quick Review
+var OBS, TAXON, mainButton;
+var newInDom = false;
+var counter = 0;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
-	wait('init');
+	console.log('initial entry');
+	wait();
 }
 
-function wait(state) {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
-	console.log('In wait function, state: ' + state);
+function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
+	if (weAreDone()) return;
+	newInDom = false;
+	console.log('In wait function');
+	if (counter++ > 100) {
+		console.log('wait timed out');
+		counter = 0;
+		return;
+	}
 	if (!document.getElementById('kdiv')) {
 		if (document.getElementById('qr-obs-documentation')) {
+			console.log('In wait, ' + whatPageAreWeOn());
 			delayedSetup();
-			initKeyboardHandlers();
+			counter = 0;
 		} else {
-			setTimeout(wait, 100, 'waiting');
+			setTimeout(wait, 200);
+		}
+	} else {
+		console.log('kdiv is already present!');
+		if (!newInDom) {
+			console.log('Waiting for new instance');
+			setTimeout(wait, 200);
 		}
 	}
 }
 
-function waitNext() {	// Wait for kdiv to disappear; then wait for its reappearance.
-	console.log('At entry to waitNext, newInDom is: ' + newInDom);
-	if (!newInDom) {
-		console.log('waiting for new qr-obs-documentation, isInDOM is: ' + isInDOM);
-		setTimeout(waitNext, 100);
-	} else {
-		console.log('ready to wait for kdiv');
-		wait('next');
+function weAreDone() {
+	const big = document.querySelector('[style*="font-size: 36px"]');
+	if (big) {
+		console.log('Found big text:', big.textContent, 'after', counter, 'iterations');
+		return true;
 	}
+/* ** 
+	let screentitle = document.getElementById('screentitle');
+	if (screentitle) { 
+		console.log('Found screentitle:', screentitle.textContent, 'after', counter, 'iterations');
+		return true;
+
+	} else return false;
+** */
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
@@ -38,21 +59,22 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 			buttons[b].addEventListener('click', secondWait);	// When a button is clicked, wait for more DOM that we will need
 		}
 	}
+	console.log('in delayedSetup');
 
 	let skipAnchor = document.getElementById('qr-obs-title').querySelector('a.Button');
 	skipAnchor.addEventListener('click', storeHistory);
-	skipAnchor.addEventListener('click', waitNext);
+	skipAnchor.addEventListener('click', buttonResponse);
 	skipAnchor.setAttribute('id', 'skipAnchor');
-	let backButton = document.createElement('a');
-	backButton.href = '#';
-	backButton.setAttribute('class', 'Button');
-	backButton.classList.add('Button--small');
-	backButton.classList.add('Button--secondary');
-	backButton.classList.add('u-margin-none');
-	backButton.style.marginRight = '1em';
-	backButton.append('Back');
-	skipAnchor.insertAdjacentElement('beforebegin', backButton);
-	backButton.addEventListener('click', goBack);
+	let backAnchor = document.createElement('a');
+	backAnchor.href = '#';
+	backAnchor.setAttribute('class', 'Button');
+	backAnchor.classList.add('Button--small');
+	backAnchor.classList.add('Button--secondary');
+	backAnchor.classList.add('u-margin-none');
+	backAnchor.style.marginRight = '1em';
+	backAnchor.append('Back');
+	skipAnchor.insertAdjacentElement('beforebegin', backAnchor);
+	backAnchor.addEventListener('click', goBack);
 
 //	Create our private div and insert it.
 	let kdiv = document.createElement('div');
@@ -173,39 +195,31 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		obsViewData(OBS, subId);
 	}
 	setTimeout(doObsMedia, 1000);
-	// Keep an eye on kdiv
-	const el = document.querySelector('#qr-obs-documentation');
-	isInDOM = document.body.contains(el);
-	newInDom = false;
+
+	console.log('Setting up main level and title level keyboard listeners');
+	document.addEventListener('keydown', mainKeyboardHandler);
+	document.addEventListener('keydown', titleKeyboardHandler);
+
+// Keep an eye on kdiv
 
 	const observer = new MutationObserver((mutations) => {
+		const el = document.querySelector('#qr-obs-documentation');
 		for (const m of mutations) {
 		// --- Detect removal ---  
 			m.removedNodes.forEach(node => {
 				if (node.contains(el)) {
-					isInDOM = false;
 					console.log('Element or one of its ancestors was removed');
 				}
 			});
 
 			// --- Detect addition ---
-			let newel = document.querySelector('#qr-obs-documentation');
 			m.addedNodes.forEach(node => {
-				// Case 1: the element itself was added
-				if (node === newel) {
-					isInDOM = true;
+				// Case 2: the element was added inside a subtree
+				if (/*!isInDOM &&*/ node.contains(el)) {
+					newInDom = true;
 					console.log('Element was added back');
 				}
-
-				// Case 2: the element was added inside a subtree
-				if (!isInDOM && node.contains(newel)) {
-					isInDOM = true;
-					newInDom = true;
-					console.log('Element was added back (inside subtree)');
-				}
 			});
-
-	
 		}
 	});
 
@@ -214,12 +228,6 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		subtree: true
 	});
 
-}
-
-function initKeyboardHandlers() {
-	console.log('Setting up main level and title level keyboard listeners');
-	document.addEventListener('keydown', mainKeyboardHandler);
-	document.addEventListener('keydown', titleKeyboardHandler);
 }
 
 function doObsMedia() {	// Add download links for media, if any
@@ -281,13 +289,26 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 		mainButton = e.target.textContent;	// Which top-level button; we'll want this in the next function.
 	}
 	if (!document.getElementById('reasonPage')) {
+		console.log('waiting for reasonPage');
 		setTimeout(secondWait,100);
 	} else {
+		console.log('In secondWait: ' + mainButton + ' was clicked, ready to set up reasonPage');
 		setTimeout(reviewReasonAndNotesSetup, 50);
 	}
 }
 
+function buttonResponse(buttonObject) {
+	let label = buttonObject.srcElement.textContent;
+	console.log('In buttonResponse, responding to button ' + label);
+	console.log(buttonObject);
+	if (label !== 'Send email') {
+		console.log('Jumping directly to wait from button ' + label);
+		wait();
+	} else console.log('Not calling wait in buttonResponse because label is Send email ');
+}
+
 function reviewReasonAndNotesSetup() {
+	console.log('In reviewReasonAndNotesSetup, on page ' + whatPageAreWeOn());
 	let reasonPage = document.getElementById('reasonPage');
 	if (!isMobile())
 		reasonPage.style.top = 'calc(100% - 175px)';
@@ -297,17 +318,20 @@ function reviewReasonAndNotesSetup() {
 	let label;
 	for (let b = 0; b < buttons.length; b++) {
 		label = buttons[b].textContent;
+		buttons[b].addEventListener('click', dropKeyboardListener);
 		if (targetLabels.includes(label)) {
 			if (['Next', 'Accept'].includes(label)) {
 				if (document.getElementById('send-email-checkbox').checked) {
 					buttons[b].addEventListener('click', emailWait);	// need to wait for more DOM for emailing
-					buttons[b].addEventListener('click', waitNext);
+					console.log('No buttonResponse for', label);
 				} else {
-					buttons[b].addEventListener('click', waitNext);
+					buttons[b].addEventListener('click', buttonResponse);
+					console.log('Setting buttonResponse listener for', label);
 					buttons[b].addEventListener('click', storeChange);
 				}
 			} else {	// Unconfirm, Defer
-				buttons[b].addEventListener('click', waitNext);
+				buttons[b].addEventListener('click', buttonResponse);
+				console.log('Setting buttonResponse listener for', label);
 				buttons[b].addEventListener('click', storeChange);
 			}
 		}
@@ -326,9 +350,30 @@ function reviewReasonAndNotesSetup() {
 
 	document.getElementById('review-reason').focus();
 
-	console.log('Setting up reason page keyboard listener in reviewReasonAndNotesSetup');
-	document.addEventListener('keydown', reasonPageKeyboardHandler);
-	reasonActive = 'yes';
+	let overlay = document.getElementById('overlay');
+	if (overlay.style.display == 'block') {
+		console.log('Setting up reason page keyboard handler and removing main and title handlers');
+		document.addEventListener('keydown', reasonPageKeyboardHandler);
+
+		document.removeEventListener('keydown', mainKeyboardHandler);
+		document.removeEventListener('keydown', titleKeyboardHandler);
+
+	} else { console.log('Not setting up reason page keyboard listener because overlay is not displayed'); }
+}
+
+function dropKeyboardListener(e) {
+	let button;
+	if (e) {
+		button = e.target.textContent;
+		console.log('In dropKeyboardListener, button is', button);
+	} 
+	console.log('Dropping reason page keyboard handler because ' + button + ' was clicked');
+	document.removeEventListener('keydown', reasonPageKeyboardHandler);
+	if (button == 'Cancel') {
+		console.log('Restoring main and title keyboard handlers because Cancel was clicked');
+		document.addEventListener('keydown', mainKeyboardHandler);
+		document.addEventListener('keydown', titleKeyboardHandler);
+	}
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
@@ -355,6 +400,7 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 }
 
 function storeChange() {
+	console.log('In storeChange, storing', OBS + '/' + TAXON);
 	storeRecallHistory(OBS + '/' + TAXON);
 	storeHistory();
 }
@@ -396,29 +442,17 @@ function emailWait() {
 	}
 }
 
-function nullreasonActive() {
-	console.log('In nullreasonActive, reasonActive set undefined');
-	reasonActive = void(0);
-}
-
 function mailSetup() {
+	console.log('In mailSetup, ' + whatPageAreWeOn());
 	const targetLabels = ['Send email'];
 	let buttons = document.querySelectorAll('button');
 	for (let b=0; b<buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			buttons[b].addEventListener('click', waitNext);
 			buttons[b].addEventListener('click', storeChange);
-			buttons[b].addEventListener('click', nullreasonActive);
 			break;
-		} else if (label == 'Cancel') {
-			buttons[b].addEventListener('click', nullreasonActive);
 		}
 	}
-	
-	let topCancel = document.getElementById('emailDialog').querySelector('a.Toolbar-item-button'); // Set up cancel link at top right
-	topCancel.addEventListener('click', nullreasonActive);
-
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
 	let URLindex = message.indexOf('\nhttps');
@@ -464,6 +498,21 @@ function mailSetup() {
 
 		newMessage = newMessage.replace('The documentation you have provided shows a', newText);
 		document.getElementById('email-message1').textContent = newMessage;
+
+		let topCancel = document.querySelectorAll('a.Toolbar-item-button');
+		for (let index in topCancel) {
+			if (topCancel[index].textContent == 'Cancel') {
+				topCancel[index].addEventListener('click', buttonResponse);
+			}
+		}
+		let bottomCancel = document.querySelectorAll('button');
+		for (let index in bottomCancel) {
+			if (bottomCancel[index].textContent == 'Cancel') {
+				bottomCancel[index].addEventListener('click', buttonResponse);
+			} else if (bottomCancel[index].textContent == 'Send email') {
+				bottomCancel[index].addEventListener('click', buttonResponse);
+			}
+		}
 	}
 	// Special handling for Turkish language emails
 	let mailDiv = document.getElementById('qr-language-control');
@@ -524,6 +573,12 @@ function createOopsControl() {
 }
 
 async function obsViewData(OBS, subId) {
+	let span = document.getElementById('kInfo');
+	if (!span) {
+		console.log('No kInfo, probably we are done');
+		return;
+	}
+
 	let url = 'https://review.ebird.org/admin/api/v1/obs/view/' + OBS;
 	let response = await fetch(url);
 	let json = await response.json();
@@ -549,7 +604,6 @@ async function obsViewData(OBS, subId) {
 	}
 // End of checklist comment setup
 
-	let span = document.getElementById('kInfo');
 	let method, version;
 
 	if (json.loc.isHotspot) {
@@ -703,10 +757,6 @@ function isMobile() {
 
 
 function mainKeyboardHandler(ev) {
-	if (reasonActive) {
-		console.log('In main keyboard handler, reasonActive is truthy so returning without handling key presses');
-		return;
-	}
 	let qrFooter = document.getElementById('qr-footer');
 	let buttons = qrFooter.querySelectorAll('button');
 	let buttonList = [];
@@ -738,12 +788,6 @@ function mainKeyboardHandler(ev) {
 			handled = false;
 //			console.log('At main level, Unhandled key: ' + ev.code);
 	}
-/*	
-	if (handled) {
-		console.log('Removing main keyboard handler because handled key: ' + ev.code);
-		document.removeEventListener('keydown', mainKeyboardHandler);
-	}
-*/
 }
 
 
@@ -767,7 +811,6 @@ function reasonPageKeyboardHandler(ev) {
 	}
 	let handled = true;
 	let checkBox = false;
-	let keepReasonActive = false;
 	let ignoreControls = ['TEXTAREA'];
 	if (!ignoreControls.includes(document.activeElement.tagName)) {
 		switch (ev.code) {
@@ -802,8 +845,6 @@ function reasonPageKeyboardHandler(ev) {
 				if (buttonList['Next']) {
 					buttonList['Next'].click();
 					console.log('In reason page, handled key: ' + ev.code + ' by clicking Next');
-					// Don't set nullreasonActive() here because we need to continue blocking higher-level keyboard handlers 
-					keepReasonActive = true;
 				} else {
 					console.log('In reason page, did not handle key: ' + ev.code + ' because Next button is not present');
 					handled = false;
@@ -821,7 +862,7 @@ function reasonPageKeyboardHandler(ev) {
 			case 'KeyX':
 				checkBox = true;
 				let XcheckBox = document.getElementById('send-email-checkbox');
-				XcheckBox.checked = !XcheckBox.checked;	// toggle on/off
+				XcheckBox.click();	// toggle on/off
 				console.log('In reason page, handled key: ' + ev.code + ' by toggling Send email checkbox to ' + XcheckBox.checked);
 				break;
 			default:
@@ -831,21 +872,9 @@ function reasonPageKeyboardHandler(ev) {
 		handled = false;
 //		console.log('In reason page, unhandled key: ' + ev.code + ' because focus is on ' + document.activeElement.tagName);
 	}
-	if (handled && !checkBox) {
-		console.log('Removing reason page keyboard handler because handled key: ' + ev.code);
-		document.removeEventListener('keydown', reasonPageKeyboardHandler);
-		if (!keepReasonActive) {
-			console.log('Also setting reasonActive to undefined');
-			nullreasonActive();
-		} else console.log('Keeping reasonActive truthy because of email dialog');
-	}
 }
 
 function titleKeyboardHandler(ev) {
-	if (reasonActive) {
-		console.log('In title keyboard handler, reasonActive is truthy so returning without handling key presses');
-		return;
-	}
 	let buttonList = [];
 
 	let buttons = document.getElementById('qr-obs-title').querySelectorAll('a.Button');
@@ -888,10 +917,20 @@ function titleKeyboardHandler(ev) {
 		handled = false;
 //		console.log('In title handler, unhandled key: ' + ev.code + ' because focus is on ' + document.activeElement.tagName);
 	}
-/*
-	if (handled) {
-		console.log('Removing title keyboard handler');
-		document.removeEventListener('keydown', titleKeyboardHandler);
-	} else console.log('Not removing title keyboard handler because key was not handled');
-*/
+}
+
+function whatPageAreWeOn() {
+	let overlay = document.getElementById('overlay');
+	if (overlay.style.display == 'block') {
+		let emailDialog = document.getElementById('emailDialog');
+		if (emailDialog) {
+			return 'emailDialog';
+		} 
+		let reasonPage = document.getElementById('reasonPage');
+		if (reasonPage) {
+			return 'reasonPage';
+		} else return 'Empty overlay';
+	} else {
+		return 'main';
+	}
 }
