@@ -11,10 +11,8 @@ function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setu
 	if (weAreDone()) return;
 	if (counter++ > 100) {
 		counter = 0;
-		console.log('Giving up waiting for DOM to be ready after 100 attempts.');
 		return;
 	}
-	console.log('Waiting for DOM to be ready, attempt ' + counter, 'lastButton is ' + lastButton);
 	if (!document.getElementById('kdiv')) {
 		if (document.getElementById('qr-obs-documentation')) {
 			counter = 0;
@@ -35,7 +33,6 @@ function weAreDone() {
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
-	console.log('Entering delayedSetup');
 	const targetLabels = ['Unconfirm', 'Defer', 'Accept'];	// We only care about these three buttons.
 	let buttons = document.querySelectorAll('button');
 	for (let b=0; b<buttons.length; b++) {	// Set up click listeners on the buttons
@@ -181,9 +178,8 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	setTimeout(doObsMedia, 1000);
 
 	if (lastButton != 'Next') {
-		console.log('Adding mainkeyboardHandler in delayedSetup after button ' + lastButton);
 		document.addEventListener('keydown', mainKeyboardHandler);
-	} else { console.log('Not adding mainkeyboardHandler in delayedSetup because lastButton is ' + lastButton); }
+	}
 }
 
 function doObsMedia() {	// Add download links for media, if any
@@ -253,7 +249,6 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 
 function buttonResponse(buttonObject) {
 	lastButton = buttonObject.target.textContent;
-	console.log('buttonResponse setting lastButton to ' + lastButton);
 	wait();
 }
 
@@ -265,15 +260,12 @@ function reviewReasonAndNotesSetup() {
 	let buttons = reasonPage.querySelectorAll('button');
 	for (let b = 0; b < buttons.length; b++) {
 		let label = buttons[b].textContent;
-		console.log('Looking at button ' + label + ' in reviewReasonAndNotesSetup');
 		buttons[b].addEventListener('click', endReasonPage);
 		if (label == 'Next') {
 			buttons[b].addEventListener('click', emailWait);	// need to wait for more DOM for emailing
-			console.log('Set emailWait for button ' + label + ' in reviewReasonAndNotesSetup');
 		} else if (label == 'Accept') {
 			buttons[b].addEventListener('click', buttonResponse);
 			buttons[b].addEventListener('click', storeChange);
-			console.log('Set storeChange for button ' + label + ' in reviewReasonAndNotesSetup');
 		}
 	}
 
@@ -292,22 +284,16 @@ function reviewReasonAndNotesSetup() {
 
 	let overlay = document.getElementById('overlay');
 	if (overlay.style.display == 'block') {
-		console.log('Adding reasonPageKeyboardHandler and removing mainKeyboardHandler in reviewReasonAndNotesSetup');	
 		document.addEventListener('keydown', reasonPageKeyboardHandler);
-
 		document.removeEventListener('keydown', mainKeyboardHandler);
 	}
 }
 
 function endReasonPage(e) {
 	let button = e.target.textContent;
-	console.log('Removing reasonPageKeyboardHandler in endReasonPage for button ' + button);
 	document.removeEventListener('keydown', reasonPageKeyboardHandler);
 	if (button == 'Cancel' || !document.getElementById('send-email-checkbox').checked) {
-		console.log('Adding mainKeyboardHandler for', button, 'button in endReasonPage');
 		document.addEventListener('keydown', mainKeyboardHandler);
-	} else if (document.getElementById('send-email-checkbox').checked) {
-		console.log('Not adding mainKeyboardHandler in endReasonPage because send email is checked');
 	} 
 }
 
@@ -443,10 +429,8 @@ function mailSetup() {
 			}
 			for (let index in mailBottom) {
 				if (mailBottom[index].textContent == 'Cancel') {
-					console.log('Adding buttonResponse listener to button ' + mailBottom[index].textContent + ' in mailSetup');
 					mailBottom[index].addEventListener('click', addMainKeyboard, { once: true });
 				} else if (mailBottom[index].textContent == 'Send email') {
-					console.log('Adding buttonResponse listener to button ' + mailBottom[index].textContent + ' in mailSetup');
 					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
 				}
 			}
@@ -458,10 +442,8 @@ function mailSetup() {
 			}
 			for (let index in mailBottom) {
 				if (mailBottom[index].textContent == 'Cancel') {
-					console.log('Adding buttonResponse listener to button ' + mailBottom[index].textContent + ' in mailSetup');
 					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
 				} else if (mailBottom[index].textContent == 'Send email') {
-					console.log('Adding buttonResponse listener to button ' + mailBottom[index].textContent + ' in mailSetup');
 					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
 				}
 			}
@@ -482,7 +464,6 @@ function mailSetup() {
 }
 
 function addMainKeyboard() {
-	console.log('Adding mainKeyboardHandler after Cancel');
 	document.addEventListener('keydown', mainKeyboardHandler);
 }
 
