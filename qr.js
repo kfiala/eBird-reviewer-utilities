@@ -1,4 +1,4 @@
- // Enhancements for Quick Review
+// Enhancements for Quick Review
 var OBS, TAXON, mainButton;
 var counter = 0;
 var lastButton = '';
@@ -308,12 +308,12 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 				label = document.getElementById('send-email-checkbox').checked ? 'Next' : 'Defer';
 				buttons[b].textContent = label;
 			}
-			if (label === 'Next') {
+			if (label === 'Next') {	// Send email is checked.
 				buttons[b].addEventListener('click', emailWait);	// mailing so need to wait for more email DOM
 				buttons[b].removeEventListener('click', storeChange);	// button may have previously had one of the other labels
-				break;
-			} else {
+			} else {	// Send email is not checked.
 				buttons[b].addEventListener('click', storeChange);
+				buttons[b].addEventListener('click', buttonResponse);
 				buttons[b].removeEventListener('click', emailWait);	// button may have previously had one of the other labels
 			}
 		}
