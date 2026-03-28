@@ -1,7 +1,7 @@
 // Enhancements for Quick Review
 var OBS, TAXON, mainButton;
 var counter = 0;
-var lastButton = '';
+var sendingMail = false;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 	wait();
@@ -177,7 +177,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 	}
 	setTimeout(doObsMedia, 1000);
 
-	if (lastButton != 'Next') {
+	if (!sendingMail) {
 		document.addEventListener('keydown', mainKeyboardHandler);
 	}
 }
@@ -248,7 +248,7 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 }
 
 function buttonResponse(buttonObject) {
-	lastButton = buttonObject.target.textContent;
+	sendingMail = (buttonObject.target.textContent == 'Next');
 	wait();
 }
 
@@ -294,6 +294,8 @@ function endReasonPage(e) {
 	document.removeEventListener('keydown', reasonPageKeyboardHandler);
 	if (button == 'Cancel' || !document.getElementById('send-email-checkbox').checked) {
 		document.addEventListener('keydown', mainKeyboardHandler);
+	} else if (document.getElementById('send-email-checkbox').checked) {
+		buttonResponse(e);
 	} 
 }
 
@@ -421,31 +423,16 @@ function mailSetup() {
 		let topCancel = document.querySelectorAll('a.Toolbar-item-button');
 		let mailBottom = document.querySelectorAll('button');
 
-		if (mainButton === 'Accept') {
-			for (let index in topCancel) {
-				if (topCancel[index].textContent == 'Cancel') {
-					topCancel[index].addEventListener('click', addMainKeyboard, {once: true});
-				}
+		for (let index in topCancel) {
+			if (topCancel[index].textContent == 'Cancel') {
+				topCancel[index].addEventListener('click', addMainKeyboard, {once: true});
 			}
-			for (let index in mailBottom) {
-				if (mailBottom[index].textContent == 'Cancel') {
-					mailBottom[index].addEventListener('click', addMainKeyboard, { once: true });
-				} else if (mailBottom[index].textContent == 'Send email') {
-					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
-				}
-			}
-		} else {
-			for (let index in topCancel) {
-				if (topCancel[index].textContent == 'Cancel') {
-					topCancel[index].addEventListener('click', buttonResponse, { once: true });
-				}
-			}
-			for (let index in mailBottom) {
-				if (mailBottom[index].textContent == 'Cancel') {
-					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
-				} else if (mailBottom[index].textContent == 'Send email') {
-					mailBottom[index].addEventListener('click', buttonResponse, { once: true });
-				}
+		}
+		for (let index in mailBottom) {
+			if (mailBottom[index].textContent == 'Cancel') {
+				mailBottom[index].addEventListener('click', addMainKeyboard, { once: true });
+			} else if (mailBottom[index].textContent == 'Send email') {
+				mailBottom[index].addEventListener('click', buttonResponse, { once: true });
 			}
 		}
 	}
