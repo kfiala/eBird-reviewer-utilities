@@ -550,7 +550,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 	mainTable.querySelectorAll('tr').forEach(function (elTr) {
 		// Extract the data from each row of the queue/search
 		let row = [];
-		let subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear;
+		let subid, species, evidence, count, obsdate, user, locname, county, state, validity, status, dayOfYear, filterURL, historyURL;
 		let checklist, chklstCell, chklstLink;
 		let OBS;
 		let Class, html, el;
@@ -586,10 +586,14 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			html = parser.parseFromString(Cell.innerHTML, "text/html");
 			el = html.body.firstChild;
 
-			if (doHeaders && (Class !== 'select') && (Class !== 'details')) {
+			if (doHeaders && (Class !== 'select')) {
 				// In the first row, save the headers of the columns that we are going to keep;
 				// also create and save header of the new day of year column we will create
-				headers.push(Class);
+				if (Class == 'details') {
+					headers.push('filter');
+					headers.push('history');
+					headers.push('checklist');
+				} else { headers.push(Class); }
 				if (Class === 'obsdate') {
 					headers.push('day of year');
 				}
@@ -682,7 +686,12 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 						submissionCell.querySelector('a').style.color = '#ccc'; 
 					}
 					break;
-				case "details": break;	// Don't keep anything from "details" column
+				case "details":
+					let details = Cell.querySelectorAll('a');
+					filterURL = details[0].href;
+					historyURL = details[1].href;
+					break;	
+				default: break;
 			}
 		});
 		if (rownum++) {	// Skip row 0 (headers)
@@ -700,6 +709,8 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 			row.push(state);
 			row.push(validity);
 			row.push(status);
+			row.push(filterURL);
+			row.push(historyURL);
 			row.push(checklist);
 			if (doHeaders) {
 				// Put the headings in the first spreadsheet row, and
