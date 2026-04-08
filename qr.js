@@ -1,35 +1,26 @@
 // Enhancements for Quick Review
 var OBS, TAXON, mainButton;
-var counter = 0;
 var sendingMail = false;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
-	wait();
-}
 
-function wait() {	// Wait until qr-obs-documentation is in the DOM, then do setup of kdiv.
-	if (weAreDone()) return;
-	if (counter++ > 100) {
-		counter = 0;
-		return;
-	}
-	if (!document.getElementById('kdiv')) {
-		if (document.getElementById('qr-obs-documentation')) {
-			counter = 0;
-			delayedSetup();
-		} else {
-			setTimeout(wait, 400);
+	const observer = new MutationObserver((mutations) => {
+		const el = document.querySelector('#qr-obs-documentation');
+		for (const m of mutations) {
+
+			// --- Detect addition ---
+			m.addedNodes.forEach(node => {
+				if (node.contains(el)) {
+					console.log('Element ' + el.id + ' was added');
+					delayedSetup();
+				}
+			});
 		}
-	} else {
-		setTimeout(wait, 400);
-	}
-}
-
-function weAreDone() {
-	if (document.querySelector('[style*="font-size: 36px"]')) {
-		return true;
-	}
-	else return false;
+	});
+	observer.observe(document.body, {
+		childList: true,
+		subtree: true
+	});
 }
 
 function delayedSetup() {	// Finish initial setup now that DOM is ready
@@ -249,7 +240,6 @@ function secondWait(e) { //	After a top-level button is clicked, wait for the "R
 
 function buttonResponse(buttonObject) {
 	sendingMail = (buttonObject.target.textContent == 'Next');
-	wait();
 }
 
 function reviewReasonAndNotesSetup() {
