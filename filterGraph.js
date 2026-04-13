@@ -1,6 +1,8 @@
 // On a filter window, add a green button to the end of each row, that displays bar chart graphs when clicked.
 if (document.getElementById("region-name-codes"))
 {
+	document.getElementById('filter-spp').focus();
+
 	let greenButton, sixcode, tr, td, species;
 	let regionCodes = document.getElementById("region-codes").innerHTML;
 	regionCodes = regionCodes.substring(0,regionCodes.length-1);
