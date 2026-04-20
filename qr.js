@@ -1,9 +1,7 @@
 // Enhancements for Quick Review
-var OBS, TAXON, mainButton;
-var sendingMail = false;
+var OBS, TAXON;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
-
 	const observer = new MutationObserver((mutations) => {
 		const el = document.querySelector('#qr-obs-documentation');
 		for (const m of mutations) {
@@ -11,8 +9,7 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 			// --- Detect addition ---
 			m.addedNodes.forEach(node => {
 				if (node.contains(el)) {
-					console.log('Element ' + el.id + ' was added');
-					delayedSetup();
+					setupMainPage();
 				}
 			});
 		}
@@ -23,19 +20,18 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 	});
 }
 
-function delayedSetup() {	// Finish initial setup now that DOM is ready
+function setupMainPage() {	// Finish initial setup now that DOM is ready
 	const targetLabels = ['Unconfirm', 'Defer', 'Accept'];	// We only care about these three buttons.
-	let buttons = document.querySelectorAll('button');
+	let buttons = document.getElementById('qr-footer').querySelectorAll('button');
 	for (let b=0; b<buttons.length; b++) {	// Set up click listeners on the buttons
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			buttons[b].addEventListener('click', secondWait);	// When a button is clicked, wait for more DOM that we will need
+			buttons[b].addEventListener('click', waitReviewReasonOverlay);
 		}
 	}
 
 	let skipAnchor = document.getElementById('qr-obs-title').querySelector('a.Button');
 	skipAnchor.addEventListener('click', storeHistory);
-	skipAnchor.addEventListener('click', buttonResponse);
 	skipAnchor.setAttribute('id', 'skipAnchor');
 	let backAnchor = document.createElement('a');
 	backAnchor.href = '#';
@@ -167,10 +163,7 @@ function delayedSetup() {	// Finish initial setup now that DOM is ready
 		obsViewData(OBS, subId);
 	}
 	setTimeout(doObsMedia, 1000);
-
-	if (!sendingMail) {
-		document.addEventListener('keydown', mainKeyboardHandler);
-	}
+	addMainKeyboard();
 }
 
 function doObsMedia() {	// Add download links for media, if any
@@ -227,19 +220,12 @@ function doObsMedia() {	// Add download links for media, if any
 	}
 }
 
-function secondWait(e) { //	After a top-level button is clicked, wait for the "Review reason and notes" panel to be ready.
-	if (e) {
-		mainButton = e.target.textContent;	// Which top-level button; we'll want this in the next function.
-	}
+function waitReviewReasonOverlay() { //	After a top-level button is clicked, wait for the "Review reason and notes" panel to be ready.
 	if (!document.getElementById('reasonPage')) {
-		setTimeout(secondWait,100);
+		setTimeout(waitReviewReasonOverlay,100);
 	} else {
 		setTimeout(reviewReasonAndNotesSetup, 50);
 	}
-}
-
-function buttonResponse(buttonObject) {
-	sendingMail = (buttonObject.target.textContent == 'Next');
 }
 
 function reviewReasonAndNotesSetup() {
@@ -250,12 +236,11 @@ function reviewReasonAndNotesSetup() {
 	let buttons = reasonPage.querySelectorAll('button');
 	for (let b = 0; b < buttons.length; b++) {
 		let label = buttons[b].textContent;
-		buttons[b].addEventListener('click', endReasonPage);
+		buttons[b].addEventListener('click', endReasonPage, { once: true });
 		if (label == 'Next') {
-			buttons[b].addEventListener('click', emailWait);	// need to wait for more DOM for emailing
+			buttons[b].addEventListener('click', emailWait, { once: true });	// need to wait for more DOM for emailing
 		} else if (label == 'Accept') {
-			buttons[b].addEventListener('click', buttonResponse);
-			buttons[b].addEventListener('click', storeChange);
+			buttons[b].addEventListener('click', storeChange, { once: true });
 		}
 	}
 
@@ -272,21 +257,16 @@ function reviewReasonAndNotesSetup() {
 
 	document.getElementById('review-reason').focus();
 
-	let overlay = document.getElementById('overlay');
-	if (overlay.style.display == 'block') {
-		document.addEventListener('keydown', reasonPageKeyboardHandler);
-		document.removeEventListener('keydown', mainKeyboardHandler);
-	}
+	document.addEventListener('keydown', reasonPageKeyboardHandler);
+	document.removeEventListener('keydown', mainKeyboardHandler);
 }
 
 function endReasonPage(e) {
 	let button = e.target.textContent;
 	document.removeEventListener('keydown', reasonPageKeyboardHandler);
-	if (button == 'Cancel' || !document.getElementById('send-email-checkbox').checked) {
-		document.addEventListener('keydown', mainKeyboardHandler);
-	} else if (document.getElementById('send-email-checkbox').checked) {
-		buttonResponse(e);
-	} 
+	if (button == 'Cancel') {
+		addMainKeyboard();
+	}
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
@@ -296,16 +276,17 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 	for (let b = 0; b < buttons.length; b++) {
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
-			if (mainButton === 'Defer') {	// fix a bug in CLO code which unconditionally leaves the button labeled Next
-				label = document.getElementById('send-email-checkbox').checked ? 'Next' : 'Defer';
-				buttons[b].textContent = label;
+			// fix a bug in CLO code. When Defer is clicked from the main page, it unconditionally leaves the button labeled Next  even when Send email is unchecked, which is confusing and also breaks keyboard shortcuts. We want the button to say Defer when Send email is unchecked, and Next when it is checked.
+			if (buttons[b].textContent == 'Next' && !document.getElementById('send-email-checkbox').checked) {
+				buttons[b].textContent = 'Defer';
+			} else if(buttons[b].textContent == 'Defer' && document.getElementById('send-email-checkbox').checked) {
+				buttons[b].textContent = 'Next';
 			}
 			if (label === 'Next') {	// Send email is checked.
-				buttons[b].addEventListener('click', emailWait);	// mailing so need to wait for more email DOM
+				buttons[b].addEventListener('click', emailWait, { once: true });	
 				buttons[b].removeEventListener('click', storeChange);	// button may have previously had one of the other labels
 			} else {	// Send email is not checked.
-				buttons[b].addEventListener('click', storeChange);
-				buttons[b].addEventListener('click', buttonResponse);
+				buttons[b].addEventListener('click', storeChange, { once: true });
 				buttons[b].removeEventListener('click', emailWait);	// button may have previously had one of the other labels
 			}
 		}
@@ -421,8 +402,6 @@ function mailSetup() {
 		for (let index in mailBottom) {
 			if (mailBottom[index].textContent == 'Cancel') {
 				mailBottom[index].addEventListener('click', addMainKeyboard, { once: true });
-			} else if (mailBottom[index].textContent == 'Send email') {
-				mailBottom[index].addEventListener('click', buttonResponse, { once: true });
 			}
 		}
 	}
@@ -441,7 +420,9 @@ function mailSetup() {
 }
 
 function addMainKeyboard() {
-	document.addEventListener('keydown', mainKeyboardHandler);
+	if (whatPageAmIOn() == 'main') {
+		document.addEventListener('keydown', mainKeyboardHandler);
+	}
 }
 
 function turkishWait() {
@@ -679,6 +660,11 @@ function isMobile() {
 
 
 function mainKeyboardHandler(ev) {
+	let keylist = ['KeyU', 'KeyD', 'KeyA', 'KeyS', 'KeyB', 'KeyH'];
+	if (!keylist.includes(ev.code)) {
+		return;
+	}
+	
 	if (ev.ctrlKey || ev.altKey || ev.metaKey) {
 		return;
 	}
@@ -695,7 +681,12 @@ function mainKeyboardHandler(ev) {
 		}
 	}
 
-	let Abuttons = document.getElementById('qr-obs-title').querySelectorAll('a.Button');
+	let qrObsTitle = document.getElementById('qr-obs-title');
+	if (!qrObsTitle) { // On the Nothing to review page.
+		document.removeEventListener('keydown', mainKeyboardHandler);
+		return;
+	}
+	let Abuttons = qrObsTitle.querySelectorAll('a.Button');
 	let headerButtons = document.getElementById('qr-header').querySelectorAll('a.Toolbar-item-button');
 
 	for (const button of Abuttons) {
@@ -796,4 +787,23 @@ function reasonPageKeyboardHandler(ev) {
 			default:;
 		}
 	}
+}
+
+function whatPageAmIOn() {
+	let thisPage = 'unknown';
+	let overlayDisplay = document.getElementById('overlay').style.display;
+	if (overlayDisplay == 'none') {
+		thisPage = 'main';
+		if (!document.getElementById('kdiv')) {
+			thisPage = 'nothingToReview';
+		}
+	} else if (overlayDisplay == 'block') {
+		if (document.getElementById('reasonPage')) {
+			thisPage = 'reasonPage';
+		} else if (document.getElementById('emailDialog')) {
+			thisPage = 'emailDialog';
+		}
+	}
+
+	return thisPage;
 }
