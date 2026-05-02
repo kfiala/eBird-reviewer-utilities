@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird reviewer assistant",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/*"],
