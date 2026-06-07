@@ -1,15 +1,25 @@
 {
   "manifest_version": 3,
   "name": "eBird reviewer assistant",
-  "version": "1.6.2",
+  "version": "1.7",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/*"],
-      "js": ["commonFunctions.js","utilities.js","qr.js","filterGraph.js","filterExport.js","search.js"]
+      "js": ["commonFunctions.js","utilities.js","qr.js","filterGraph.js","filterExport.js","search.js","ctrlB.js"]
     }
   ],
   "host_permissions": [
       "*://search.macaulaylibrary.org/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "page-bold.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ],
   "description": "Utilities for eBird reviewers.",
   "homepage_url": "https://www.faintlake.com/eBird/extension/ReviewerUtilities/",
