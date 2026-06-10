@@ -256,7 +256,7 @@ function colorSelectAll(check = 'none') {	// Set row background color when selec
 		}
 	});
 }
-  
+
 function selectAllChecked(check) {	// hide rows that are not selected
 	const tableBody = document.getElementById('contents').querySelector('tbody');
 
@@ -281,7 +281,7 @@ function selectAllChecked(check) {	// hide rows that are not selected
 				} else { // Checked
 					if (firstDisplayedRow < 0) {
 						firstDisplayedRow = input.id.substring(6);
-					} 
+					}
 					lastDisplayedRow = input.id.substring(6);
 				}
 				break;
@@ -683,7 +683,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				case "status": status = Cell.textContent;
 					if (status == 'Deferred') {	// Gray out species name on deferred record
 						speciesCell.querySelector('a').style.color = '#aaa';
-						submissionCell.querySelector('a').style.color = '#ccc'; 
+						submissionCell.querySelector('a').style.color = '#ccc';
 					}
 					break;
 				case "details":
@@ -717,7 +717,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				// turn off flag for saving headers.
 				spreadSheet.push(headers.join());
 				doHeaders = false;
-			} 
+			}
 			checkRecord(RowObject);
 
 			spreadSheet.push(row.join());	// Add this row to spreadsheet
