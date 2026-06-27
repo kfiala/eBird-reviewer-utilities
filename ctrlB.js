@@ -30,21 +30,3 @@ if (isFirefox()) {
 	}, { capture: true });
 }
 // else { console.log("Not in Firefox.") }
-
-function isFirefox() {
-	// Modern detection (Chromium-based browsers expose userAgentData)
-	if (navigator.userAgentData && navigator.userAgentData.brands) {
-		return navigator.userAgentData.brands.some(b => b.brand === "Firefox");
-	}
-
-	// Fallback for Firefox (which does not expose userAgentData)
-	return navigator.userAgent.includes("Firefox");
-}
-
-function isChrome() {
-	if (navigator.userAgentData && navigator.userAgentData.brands) {
-		return navigator.userAgentData.brands.some(b => b.brand === "Chromium" || b.brand === "Google Chrome");
-	}
-
-	return navigator.userAgent.includes("Chrome") && !navigator.userAgent.includes("Edg");
-}
