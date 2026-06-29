@@ -23,9 +23,12 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 function setupMainPage() {	// Finish initial setup now that DOM is ready
 	const targetLabels = ['Unconfirm', 'Defer', 'Accept'];	// We only care about these three buttons.
 	let buttons = document.getElementById('qr-footer').querySelectorAll('button');
+	console.log('Setting up main page, found buttons:', buttons);
 	for (let b=0; b<buttons.length; b++) {	// Set up click listeners on the buttons
-		let label = buttons[b].textContent;
+		let label = buttons[b].textContent.trim();
+		console.log('Found button with label ' + label);
 		if (targetLabels.includes(label)) {
+			console.log('Adding click listener to button with label ' + label);
 			buttons[b].addEventListener('click', waitReviewReasonOverlay);
 		}
 	}
@@ -123,7 +126,7 @@ function setupMainPage() {	// Finish initial setup now that DOM is ready
 // Setup for checklist comments
 // Create empty html elements that will be filled in later
 	let commentsP = document.createElement('p');
-	commentsP.style.fontSize = '13px';
+	commentsP.style.fontSize = '1rem';
 	commentsP.style.display = 'none';
 	commentsP.setAttribute('id', 'commentsP');
 	let commentSpan0 = document.createElement('span');
@@ -229,13 +232,23 @@ function waitReviewReasonOverlay() { //	After a top-level button is clicked, wai
 }
 
 function reviewReasonAndNotesSetup() {
+	console.log('Setting up Review reason and notes overlay');
+
+
+
+
+//	stopKeyupBug();
+
+
+
 	let reasonPage = document.getElementById('reasonPage');
-	if (!isMobile())
-		reasonPage.style.top = 'calc(100% - 175px)';
+	reasonPage.style.position = 'fixed';
+	reasonPage.style.bottom = '0';
+	reasonPage.style.right = '0';
 
 	let buttons = reasonPage.querySelectorAll('button');
 	for (let b = 0; b < buttons.length; b++) {
-		let label = buttons[b].textContent;
+		let label = buttons[b].textContent.trim();
 		buttons[b].addEventListener('click', endReasonPage, { once: true });
 		if (label == 'Next') {
 			buttons[b].addEventListener('click', emailWait, { once: true });	// need to wait for more DOM for emailing
@@ -261,6 +274,36 @@ function reviewReasonAndNotesSetup() {
 	document.removeEventListener('keydown', mainKeyboardHandler);
 }
 
+function stopKeyupBug() {	// This function written by CoPilot
+	console.log('In stopKeyupBug');
+	bodyKeyup();
+}
+
+function bodyKeyup() {
+	document.addEventListener("keyup", function (e) {
+		console.log("Keyup event detected in the body:", e.code);
+		console.log(e);
+
+		dialogKeyup();
+	});
+}
+
+function dialogKeyup() {
+	const el = document.querySelector("#dialog"); // same element you see in DevTools
+
+	if (!el) {
+		console.log("Target element not found");
+		return;
+	}
+
+	el.addEventListener("keyup", function (e) {
+		console.log("Extension capture on element in dialog:", e.code);
+		e.stopImmediatePropagation();
+		e.preventDefault();
+	}, true); // capture on the SAME element
+}
+
+
 function endReasonPage(e) {
 	let button = e.target.textContent;
 	document.removeEventListener('keydown', reasonPageKeyboardHandler);
@@ -270,6 +313,7 @@ function endReasonPage(e) {
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
+	console.log('In emailToggle, Send email is now ' + (document.getElementById('send-email-checkbox').checked ? 'checked' : 'unchecked'));
 	let reasonPage = document.getElementById('reasonPage');
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
@@ -345,6 +389,13 @@ function mailSetup() {
 			break;
 		}
 	}
+
+	if (isFirefox()) {
+		console.log('In mailSetup, calling stopKeyupBug');
+		stopKeyupBug();
+	} else console.log('In mailSetup, not calling stopKeyupBug because not Firefox');
+
+
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
 	let URLindex = message.indexOf('\nhttps');
@@ -420,7 +471,9 @@ function mailSetup() {
 }
 
 function addMainKeyboard() {
+	console.log('In addMainKeyboard, current page is ' + whatPageAmIOn());
 	if (whatPageAmIOn() == 'main') {
+		console.log('Adding main keyboard handler');
 		document.addEventListener('keydown', mainKeyboardHandler);
 	}
 }
@@ -660,8 +713,10 @@ function isMobile() {
 
 
 function mainKeyboardHandler(ev) {
+	console.log('Entering mainKeyboardHandler with key ' + ev.code);
 	let keylist = ['KeyU', 'KeyD', 'KeyA', 'KeyS', 'KeyB', 'KeyH'];
 	if (!keylist.includes(ev.code)) {
+		console.log('Key is not in list');
 		return;
 	}
 	
@@ -671,21 +726,25 @@ function mainKeyboardHandler(ev) {
 
 	let buttons = document.getElementById('qr-footer').querySelectorAll('button');
 	let buttonList = [];
-	for (const button of buttons) {
-		if (button.textContent == 'Unconfirm') {
-			buttonList['Unconfirm'] = button;
-		} else if (button.textContent == 'Defer') {
-			buttonList['Defer'] = button;
-		} else if (button.textContent == 'Accept') {
-			buttonList['Accept'] = button;
-		}
+	for (rawbutton of buttons) {
+		let button = rawbutton.textContent.trim();
+		if (button == 'Unconfirm') {
+			buttonList['Unconfirm'] = rawbutton;
+		} else if (button == 'Defer') {
+			buttonList['Defer'] = rawbutton;
+		} else if (button == 'Accept') {
+			buttonList['Accept'] = rawbutton;
+		} else console.log('Button not in list');
+
 	}
+	console.log(buttonList);
 
 	let qrObsTitle = document.getElementById('qr-obs-title');
 	if (!qrObsTitle) { // On the Nothing to review page.
 		document.removeEventListener('keydown', mainKeyboardHandler);
+		console.log('No qrObsTitle, so returning');
 		return;
-	}
+	} else console.log('Found qrObsTitle, display:', qrObsTitle.style.display);
 	let Abuttons = qrObsTitle.querySelectorAll('a.Button');
 	let headerButtons = document.getElementById('qr-header').querySelectorAll('a.Toolbar-item-button');
 
@@ -732,6 +791,7 @@ function mainKeyboardHandler(ev) {
 
 
 function reasonPageKeyboardHandler(ev) {
+	console.log('Entering reasonPageKeyboardHandler with key ' + ev.code);
 	if (ev.ctrlKey || ev.altKey || ev.metaKey) {
 		return;
 	}
@@ -791,19 +851,19 @@ function reasonPageKeyboardHandler(ev) {
 
 function whatPageAmIOn() {
 	let thisPage = 'unknown';
-	let overlayDisplay = document.getElementById('overlay').style.display;
-	if (overlayDisplay == 'none') {
+	let dialog = document.getElementById('dialog');
+	if (!dialog) {
 		thisPage = 'main';
 		if (!document.getElementById('kdiv')) {
 			thisPage = 'nothingToReview';
 		}
-	} else if (overlayDisplay == 'block') {
+	} else {
 		if (document.getElementById('reasonPage')) {
 			thisPage = 'reasonPage';
 		} else if (document.getElementById('emailDialog')) {
 			thisPage = 'emailDialog';
 		}
 	}
-
+	console.log('I think I am on page ' + thisPage);
 	return thisPage;
 }

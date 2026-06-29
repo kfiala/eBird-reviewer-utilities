@@ -991,43 +991,69 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 async function getMedia(mediaTD) {
 	let assetList = mediaTD.textContent;
 	if (assetList) {
+		console.log('Getting media for assets ' + assetList);
 		mediaTD.textContent = 'Fetching media...';
 		mediaTD.style.display = 'table-cell';
-		let resp = await fetch('https://search.macaulaylibrary.org/api/v1/search?includeUnconfirmed=T&sort=id_asc&catId=' + assetList);
+		let assetURL = 'https://review.ebird.org/admin/api/v1/ml-search-api?assetId='+assetList+'&sort=id_asc&unconfirmed=incl';
+		let resp = await fetch(assetURL);
 		let json = await resp.json();
-
-		const previewURL = [];
-		const largeURL = [];
-		const mediaURL = [];
-		const downloadURL = [];
-		const userDisplayName = [];	// eBirder
-		const catalogId = [];
-		for (let index in json.results.content) {
-			previewURL.push(json.results.content[index].previewUrl);
-			largeURL.push(json.results.content[index].largeUrl);
-			mediaURL.push(json.results.content[index].mediaUrl);
-			downloadURL.push(json.results.content[index].previewUrl + '2400');
-			userDisplayName.push(json.results.content[index].userDisplayName);
-			catalogId.push(json.results.content[index].catalogId);
-		}
 
 		let mediaAnchor;
 		let imgTag;
 		let wavAnchor;
 		let mediaDiv;
 		mediaTD.textContent = '';
-		for (let index in previewURL) {
+		let imgWidth = 500;
+		for (let index = 0; index < json.length; index++) {
+			let assetId = json[index].assetId;
+			let mtype = json[index].mediaType;	// photo, audio, video
+			let fetchURLbase = 'https://cdn.download.ams.birds.cornell.edu/api/v2/asset/' + assetId;
+			let altText = json[index].taxonomy.comName + ' - ' + json[index].userDisplayName;
+
+
 			mediaAnchor = document.createElement('a');
-			mediaAnchor.setAttribute('href', 'https://macaulaylibrary.org/asset/' + catalogId[index]);
+			if (mtype == 'photo') {
+				mediaAnchor.setAttribute('href', fetchURLbase + '/2400');
+			} else if (mtype == 'audio') {
+				mediaAnchor.setAttribute('href', fetchURLbase + '/default/preview');
+			} else if (mtype == 'video') {
+				mediaAnchor.setAttribute('href', fetchURLbase + '/mp4');
+			}
 			mediaAnchor.setAttribute('target', '_blank');
 
-			let mtype = json.results.content[index].mediaType;	// Photo, Audio, Video
-
 			imgTag = document.createElement('img');
-			imgTag.setAttribute('src', previewURL[index]);
-			imgTag.setAttribute('title', userDisplayName[index]);
+			switch (mtype) {
+				case 'photo':
+					imgTag.setAttribute('src', fetchURLbase + '/480');
+					break;
+				case 'audio':
+					imgTag.setAttribute('src', fetchURLbase + '/default/preview');
+					break;
+				case 'video':
+					imgTag.setAttribute('src', fetchURLbase + '/mp4');
+					break;
+			}
+			imgTag.setAttribute('title', json[index].userDisplayName);
 			imgTag.style.marginRight = '5px';
 			imgTag.style.marginBottom = '5px';
+
+			imgTag.setAttribute('alt', altText);
+
+			if (mtype == 'photo') {
+				imgTag.setAttribute('sizes', imgWidth);
+				imgTag.setAttribute('srcset', fetchURLbase + '/160 160w, ' +
+					fetchURLbase + '/320 320w, ' +
+					fetchURLbase + '/480 480w, ' +
+					fetchURLbase + '/640 640w, ' +
+					fetchURLbase + '/900 900w, ' +
+					fetchURLbase + '/1200 1200w'
+				);
+			}
+			imgTag.setAttribute('class', 'ResultsGallery-image show pixelated');
+			imgTag.style.width = imgWidth + 'px';
+
+			console.log(imgTag);
+
 
 			mediaAnchor.appendChild(imgTag);
 
@@ -1035,24 +1061,26 @@ async function getMedia(mediaTD) {
 			mediaDiv.appendChild(mediaAnchor);
 			mediaDiv.style.display = 'inline-block';
 
-			if (mtype == 'Photo') {
+			if (mtype == 'photo') {
+				console.log('mtype is photo');
 				let newDiv = document.createElement('div');
 				let downloadAnchor = document.createElement('a');
-				downloadAnchor.setAttribute('href', downloadURL[index]);
+				downloadAnchor.setAttribute('href', fetchURLbase + '/2400');
 				downloadAnchor.setAttribute('target', '_blank');
 				downloadAnchor.appendChild(document.createTextNode('Download Image'));
 				newDiv.appendChild(downloadAnchor);
-
 				mediaDiv.appendChild(newDiv);
 			}
 
-			if (mtype == 'Video') {
+			if (mtype == 'video') {
+				console.log('mtype is video');
 				mediaDiv.style.border = 'thick solid blue';
 			}
 
-			if (mtype == 'Audio') {
+			if (mtype == 'audio') {
+				console.log('mtype is audio');
 				wavAnchor = document.createElement('a');
-				wavAnchor.setAttribute('href', mediaURL[index]);
+				wavAnchor.setAttribute('href', fetchURLbase + '/mp3');
 				wavAnchor.setAttribute('target', '_blank');
 				wavAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
 
