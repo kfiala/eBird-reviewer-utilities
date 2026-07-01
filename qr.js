@@ -234,12 +234,7 @@ function waitReviewReasonOverlay() { //	After a top-level button is clicked, wai
 function reviewReasonAndNotesSetup() {
 	console.log('Setting up Review reason and notes overlay');
 
-
-
-
-//	stopKeyupBug();
-
-
+	stopKeyupBug();
 
 	let reasonPage = document.getElementById('reasonPage');
 	reasonPage.style.position = 'fixed';
@@ -274,35 +269,22 @@ function reviewReasonAndNotesSetup() {
 	document.removeEventListener('keydown', mainKeyboardHandler);
 }
 
-function stopKeyupBug() {	// This function written by CoPilot
-	console.log('In stopKeyupBug');
-	bodyKeyup();
-}
-
-function bodyKeyup() {
-	document.addEventListener("keyup", function (e) {
-		console.log("Keyup event detected in the body:", e.code);
-		console.log(e);
-
-		dialogKeyup();
-	});
-}
-
-function dialogKeyup() {
-	const el = document.querySelector("#dialog"); // same element you see in DevTools
-
-	if (!el) {
-		console.log("Target element not found");
-		return;
+function stopKeyupBug() {
+	if (isFirefox()) {
+		const el = document.querySelector(".quick-review-app");
+		el.addEventListener("keyup", outerKeyup, false);
 	}
-
-	el.addEventListener("keyup", function (e) {
-		console.log("Extension capture on element in dialog:", e.code);
-		e.stopImmediatePropagation();
-		e.preventDefault();
-	}, true); // capture on the SAME element
 }
 
+function outerKeyup(e) {
+	const el = document.querySelector("#dialog");
+	if (el) el.addEventListener("keyup", innerKeyup, true);
+}
+
+function innerKeyup(e) {
+	e.stopImmediatePropagation();
+	e.preventDefault();
+}
 
 function endReasonPage(e) {
 	let button = e.target.textContent;
@@ -390,11 +372,7 @@ function mailSetup() {
 		}
 	}
 
-	if (isFirefox()) {
-		console.log('In mailSetup, calling stopKeyupBug');
-		stopKeyupBug();
-	} else console.log('In mailSetup, not calling stopKeyupBug because not Firefox');
-
+	stopKeyupBug();
 
 	// Update the email content to convert the checklist URL to a clickable hyperlink
 	let message = document.getElementById('email-message1').textContent;
