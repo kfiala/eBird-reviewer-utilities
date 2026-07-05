@@ -635,6 +635,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					break;
 				case "evidence":
 					mediaCell = document.createElement('td');
+					mediaCell.setAttribute('class', 'Doc');
 					elTr.insertBefore(mediaCell, Cell);
 					setupMedia(elTr, mediaCell, OBS);
 					if (html) {
