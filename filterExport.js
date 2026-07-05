@@ -1,7 +1,8 @@
 // Export an eBird review filter in csv format
 let mainTable=document.getElementById('filter-grid-species');
-if(mainTable)	// The filter is <ul id="filter-grid-species" 
+if (mainTable && document.getElementsByClassName('h-bar'))	// The filter is <ul id="filter-grid-species" 
 {
+	// If no h-bar, then it's the "Add Species" page. No place to hook up the download link
 	let nameLookup=[];
 	mainTable.querySelectorAll('label').forEach(function(elLabel)	// List all the species in a lookup table
 	{	// Each <li> contains a <label 
