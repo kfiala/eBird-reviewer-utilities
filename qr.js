@@ -3,14 +3,16 @@ var OBS, TAXON;
 
 if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 	const observer = new MutationObserver((mutations) => {
-		const el = document.querySelector('#qr-obs-documentation');
-		for (const m of mutations) {
-
-			// --- Detect addition ---
+		for (const m of mutations) {-
 			m.addedNodes.forEach(node => {
-				if (node.contains(el)) {
+				if (node.innerHTML && node.innerHTML.includes('qr-obs-documentation')) {
+					console.log('=============> Confirmed that node contains qr-obs-documentation');
 					setupMainPage();
 				}
+			});
+
+			m.removedNodes.forEach(node => {
+				if (node.id === "dialog" && whatPageAmIOn() == 'main') addMainKeyboard();
 			});
 		}
 	});
@@ -23,12 +25,9 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 function setupMainPage() {	// Finish initial setup now that DOM is ready
 	const targetLabels = ['Unconfirm', 'Defer', 'Accept'];	// We only care about these three buttons.
 	let buttons = document.getElementById('qr-footer').querySelectorAll('button');
-	console.log('Setting up main page, found buttons:', buttons);
 	for (let b=0; b<buttons.length; b++) {	// Set up click listeners on the buttons
 		let label = buttons[b].textContent.trim();
-		console.log('Found button with label ' + label);
 		if (targetLabels.includes(label)) {
-			console.log('Adding click listener to button with label ' + label);
 			buttons[b].addEventListener('click', waitReviewReasonOverlay);
 		}
 	}
@@ -188,11 +187,12 @@ function doObsMedia() {	// Add download links for media, if any
 				thingIsNumeric = /^\d+$/.test(thing);
 				let URL;
 				let imgAnchor;
-				if (thingIsNumeric || thing == 'poster') {
+				if (thingIsNumeric || thing == 'preview') {
 					if (thingIsNumeric) {
 						URL = img.src.slice(0, last + 1) + '2400';
-					} else if (thing == 'poster') {
-						URL = img.src.slice(0, last + 1) + 'audio';
+					} else if (thing == 'preview') {
+						const secondLast = img.src.lastIndexOf('/', last - 1);
+						URL = img.src.slice(0, secondLast + 1) + 'mp3';
 					}
 					imgAnchor = document.createElement('a');
 					imgAnchor.setAttribute('href', URL);
@@ -206,7 +206,7 @@ function doObsMedia() {	// Add download links for media, if any
 					imgAnchor.style.textAlign = 'center';
 					if (thingIsNumeric) {
 						imgAnchor.appendChild(document.createTextNode('Download image'));
-					} else if (thing == 'poster') {
+					} else if (thing == 'preview') {
 						imgAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
 					}
 				} else {
@@ -232,8 +232,6 @@ function waitReviewReasonOverlay() { //	After a top-level button is clicked, wai
 }
 
 function reviewReasonAndNotesSetup() {
-	console.log('Setting up Review reason and notes overlay');
-
 	stopKeyupBug();
 
 	let reasonPage = document.getElementById('reasonPage');
@@ -287,15 +285,10 @@ function innerKeyup(e) {
 }
 
 function endReasonPage(e) {
-	let button = e.target.textContent;
 	document.removeEventListener('keydown', reasonPageKeyboardHandler);
-	if (button == 'Cancel') {
-		addMainKeyboard();
-	}
 }
 
 function emailToggle() {	// Swap event listeners when Send email is toggled
-	console.log('In emailToggle, Send email is now ' + (document.getElementById('send-email-checkbox').checked ? 'checked' : 'unchecked'));
 	let reasonPage = document.getElementById('reasonPage');
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
@@ -303,10 +296,10 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 		let label = buttons[b].textContent;
 		if (targetLabels.includes(label)) {
 			// fix a bug in CLO code. When Defer is clicked from the main page, it unconditionally leaves the button labeled Next  even when Send email is unchecked, which is confusing and also breaks keyboard shortcuts. We want the button to say Defer when Send email is unchecked, and Next when it is checked.
-			if (buttons[b].textContent == 'Next' && !document.getElementById('send-email-checkbox').checked) {
-				buttons[b].textContent = 'Defer';
-			} else if(buttons[b].textContent == 'Defer' && document.getElementById('send-email-checkbox').checked) {
-				buttons[b].textContent = 'Next';
+			if (buttons[b].textContent.trim() == 'Next' && !document.getElementById('send-email-checkbox').checked) {
+				buttons[b].textContent = ' Defer ';
+			} else if(buttons[b].textContent.trim() == 'Defer' && document.getElementById('send-email-checkbox').checked) {
+				buttons[b].textContent = ' Next ';
 			}
 			if (label === 'Next') {	// Send email is checked.
 				buttons[b].addEventListener('click', emailWait, { once: true });	
@@ -365,7 +358,7 @@ function mailSetup() {
 	const targetLabels = ['Send email'];
 	let buttons = document.querySelectorAll('button');
 	for (let b=0; b<buttons.length; b++) {
-		let label = buttons[b].textContent;
+		let label = buttons[b].textContent.trim();
 		if (targetLabels.includes(label)) {
 			buttons[b].addEventListener('click', storeChange);
 			break;
@@ -422,17 +415,6 @@ function mailSetup() {
 
 		let topCancel = document.querySelectorAll('a.Toolbar-item-button');
 		let mailBottom = document.querySelectorAll('button');
-
-		for (let index in topCancel) {
-			if (topCancel[index].textContent == 'Cancel') {
-				topCancel[index].addEventListener('click', addMainKeyboard, {once: true});
-			}
-		}
-		for (let index in mailBottom) {
-			if (mailBottom[index].textContent == 'Cancel') {
-				mailBottom[index].addEventListener('click', addMainKeyboard, { once: true });
-			}
-		}
 	}
 	// Special handling for Turkish language emails
 	let mailDiv = document.getElementById('qr-language-control');
@@ -440,7 +422,7 @@ function mailSetup() {
 		let langUL = mailDiv.querySelector('ul').querySelectorAll('li');
 		for (let index in langUL) {
 			let langItem = langUL[index];
-			if (langItem.textContent == 'Turkish') {
+			if (langItem.textContent.trim() == 'Turkish') {
 				langItem.addEventListener('click', turkishWait);
 				break;
 			}
@@ -449,9 +431,7 @@ function mailSetup() {
 }
 
 function addMainKeyboard() {
-	console.log('In addMainKeyboard, current page is ' + whatPageAmIOn());
 	if (whatPageAmIOn() == 'main') {
-		console.log('Adding main keyboard handler');
 		document.addEventListener('keydown', mainKeyboardHandler);
 	}
 }
@@ -691,10 +671,8 @@ function isMobile() {
 
 
 function mainKeyboardHandler(ev) {
-	console.log('Entering mainKeyboardHandler with key ' + ev.code);
 	let keylist = ['KeyU', 'KeyD', 'KeyA', 'KeyS', 'KeyB', 'KeyH'];
 	if (!keylist.includes(ev.code)) {
-		console.log('Key is not in list');
 		return;
 	}
 	
@@ -705,36 +683,35 @@ function mainKeyboardHandler(ev) {
 	let buttons = document.getElementById('qr-footer').querySelectorAll('button');
 	let buttonList = [];
 	for (rawbutton of buttons) {
-		let button = rawbutton.textContent.trim();
+		const button = rawbutton.textContent.trim();
 		if (button == 'Unconfirm') {
 			buttonList['Unconfirm'] = rawbutton;
 		} else if (button == 'Defer') {
 			buttonList['Defer'] = rawbutton;
 		} else if (button == 'Accept') {
 			buttonList['Accept'] = rawbutton;
-		} else console.log('Button not in list');
-
+		}
 	}
-	console.log(buttonList);
 
 	let qrObsTitle = document.getElementById('qr-obs-title');
 	if (!qrObsTitle) { // On the Nothing to review page.
 		document.removeEventListener('keydown', mainKeyboardHandler);
-		console.log('No qrObsTitle, so returning');
 		return;
-	} else console.log('Found qrObsTitle, display:', qrObsTitle.style.display);
+	}
 	let Abuttons = qrObsTitle.querySelectorAll('a.Button');
 	let headerButtons = document.getElementById('qr-header').querySelectorAll('a.Toolbar-item-button');
 
 	for (const button of Abuttons) {
-		if (button.textContent == 'Skip') {
+		buttonText = button.textContent.trim();
+		if (buttonText == 'Skip') {
 			buttonList['Skip'] = button;
-		} else if (button.textContent == 'Back') {
+		} else if (buttonText == 'Back') {
 			buttonList['Back'] = button;
 		}
 	}
 	for (const button of headerButtons) {
-		if (button.textContent == 'Home') {
+		buttonText = button.textContent.trim();
+		if (buttonText == 'Home') {
 			buttonList['Home'] = button;
 		}
 	}
@@ -769,7 +746,6 @@ function mainKeyboardHandler(ev) {
 
 
 function reasonPageKeyboardHandler(ev) {
-	console.log('Entering reasonPageKeyboardHandler with key ' + ev.code);
 	if (ev.ctrlKey || ev.altKey || ev.metaKey) {
 		return;
 	}
@@ -778,15 +754,16 @@ function reasonPageKeyboardHandler(ev) {
 	let buttons = reasonPage.querySelectorAll('button');
 	let buttonList = [];
 	for (const button of buttons) {
-		if (button.textContent == 'Cancel') {
+		buttonText = button.textContent.trim();
+		if (buttonText == 'Cancel') {
 			buttonList['Cancel'] = button;
-		} else if (button.textContent == 'Accept') {
+		} else if (buttonText == 'Accept') {
 			buttonList['Accept'] = button;
-		} else if (button.textContent == 'Next') {
+		} else if (buttonText == 'Next') {
 			buttonList['Next'] = button;
-		} else if (button.textContent == 'Unconfirm') {
+		} else if (buttonText == 'Unconfirm') {
 			buttonList['Unconfirm'] = button;
-		} else if (button.textContent == 'Defer') {
+		} else if (buttonText == 'Defer') {
 			buttonList['Defer'] = button;
 		}
 	}
@@ -829,19 +806,18 @@ function reasonPageKeyboardHandler(ev) {
 
 function whatPageAmIOn() {
 	let thisPage = 'unknown';
-	let dialog = document.getElementById('dialog');
-	if (!dialog) {
+	if (!document.getElementById('dialog')) {
 		thisPage = 'main';
 		if (!document.getElementById('kdiv')) {
 			thisPage = 'nothingToReview';
 		}
-	} else {
-		if (document.getElementById('reasonPage')) {
-			thisPage = 'reasonPage';
-		} else if (document.getElementById('emailDialog')) {
+	} else {	// dialog is present
+		if (document.getElementById('emailDialog')) {
 			thisPage = 'emailDialog';
+		} else if (document.getElementById('reasonPage')) {
+			thisPage = 'reasonPage';
 		}
 	}
-	console.log('I think I am on page ' + thisPage);
+
 	return thisPage;
 }

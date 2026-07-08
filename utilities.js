@@ -992,7 +992,6 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 async function getMedia(mediaTD) {
 	let assetList = mediaTD.textContent;
 	if (assetList) {
-		console.log('Getting media for assets ' + assetList);
 		mediaTD.textContent = 'Fetching media...';
 		mediaTD.style.display = 'table-cell';
 		let assetURL = 'https://review.ebird.org/admin/api/v1/ml-search-api?assetId='+assetList+'&sort=id_asc&unconfirmed=incl';
@@ -1004,43 +1003,39 @@ async function getMedia(mediaTD) {
 		let wavAnchor;
 		let mediaDiv;
 		mediaTD.textContent = '';
-		let imgWidth = 500;
+		let imgWidth = '480px';
+		let videoWidth = '100%';
+		let sonagWidth = '480px';
+
 		for (let index = 0; index < json.length; index++) {
+
+			mediaDiv = document.createElement('div');
+			mediaDiv.style.display = 'inline-block';
+			mediaDiv.style.marginRight = '5px';
+			mediaDiv.style.marginBottom = '5px';
+			mediaDiv.style.verticalAlign = 'bottom';
+
+			mediaTD.appendChild(mediaDiv);
+
 			let assetId = json[index].assetId;
 			let mtype = json[index].mediaType;	// photo, audio, video
 			let fetchURLbase = 'https://cdn.download.ams.birds.cornell.edu/api/v2/asset/' + assetId;
 			let altText = json[index].taxonomy.comName + ' - ' + json[index].userDisplayName;
 
-
-			mediaAnchor = document.createElement('a');
 			if (mtype == 'photo') {
+				mediaAnchor = document.createElement('a');
 				mediaAnchor.setAttribute('href', fetchURLbase + '/2400');
-			} else if (mtype == 'audio') {
-				mediaAnchor.setAttribute('href', fetchURLbase + '/default/preview');
-			} else if (mtype == 'video') {
-				mediaAnchor.setAttribute('href', fetchURLbase + '/mp4');
-			}
-			mediaAnchor.setAttribute('target', '_blank');
+				mediaAnchor.setAttribute('target', '_blank');
+				mediaDiv.appendChild(mediaAnchor);
 
-			imgTag = document.createElement('img');
-			switch (mtype) {
-				case 'photo':
-					imgTag.setAttribute('src', fetchURLbase + '/480');
-					break;
-				case 'audio':
-					imgTag.setAttribute('src', fetchURLbase + '/default/preview');
-					break;
-				case 'video':
-					imgTag.setAttribute('src', fetchURLbase + '/mp4');
-					break;
-			}
-			imgTag.setAttribute('title', json[index].userDisplayName);
-			imgTag.style.marginRight = '5px';
-			imgTag.style.marginBottom = '5px';
+				imgTag = document.createElement('img');
+				imgTag.setAttribute('src', fetchURLbase + '/480');
+				imgTag.setAttribute('title', json[index].userDisplayName);
+				imgTag.style.marginRight = '5px';
+				imgTag.style.marginBottom = '5px';
 
-			imgTag.setAttribute('alt', altText);
+				imgTag.setAttribute('alt', altText);
 
-			if (mtype == 'photo') {
 				imgTag.setAttribute('sizes', imgWidth);
 				imgTag.setAttribute('srcset', fetchURLbase + '/160 160w, ' +
 					fetchURLbase + '/320 320w, ' +
@@ -1049,48 +1044,67 @@ async function getMedia(mediaTD) {
 					fetchURLbase + '/900 900w, ' +
 					fetchURLbase + '/1200 1200w'
 				);
-			}
-			imgTag.setAttribute('class', 'ResultsGallery-image show pixelated');
-			imgTag.style.width = imgWidth + 'px';
-
-			console.log(imgTag);
 
 
-			mediaAnchor.appendChild(imgTag);
+				imgTag.style.width = imgWidth + 'px';
 
-			mediaDiv = document.createElement('div');
-			mediaDiv.appendChild(mediaAnchor);
-			mediaDiv.style.display = 'inline-block';
+				mediaAnchor.appendChild(imgTag);
 
-			if (mtype == 'photo') {
-				console.log('mtype is photo');
-				let newDiv = document.createElement('div');
+				let downloadDiv = document.createElement('div');
 				let downloadAnchor = document.createElement('a');
+				downloadDiv.appendChild(downloadAnchor);
+
 				downloadAnchor.setAttribute('href', fetchURLbase + '/2400');
 				downloadAnchor.setAttribute('target', '_blank');
 				downloadAnchor.appendChild(document.createTextNode('Download Image'));
-				newDiv.appendChild(downloadAnchor);
-				mediaDiv.appendChild(newDiv);
+				mediaDiv.appendChild(downloadDiv);
+			} else {
+				let mediaWidth, mediaHeight, urlTail;
+				if (mtype == 'audio') {
+					mediaWidth = sonagWidth;
+					mediaHeight = '130px';
+					urlTail = '/default/preview';
+				} else if (mtype == 'video') {
+					mediaWidth = videoWidth;
+					mediaHeight = 'auto';
+					urlTail = '/640';
+				}
+
+				assetId = json[index].assetId;
+
+				mediaAnchor = document.createElement('a');
+				mediaAnchor.setAttribute('href', 'https://macaulaylibrary.org/asset/' + assetId);
+				mediaAnchor.setAttribute('target', '_blank');
+				mediaDiv.appendChild(mediaAnchor);
+
+				let mediaImg = document.createElement('img');
+				mediaImg.setAttribute('src', 'https://cdn.download.ams.birds.cornell.edu/api/v2/asset/' + assetId + urlTail);
+				mediaImg.setAttribute('alt', altText);
+				mediaImg.setAttribute('title', json[index].userDisplayName);
+				mediaImg.style.width = mediaWidth;
+				mediaImg.style.height = mediaHeight;
+
+				mediaAnchor.appendChild(mediaImg);
+
+
+
+				if (mtype == 'audio') {
+					wavAnchor = document.createElement('a');
+					wavAnchor.setAttribute('href', fetchURLbase + '/mp3');
+					wavAnchor.setAttribute('target', '_blank');
+					wavAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
+
+					mediaDiv.appendChild(document.createElement('br'));
+					mediaDiv.appendChild(wavAnchor);
+				} else if (mtype == 'video') {
+					let videoP = document.createElement('p');
+					videoP.textContent = 'Video';
+					mediaDiv.appendChild(videoP);
+				}
 			}
 
-			if (mtype == 'video') {
-				console.log('mtype is video');
-				mediaDiv.style.border = 'thick solid blue';
-			}
-
-			if (mtype == 'audio') {
-				console.log('mtype is audio');
-				wavAnchor = document.createElement('a');
-				wavAnchor.setAttribute('href', fetchURLbase + '/mp3');
-				wavAnchor.setAttribute('target', '_blank');
-				wavAnchor.appendChild(document.createTextNode('Download audio (mp3)'));
-
-				mediaDiv.appendChild(document.createElement('br'));
-				mediaDiv.appendChild(wavAnchor);
-			}
 			mediaTD.setAttribute('class', 'mediacomplete');
 			mediaTD.classList.add('expanded');
-			mediaTD.appendChild(mediaDiv);
 		}
 	}
 }
