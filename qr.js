@@ -428,6 +428,8 @@ function mailSetup() {
 			}
 		}
 	}
+
+	document.addEventListener('keydown', mailPageKeyboardHandler);
 }
 
 function addMainKeyboard() {
@@ -801,6 +803,42 @@ function reasonPageKeyboardHandler(ev) {
 				break;
 			default:;
 		}
+	}
+}
+
+function mailPageKeyboardHandler(ev) {
+	if (! ev.altKey) {	// Only respond to Alt+key combinations
+		return;
+	}
+	let buttons = document.getElementById('emailDialog').querySelectorAll('button');
+	let buttonList = [];
+	for (const button of buttons) {
+		buttonText = button.textContent.trim();
+		if (buttonText == 'Cancel') {
+			buttonList['Cancel'] = button;
+		} else if (buttonText == 'Send email') {
+			buttonList['Send email'] = button;
+		} else if (buttonText == 'Language') {
+			buttonList['Language'] = button;
+		}
+	}
+	switch (ev.code) {
+		case 'KeyC':
+			if (buttonList['Cancel']) {
+				buttonList['Cancel'].click();
+			}
+			break;
+		case 'KeyS':
+			if (buttonList['Send email']) {
+				buttonList['Send email'].click();
+			}
+			break;
+		case 'KeyL':
+			if (buttonList['Language']) {
+				buttonList['Language'].click();
+			}
+			break;
+		default: ;
 	}
 }
 
