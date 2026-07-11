@@ -1513,10 +1513,14 @@ function historyWindow() {
 }
 
 function submissionWindow() {
-	const parser = new DOMParser();
 	let theForm = document.getElementById('reviewForm');
 	let theTable = theForm.getElementsByTagName('tbody')[0];
 	let Class, html, el;
+	let OBSlist = [];
+	let sharerName = {};
+	let sharedList = [];
+	let submissionCount = {};
+
 	if (theTable) {	// Go through the table of species for this submission
 		theTable.querySelectorAll('tr').forEach(function (elTr) {
 			// Examine the data from each row
@@ -1524,21 +1528,83 @@ function submissionWindow() {
 			elTr.querySelectorAll('td').forEach(function (Cell) {
 				// Look at the "select" and "species" column cells in this row of the table
 				Class = Cell.getAttribute('class').split(' ')[0];
-				html = parser.parseFromString(Cell.innerHTML, "text/html");
-				el = html.body.firstChild;
-
 				switch (Class) {
 					case "select":
-						OBS = el.getAttribute('value');	// The "select" cell has the OBS value
+						let inputTag = Cell.getElementsByTagName('input')[0];
+						OBS = inputTag.value;	// The "select" cell has the OBS value
+						OBSlist.push(OBS);
 						break;
 					case "species":
-						if (el.nodeName === 'LABEL') {
-							lookup[OBS] = el.textContent.trim();	// Insert the species name into the OBS lookup table
-						}
+						let anchorTag = Cell.querySelector('a');
+						lookup[OBS] = anchorTag.textContent.trim();	// Insert the species name into the OBS lookup table
 						break;
 					default:
 				}
 			});
+		});
+
+		submissionCount.remaining = OBSlist.length;
+
+		OBSlist.forEach(function (OBSnumber) {
+			getSharedLists(OBSnumber, sharerName, sharedList, submissionCount);
+		});
+	}
+}
+
+async function getSharedLists(OBSnumber, sharerName, sharedList, submissionCount) {
+	let response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBSnumber);
+	let json = await response.json();
+
+	let shareTable;
+
+	if (json.observers.length > 1) {
+		shareTable = document.querySelector('table#shares');
+		if (!shareTable) {
+			shareTable = document.createElement('table');
+			shareTable.setAttribute('id', 'shares');
+			shareTable.style.marginTop = '2em';
+			let caption = document.createElement('caption');
+			caption.textContent = "Shared checklists";
+			shareTable.appendChild(caption);
+
+			let group1 = document.querySelector('div.group1');
+			group1.appendChild(shareTable);
+		}
+	}
+
+	let listOwnerSubId = json.sub.subId;
+	for (const i in json.observers) {
+		let subId = json.observers[i].subId;
+		let observerName = json.observers[i].alias;
+		if (listOwnerSubId != subId) {
+			if (!sharedList.includes(subId)) {
+				sharedList.push(subId);
+				sharerName[subId] = observerName;
+			}
+		}
+	}
+
+	submissionCount.remaining -= 1;
+
+	if (submissionCount.remaining <= 0) {
+		sharedList.forEach(function (subId) {
+			let observer = sharerName[subId];
+
+			let row = document.createElement('tr');
+			shareTable.appendChild(row);
+
+			let sharedListLink = document.createElement('a');
+			sharedListLink.setAttribute('href', 'https://review.ebird.org/admin/reviewSub.htm?subID=' + subId);
+			sharedListLink.setAttribute('target', '_blank');
+			sharedListLink.textContent = subId;
+
+			let td1 = document.createElement('td');
+			td1.appendChild(sharedListLink);
+			row.appendChild(td1);
+
+			let td2 = document.createElement('td');
+			td2.textContent = observer;
+			row.appendChild(td2);
 		});
 	}
 }
