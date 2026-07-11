@@ -1024,7 +1024,7 @@ async function getMedia(mediaTD) {
 
 			if (mtype == 'photo') {
 				mediaAnchor = document.createElement('a');
-				mediaAnchor.setAttribute('href', fetchURLbase + '/2400');
+				mediaAnchor.setAttribute('href', 'https://macaulaylibrary.org/asset/' + assetId);
 				mediaAnchor.setAttribute('target', '_blank');
 				mediaDiv.appendChild(mediaAnchor);
 
