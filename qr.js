@@ -6,7 +6,6 @@ if (window.location.href.includes('https://review.ebird.org/admin/qr.htm')) {
 		for (const m of mutations) {-
 			m.addedNodes.forEach(node => {
 				if (node.innerHTML && node.innerHTML.includes('qr-obs-documentation')) {
-					console.log('=============> Confirmed that node contains qr-obs-documentation');
 					setupMainPage();
 				}
 			});
