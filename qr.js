@@ -292,7 +292,7 @@ function emailToggle() {	// Swap event listeners when Send email is toggled
 	const targetLabels = ['Next', 'Accept', 'Unconfirm', 'Defer'];
 	let buttons = reasonPage.querySelectorAll('button');
 	for (let b = 0; b < buttons.length; b++) {
-		let label = buttons[b].textContent;
+		let label = buttons[b].textContent.trim();
 		if (targetLabels.includes(label)) {
 			// fix a bug in CLO code. When Defer is clicked from the main page, it unconditionally leaves the button labeled Next  even when Send email is unchecked, which is confusing and also breaks keyboard shortcuts. We want the button to say Defer when Send email is unchecked, and Next when it is checked.
 			if (buttons[b].textContent.trim() == 'Next' && !document.getElementById('send-email-checkbox').checked) {
