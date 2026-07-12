@@ -504,12 +504,10 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docUL.style.marginLeft = '15px';
 		docDiv.appendChild(docUL);
 
-		let URLlist = [['eBird Reviewer Handbook', 'https://drive.google.com/file/d/1zeGEwMt9vrJL3dvj1aAuYodErB8ikl3e/view?usp=share_link'],
-		['eBird Regional Editors', 'https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
-		['Exotics and taxonomy files', 'https://drive.google.com/drive/folders/1CzYzrR4DOMWpTxPnafvqjBw77JcTUcJr'],
-		['Filter taxa recommendations', 'https://docs.google.com/spreadsheets/d/1p-VRE2GhUuJXv6ADUehw7tlVLauYB7YI/edit#gid=446487343'],
-		['Exotic species guidelines','https://docs.google.com/document/d/1VHA1bpLI5zOk89WtbytUMfJME567SGRJUrHxmSr7Or8/'],
-		['Google Drive folder', 'https://drive.google.com/drive/folders/1LtQA_2lbKyjQ4aDpPwUTPCgRWcQISa7u']];
+		let URLlist = [['eBird Reviewer Handbook', 'https://team-ebird.github.io/Reviewer_Handbook/'],
+			['eBird Hotspot Editor Manual','https://team-ebird.github.io/eBird_Hotspot_Manual/'],
+			['eBird Regional Editors', 'https://docs.google.com/spreadsheets/d/1i08drC6kGqequ_uRB6vgRdMaClcTljX0pvDzSS0ARic/edit#gid=124519153'],
+			['Google Drive folder', 'https://tinyurl.com/eBirdreview']];
 
 		const liList = [];
 		const linkList = [];
@@ -1025,7 +1023,7 @@ async function getMedia(mediaTD) {
 
 			if (mtype == 'photo') {
 				mediaAnchor = document.createElement('a');
-				mediaAnchor.setAttribute('href', fetchURLbase + '/2400');
+				mediaAnchor.setAttribute('href', 'https://macaulaylibrary.org/asset/' + assetId);
 				mediaAnchor.setAttribute('target', '_blank');
 				mediaDiv.appendChild(mediaAnchor);
 
