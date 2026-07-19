@@ -347,6 +347,7 @@ function pulldownHyperlinks(hyperlink) {
 	hyperlinkDiv.style.paddingBottom = '1em';
 	hyperlinkDiv.style.display = 'none';
 	hyperlinkDiv.style.zIndex = 1;
+	hyperlinkDiv.setAttribute('tabindex', '-1');	// Make div focusable so that it can be closed with escape key
 	document.getElementById("listnav").appendChild(hyperlinkDiv);
 
 	// Create the list of addons
@@ -800,8 +801,10 @@ async function checkRecord(RowObject) {
 		if (!response.ok) { throw new Error("Bad response"); }
 		json = await response.json();
 	} catch (error) {
-		console.log("Fetch failed for " + OBS + ' (' + species + ')');
-		flagCell(RowObject.species);
+		console.log("Fetch failed in checkRecord for " + OBS + ' (' + species + '): ' + error);
+		// This happens when the user changes a count from a positive number to zero.
+		// The count is incorrectly displayed as the original value.
+		flagCell(RowObject.count);
 	}
 
 	function flagCell(Cell) {
@@ -816,11 +819,11 @@ async function checkRecord(RowObject) {
 		}
 	}
 
-	let commonName = json.taxon.commonName.trim();
-	let sciName = json.taxon.sciName.trim();
-	let fullName = commonName + ' ' + sciName;
-
 	if (json) {
+		let commonName = json.taxon.commonName.trim();
+		let sciName = json.taxon.sciName.trim();
+		let fullName = commonName + ' ' + sciName;
+
 		if ((commonName != species) && (sciName != species) && (fullName != species)) {
 			console.log('Mismatch for ' + OBS + ', "' + species + '" should be "' + fullName + '"');
 			flagCell(RowObject.species);
@@ -923,9 +926,18 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 	comments = comments.slice(1, comments.length - 1);	// strip enclosing quotes.
 
 	let checklistComments = false;
-	response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
-	let json = await response.json();
-	if (json.sub.comments) {
+	let json = false;
+
+	try {
+		response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+		if (!response.ok) throw new Error("Bad response");
+		json = await response.json();
+	} catch (error) {
+		console.log("Fetch failed in getDetails for " + OBS + ' ' + error);
+		return;
+	}
+
+	if (json && json.sub.comments) {
 		checklistComments = true;
 		const clComment = parser.parseFromString('Checklist comments: ' + json.sub.comments, 'text/html');
 		commentTD.append(clComment.body.textContent);
@@ -933,7 +945,6 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 			commentTD.append(document.createElement('br'));
 		}
 	}
-
 
 	if (comments.length) {
 		if (checklistComments)
@@ -1719,6 +1730,16 @@ function keyboardHandler(ev)
 				}
 			}
 			break;
+		case 'KeyA':
+			console.log('Key A pressed'); 
+			if (document.getElementById('hyperlinkDiv').style.display == 'block') {
+				console.log('Hiding hyperlink div');
+				document.getElementById('hyperlinkDiv').style.display = 'none';
+			} else {
+				console.log('Showing hyperlink div');
+				addonsMenu('hyperlinkDiv');
+			}
+			break;
 		default:
 			handled = false;
 			break;
@@ -1777,6 +1798,50 @@ function keyboardHandler(ev)
 			default:
 //			console.log('Unhandled key: ' + ev.code);
 		}
+	}
+	function addonsMenu(id) {
+		const menu = document.getElementById(id);
+		const items = Array.from(menu.querySelectorAll("a"));
+		let pos = 0;
+
+		function showMenu() {
+			menu.style.display = "block";
+			menu.focus();
+			console.log('activeElement:', document.activeElement.id);
+
+			highlight();
+		}
+
+		showMenu();
+
+		function highlight() {
+			items.forEach(a => a.classList.remove("selected"));
+			items[pos].classList.add("selected");
+			items[pos].focus();  // Move actual keyboard focus to the <a>
+		}
+
+		menu.addEventListener("keydown", function (e) {
+			console.log('menu keydown:', e.key, 'pos:', pos);
+			switch (e.key) {
+				case "ArrowDown":
+					pos = (pos + 1) % items.length;
+					highlight();
+					e.preventDefault();
+					break;
+
+				case "ArrowUp":
+					pos = (pos - 1 + items.length) % items.length;
+					highlight();
+					e.preventDefault();
+					break;
+
+				case "Enter":
+					console.log('Clicking item ' + pos + ':', items[pos].textContent);
+					items[pos].click();
+					e.preventDefault();
+					break;
+			}
+		});
 	}
 }
 
