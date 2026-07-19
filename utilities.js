@@ -801,8 +801,10 @@ async function checkRecord(RowObject) {
 		if (!response.ok) { throw new Error("Bad response"); }
 		json = await response.json();
 	} catch (error) {
-		console.log("Fetch failed for " + OBS + ' (' + species + ')');
-		flagCell(RowObject.species);
+		console.log("Fetch failed in checkRecord for " + OBS + ' (' + species + '): ' + error);
+		// This happens when the user changes a count from a positive number to zero.
+		// The count is incorrectly displayed as the original value.
+		flagCell(RowObject.count);
 	}
 
 	function flagCell(Cell) {
@@ -817,11 +819,11 @@ async function checkRecord(RowObject) {
 		}
 	}
 
-	let commonName = json.taxon.commonName.trim();
-	let sciName = json.taxon.sciName.trim();
-	let fullName = commonName + ' ' + sciName;
-
 	if (json) {
+		let commonName = json.taxon.commonName.trim();
+		let sciName = json.taxon.sciName.trim();
+		let fullName = commonName + ' ' + sciName;
+
 		if ((commonName != species) && (sciName != species) && (fullName != species)) {
 			console.log('Mismatch for ' + OBS + ', "' + species + '" should be "' + fullName + '"');
 			flagCell(RowObject.species);
@@ -924,9 +926,18 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 	comments = comments.slice(1, comments.length - 1);	// strip enclosing quotes.
 
 	let checklistComments = false;
-	response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
-	let json = await response.json();
-	if (json.sub.comments) {
+	let json = false;
+
+	try {
+		response = await fetch('https://review.ebird.org/admin/api/v1/obs/view/' + OBS);
+		if (!response.ok) throw new Error("Bad response");
+		json = await response.json();
+	} catch (error) {
+		console.log("Fetch failed in getDetails for " + OBS + ' ' + error);
+		return;
+	}
+
+	if (json && json.sub.comments) {
 		checklistComments = true;
 		const clComment = parser.parseFromString('Checklist comments: ' + json.sub.comments, 'text/html');
 		commentTD.append(clComment.body.textContent);
@@ -934,7 +945,6 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 			commentTD.append(document.createElement('br'));
 		}
 	}
-
 
 	if (comments.length) {
 		if (checklistComments)
