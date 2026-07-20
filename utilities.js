@@ -302,7 +302,7 @@ function selectAllChecked(check) {	// hide rows that are not selected
 				break;
 		}
 	});
-	
+
 	document.getElementById('contents').querySelector('input.checkbox').disabled = check;
 }
 
@@ -581,7 +581,11 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 
 		elTr.querySelectorAll('td').forEach(function (Cell) {
 			// Look at each column cell in this row of the table
-			Class = Cell.getAttribute('class').split(' ')[0];
+			if (Cell.getAttribute('class'))
+				Class = Cell.getAttribute('class').split(' ')[0];
+			else {
+				Class = 'none';
+			}
 			html = parser.parseFromString(Cell.innerHTML, "text/html");
 			el = html.body.firstChild;
 
