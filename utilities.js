@@ -722,7 +722,9 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 				spreadSheet.push(headers.join());
 				doHeaders = false;
 			}
-			checkRecord(RowObject);
+
+			if (RowObject.species)
+				checkRecord(RowObject);
 
 			spreadSheet.push(row.join());	// Add this row to spreadsheet
 
