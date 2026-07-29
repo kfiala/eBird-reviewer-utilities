@@ -923,7 +923,7 @@ async function getDetails(elTr, mediaCell, commentTD, mediaTD, OBS) {
 	let response = await fetch('https://review.ebird.org/admin/reviewServices/getObsComments.do?obsId=' + OBS);
 	let comments = await response.text();
 	comments = comments.replace(/\\"/g, '"');	// unescape internal quotes
-	comments = comments.slice(1, comments.length - 1);	// strip enclosing quotes.
+	comments.replace(/^['"]|['"]$/g, '');	// strip enclosing quotes, if any.
 
 	let checklistComments = false;
 	let json = false;
