@@ -1730,16 +1730,6 @@ function keyboardHandler(ev)
 				}
 			}
 			break;
-		case 'KeyA':
-			console.log('Key A pressed'); 
-			if (document.getElementById('hyperlinkDiv').style.display == 'block') {
-				console.log('Hiding hyperlink div');
-				document.getElementById('hyperlinkDiv').style.display = 'none';
-			} else {
-				console.log('Showing hyperlink div');
-				addonsMenu('hyperlinkDiv');
-			}
-			break;
 		default:
 			handled = false;
 			break;
@@ -1798,50 +1788,6 @@ function keyboardHandler(ev)
 			default:
 //			console.log('Unhandled key: ' + ev.code);
 		}
-	}
-	function addonsMenu(id) {
-		const menu = document.getElementById(id);
-		const items = Array.from(menu.querySelectorAll("a"));
-		let pos = 0;
-
-		function showMenu() {
-			menu.style.display = "block";
-			menu.focus();
-			console.log('activeElement:', document.activeElement.id);
-
-			highlight();
-		}
-
-		showMenu();
-
-		function highlight() {
-			items.forEach(a => a.classList.remove("selected"));
-			items[pos].classList.add("selected");
-			items[pos].focus();  // Move actual keyboard focus to the <a>
-		}
-
-		menu.addEventListener("keydown", function (e) {
-			console.log('menu keydown:', e.key, 'pos:', pos);
-			switch (e.key) {
-				case "ArrowDown":
-					pos = (pos + 1) % items.length;
-					highlight();
-					e.preventDefault();
-					break;
-
-				case "ArrowUp":
-					pos = (pos - 1 + items.length) % items.length;
-					highlight();
-					e.preventDefault();
-					break;
-
-				case "Enter":
-					console.log('Clicking item ' + pos + ':', items[pos].textContent);
-					items[pos].click();
-					e.preventDefault();
-					break;
-			}
-		});
 	}
 }
 
