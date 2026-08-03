@@ -3,6 +3,8 @@
 const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 const boxBackgroundColor = '#edf4fe', itemBackgroundColor = '#113245';
 const flagBackgroundColor = '#bb2222';
+var keyboardMode = "main";
+var popupState = { };
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
 
@@ -153,19 +155,7 @@ function regularReview() {
 	hyperlink['Download'] = '';
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
-		document.addEventListener('keydown', keyboardHandler);
-
-		let filterForm = document.getElementById('filterwrapper');
-		if (filterForm) {	// Turn off keyboard handling when in filter form; turn it back on when leaving.
-			filterForm.addEventListener('focusin', () => { document.removeEventListener('keydown', keyboardHandler) });
-			filterForm.addEventListener('focusout', () => { document.addEventListener('keydown', keyboardHandler) });
-		}
-
-		let bulkactions = document.getElementById('bulkactions');
-		if (bulkactions) {	// Turn off keyboard handling when in disposition form; turn it back on when leaving.
-			bulkactions.addEventListener('focusin', () => { document.removeEventListener('keydown', keyboardHandler) });
-			bulkactions.addEventListener('focusout', () => { document.addEventListener('keydown', keyboardHandler) });
-		}
+		document.addEventListener("keydown", keyboardDispatcher);
 
 		mainTable.querySelector('tr').setAttribute('id', 'tableHeader');	// Label header row for future reference
 
@@ -249,10 +239,12 @@ function colorSelectAll(check = 'none') {	// Set row background color when selec
 				break;
 		}
 
-		let rowNumber = input.id.substring(6);
-		setRowBackground(rowNumber);
-		if (rowNumber == focusRowNumber) {
-			document.getElementById('rowid' + rowNumber).style.background = focusColor;
+		if (input.id) {
+			let rowNumber = input.id.substring(6);
+			setRowBackground(rowNumber);
+			if (rowNumber == focusRowNumber) {
+				document.getElementById('rowid' + rowNumber).style.background = focusColor;
+			}
 		}
 	});
 }
@@ -356,33 +348,43 @@ function pulldownHyperlinks(hyperlink) {
 	addonUL.style.marginLeft = '15px';
 	hyperlinkDiv.appendChild(addonUL);
 
-	addonLink(addonUL, hyperlink['Recall'], true, hyperlinkDiv,11);
-	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv,6);
-	addonLink(addonUL, hyperlink['Species'], true, hyperlinkDiv,4);
-	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv,7);
-	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv,7);
-	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv,1);
-	addonLink(addonUL, hyperlink['WhatsNew'], true, hyperlinkDiv,8);
+	let sequence = 0;
+	addonLink(addonUL, hyperlink['Recall'], true, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['Toggle'], false, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['Species'], true, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['DocList'], true, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['Download'], true, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['Extension'], true, hyperlinkDiv, sequence++);
+	addonLink(addonUL, hyperlink['WhatsNew'], true, hyperlinkDiv, sequence++);
 
 	hyperlinkPulldownButton.addEventListener('mouseenter', function () {
 		hyperlinkPulldownButton.style.textDecoration = 'underline'
-		document.getElementById('hyperlinkDiv').style.display = 'block';
+		popupMenu('hyperlinkDiv');
+		colorSelectAll(false);	// Just in case, clear any select all
 	});
 
 	var timeoutID;
 
 	hyperlinkPulldownButton.addEventListener('mouseleave', function () {
+		// Close the pulldown menu after a short delay, if the mouse does not enter the menu within that time.
 		hyperlinkPulldownButton.style.textDecoration = 'none';
-		timeoutID = setTimeout(() => { hyperlinkDiv.style.display = 'none'; }, 80);
+		timeoutID = setTimeout(() => { popupOff(hyperlinkDiv,'main'); }, 80);
 	});
 
 	hyperlinkDiv.addEventListener('mouseenter', function () {
+		// Once the mouse enters the pulldown menu, cancel the timeout that would close it.
 		clearTimeout(timeoutID);
-		hyperlinkDiv.addEventListener('mouseleave', () => { hyperlinkDiv.style.display = 'none'; });
+		// Set up to close the menu when the mouse leaves it.
+		hyperlinkDiv.addEventListener('mouseleave', () => {
+			if (hyperlinkDiv.style.display === 'block') {
+				popupOff(hyperlinkDiv, 'main');
+				console.log(`Setting keyboardMode from ${keyboardMode} to main because Mouseleave`);
+			}
+		});
 	});
 }
 
-function addonLink(addonUL, addon, clear, hyperlinkDiv,padRight) {
+function addonLink(addonUL, addon, clear, hyperlinkDiv, sequence) {
 	if (addon) {
 		let item = document.createElement('li');
 		if (isMobile()) {
@@ -392,24 +394,124 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv,padRight) {
 		}
 		item.style.paddingLeft = '2em';
 		item.style.textIndent = '-2em';
+		item.id = 'menu' + sequence;
 
-		addon.style.paddingRight = padRight + 'em';
 		addon.style.paddingTop = '.4em';
 		addon.style.paddingBottom = '.4em';
 
-		item.addEventListener('mouseenter', () => { addon.style.backgroundColor = itemBackgroundColor });
-		item.addEventListener('mouseenter', () => { item.querySelector('a').style.color = 'white' });
-		item.addEventListener('mouseleave', () => { addon.style.backgroundColor = boxBackgroundColor });
-		item.addEventListener('mouseleave', () => { item.querySelector('a').style.color = ' #36c' });
+		item.addEventListener('mouseenter', () => {
+			item.style.backgroundColor = itemBackgroundColor;
+			item.querySelector('a').style.color = 'white';
+			item.classList.add("selected");
+			popupState.pos = Number(item.id.slice(4));
+			highlight();
+		});
+
+		item.addEventListener('mouseleave', () => {
+      item.style.backgroundColor = boxBackgroundColor;
+      item.querySelector('a').style.color = ' #36c'
+    });
 
 		addonUL.appendChild(item);
 		item.appendChild(addon);
 		if (clear) {
 			addon.addEventListener('click', function () {
-				hyperlinkDiv.style.display = 'none';
+				popupOff(hyperlinkDiv);
 			});
 		}
 	}
+}
+
+function keyboardDispatcher(e) {
+	if (keyboardMode === "main") {
+		keyboardHandler(e);
+	} else if (keyboardMode === "popup") {
+		popupListener(e);
+	} else if (keyboardMode === 'filter') {
+	} else if (keyboardMode === 'bulkactions') {
+		bulkactionsKeyHandler(e);
+	} else console.log('=================> There is no keyboard mode!!!');
+	console.log('keyboardMode =', keyboardMode);
+}
+
+function popupMenu(id) {
+	keyboardMode = "popup";
+	console.log(`Setting keyboardMode from ${keyboardMode} to popup for ${id} in popupMenu`);
+	popupState.div = document.getElementById(id);
+	console.log("In popupMenu for ", id);
+	popupState.div.style.display = "block";
+	popupState.items = Array.from(popupState.div.querySelectorAll("li"));
+	popupState.div.focus();
+	popupState.pos = 0;
+	highlight();
+	popupListener();
+}
+
+function popupListener(e) {
+	if (e) {
+		let msg;
+		console.log('In popupListener for', popupState.div.id, 'key', e.code);
+		switch (e.code) {
+			case "ArrowDown":
+				popupState.pos = (popupState.pos + 1) % popupState.items.length;
+				highlight();
+				e.preventDefault();
+				break;
+
+			case "ArrowUp":
+				popupState.pos = (popupState.pos - 1 + popupState.items.length) % popupState.items.length;
+				highlight();
+				e.preventDefault();
+				break;
+
+			case "Enter":
+				console.log('Clicking item ' + popupState.pos + ':', popupState.items[popupState.pos].textContent);
+				let anchor = popupState.items[popupState.pos];
+				let a = anchor.getElementsByTagName('a');
+				if (a[0]) {
+					anchor = a[0];
+					console.log('Anchor switched to', anchor);
+				} else {
+					console.log('Anchor kept at', anchor);
+				}
+				anchor.click();
+				e.preventDefault();
+				break;
+
+			case 'Escape':
+			case 'KeyA':
+				console.log(`Setting keyboardMode from ${keyboardMode} to main because Escape or A`);
+				popupOff(popupState.div, 'main')		;
+		}
+	}
+}
+
+function highlight() {
+	let selected = -1;
+	let counter = 0;
+	let anchors;
+	console.log('In highlight');
+	popupState.items.forEach(item => {
+		if (item.classList.contains('selected')) selected = counter;
+		item.classList.remove("selected");
+		item.style.backgroundColor = boxBackgroundColor;
+		item.style.color = '#36c';
+		anchors = item.getElementsByTagName('a');
+		if (anchors[0])
+			anchors[0].style.color = '#36c'
+		counter++;
+	});
+	if (!popupState.items[popupState.pos]) {
+		console.error('popupState.items[popupState.pos] undefined for', popupState.pos)
+	}
+	popupState.items[popupState.pos].classList.add("selected");
+	popupState.items[popupState.pos].style.backgroundColor = itemBackgroundColor;
+	popupState.items[popupState.pos].style.color = 'white';
+	anchors = popupState.items[popupState.pos].getElementsByTagName('a');
+	if (anchors[0])
+		anchors[0].style.color = 'white';
+
+	popupState.items[popupState.pos].focus();  // Move actual keyboard focus to the <a>
 }
 
 function CreateRecallControl() {
@@ -483,18 +585,12 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		document.getElementById("listnav").appendChild(docDiv);
 
 		docDiv.addEventListener('click', () => {	// Close the document list when it is clicked on
-			document.getElementById('docDiv').style.display = 'none';
+			popupOff(docDiv, 'main');
 		});
-
-		if (document.getElementById('contents')) {
-			document.getElementById('contents').addEventListener('click', () => {	// Close the document list when table is clicked on
-				document.getElementById('docDiv').style.display = 'none';
-			});
-		}
-
+	
 		docDiv.addEventListener('mouseenter', () => {	// Once the mouse enters the document list;
 			docDiv.addEventListener('mouseleave', () => {	// Close the document list when the mouse leaves
-				document.getElementById('docDiv').style.display = 'none';
+				popupOff(docDiv, 'main');
 			});
 		});
 
@@ -526,12 +622,8 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		}
 		// This function will execute when "Reviewer docs" is clicked.
 		hyperlinkDocAnchor.addEventListener('click', function () {
-			let docDiv = document.getElementById('docDiv');
-			if (docDiv.style.display == 'block') {
-				docDiv.style.display = 'none';
-			} else {
-				docDiv.style.display = 'block';
-			}
+			console.log('Calling popupMenu for docDiv');
+			popupMenu('docDiv');
 		});
 		return (hyperlinkDocAnchor);
 	}
@@ -1282,23 +1374,35 @@ function setToggleStatus() {
 			case 1:
 				toggleStatus.textContent = 'Non-deferred records';
 				toggleStatusDiv.style.display = 'block';
+				keyboardMode = "popup";
 				break;
 			case 2:
 				toggleStatus.textContent = 'Deferred records';
 				toggleStatusDiv.style.display = 'block';
+				keyboardMode = "popup";
 				break;
 			case 3:
 				toggleStatus.textContent = 'Rereview records';
 				toggleStatusDiv.style.display = 'block';
+				keyboardMode = "popup";
 				break;
 			default:	// 0 or undefined
 				toggleStatus.textContent = '';
 				toggleStatusDiv.style.display = 'none';
+				console.log(toggleStatusDiv);
+				console.log(document.getElementById('hyperlinkDiv'));
+				let hyperlinkDiv = document.getElementById('hyperlinkDiv');
+				if (hyperlinkDiv)
+					popupOff(hyperlinkDiv, 'main');
+				else console.log('No hyperlinkDiv yet');
+				keyboardMode = "main";
 		}
+		console.log('In setToggleStatus, keyboard mode', keyboardMode);
 	}
 }
 
 function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, and create the list of species
+	console.log('Entering setupSelectSpecies');
 	// Set up a div to contain the species list
 	let toggleSpeciesDiv = document.createElement('div');
 	toggleSpeciesDiv.setAttribute("id", 'toggleSpeciesDiv');
@@ -1310,7 +1414,7 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	toggleSpeciesDiv.style.padding = '1em';
 	toggleSpeciesDiv.style.display = 'none';
 	toggleSpeciesDiv.style.zIndex = 1;
-	toggleSpeciesDiv.addEventListener('mouseleave', () => { toggleSpeciesDiv.style.display = 'none' });
+	toggleSpeciesDiv.addEventListener('mouseleave', () => { popupOff(toggleSpeciesDiv, 'main') });
 	document.getElementById("listnav").appendChild(toggleSpeciesDiv);
 	let speciesUL = document.createElement('ul');	// list of species
 	speciesUL.style.listStyle = 'none';
@@ -1322,11 +1426,15 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	listOfSpecies.unshift('All species');
 	for (let i = 0; i < listOfSpecies.length; i++) {
 		item[i] = document.createElement('li');
-		item[i].addEventListener('mouseenter', () => { item[i].style.backgroundColor = itemBackgroundColor });
-		item[i].addEventListener('mouseenter', () => { item[i].style.color = 'white' });
-		item[i].addEventListener('mouseleave', () => { item[i].style.backgroundColor = boxBackgroundColor });
-		item[i].addEventListener('mouseleave', () => { item[i].style.color = 'black' });
-		item[i].addEventListener('click', (ev) => { performSelectSpecies(mainTable, ev.target.textContent); });
+		item[i].addEventListener('mouseenter', () => {
+			item[i].style.backgroundColor = itemBackgroundColor; item[i].style.color = 'white'
+		});
+		item[i].addEventListener('mouseleave', () => {
+			item[i].style.backgroundColor = boxBackgroundColor; item[i].style.color = 'black'
+		});
+		item[i].addEventListener('click', (ev) => {
+			performSelectSpecies(mainTable, ev.target.textContent);
+		});
 		if (isMobile()) {
 			item[i].style.lineHeight = '35px';
 		}
@@ -1341,7 +1449,8 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 	ae.setAttribute("href", "#");
 
 	ae.onclick = function () {
-		document.getElementById('toggleSpeciesDiv').style.display = 'block';
+		popupOff(document.getElementById('hyperlinkDiv'), 'main');
+		popupMenu('toggleSpeciesDiv');
 	}
 
 	let previousSpecies = sessionStorage.getItem('species');
@@ -1379,8 +1488,8 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 
 function performSelectSpecies(mainTable, targetSpecies) {
 	sessionStorage.setItem('species', targetSpecies);
-
-	document.getElementById('toggleSpeciesDiv').style.display = 'none';
+	console.log('performSelectSpecies, targetSpecies', targetSpecies);
+	popupOff(document.getElementById('toggleSpeciesDiv'),'main');
 
 	let showAll = (targetSpecies == 'All species');
 
@@ -1631,7 +1740,6 @@ function bulkactionsKeyHandler(ev) { // key handler for when bulk actions are ac
 				document.activeElement.blur();
 			}
 			selectAllChecked(false);
-			document.removeEventListener('keydown', bulkactionsKeyHandler);
 			break;
 		case 'Home':	// To return to the table after pressing "J"
 			if (document.activeElement) {
@@ -1644,7 +1752,7 @@ function bulkactionsKeyHandler(ev) { // key handler for when bulk actions are ac
 				document.activeElement.blur();
 				if (firstDisplayedRow) {
 					focusRow = document.getElementById('rowid' + focusRowNumber);
-					keepInView(focusRow, 'keyboardHandler');
+					keepInView(focusRow, 'bulkactionsKeyHandler');
 					if (focusRowNumber && focusRow.style.display != 'none') {
 						focusRow.style.background = focusColor;
 						break;
@@ -1737,14 +1845,7 @@ function keyboardHandler(ev)
 			}
 			break;
 		case 'KeyA':
-			console.log('Key A pressed'); 
-			if (document.getElementById('hyperlinkDiv').style.display == 'block') {
-				console.log('Hiding hyperlink div');
-				document.getElementById('hyperlinkDiv').style.display = 'none';
-			} else {
-				console.log('Showing hyperlink div');
-				addonsMenu('hyperlinkDiv');
-			}
+			popupMenu('hyperlinkDiv');
 			break;
 		default:
 			handled = false;
@@ -1770,7 +1871,7 @@ function keyboardHandler(ev)
 				selectAllChecked(true);
 				document.getElementById('resultingValid').focus();
 				window.scrollTo(0, 0);
-				document.addEventListener('keydown', bulkactionsKeyHandler);
+				keyboardMode = 'bulkactions';
 				break;
 			case 'Enter':
 				ev.preventDefault();
@@ -1804,50 +1905,6 @@ function keyboardHandler(ev)
 			default:
 //			console.log('Unhandled key: ' + ev.code);
 		}
-	}
-	function addonsMenu(id) {
-		const menu = document.getElementById(id);
-		const items = Array.from(menu.querySelectorAll("a"));
-		let pos = 0;
-
-		function showMenu() {
-			menu.style.display = "block";
-			menu.focus();
-			console.log('activeElement:', document.activeElement.id);
-
-			highlight();
-		}
-
-		showMenu();
-
-		function highlight() {
-			items.forEach(a => a.classList.remove("selected"));
-			items[pos].classList.add("selected");
-			items[pos].focus();  // Move actual keyboard focus to the <a>
-		}
-
-		menu.addEventListener("keydown", function (e) {
-			console.log('menu keydown:', e.key, 'pos:', pos);
-			switch (e.key) {
-				case "ArrowDown":
-					pos = (pos + 1) % items.length;
-					highlight();
-					e.preventDefault();
-					break;
-
-				case "ArrowUp":
-					pos = (pos - 1 + items.length) % items.length;
-					highlight();
-					e.preventDefault();
-					break;
-
-				case "Enter":
-					console.log('Clicking item ' + pos + ':', items[pos].textContent);
-					items[pos].click();
-					e.preventDefault();
-					break;
-			}
-		});
 	}
 }
 
@@ -1904,4 +1961,33 @@ function unExpand() {	// Close any rows expanded with comments or media if under
 			Cell.style.display = 'none';
 		}
 	});
+}
+
+function popupOn(element, keyState = false) {
+	console.log('popupOn', element.id, keyState);
+	element.style.display = 'block';
+	if (keyState) {
+		keyboardMode = keyState;
+	}
+}
+
+function popupOff(element, keyState = false) {
+	console.log('Called from line', getCallerInfo());
+	console.log('popupOff', element.id, keyState);
+//	let displayed = element.style.display == 'block';
+	element.style.display = 'none';
+//	if (displayed) {
+		if (keyState) {
+			keyboardMode = keyState;
+		}
+//	} else console.log('popupOff: element was not displayed');
+}
+
+function getCallerInfo() {
+	const err = new Error();
+	const stack = err.stack.split(/\r?\n/);
+	const callerLine = stack[2];
+	const match = callerLine.match(/(.*)@.*:(\d+):/);
+	if (!match) return null;
+	return { 'function': match[1], 'line': Number(match[2]) }; // Return the function name and line number of the caller	
 }
