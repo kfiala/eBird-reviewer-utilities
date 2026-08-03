@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird reviewer assistant",
-  "version": "1.8.2",
+  "version": "1.9",
   "content_scripts": [
     {
       "matches": ["https://review.ebird.org/admin/*"],
@@ -12,7 +12,7 @@
       "*://search.macaulaylibrary.org/*"
   ],
   "description": "Utilities for eBird reviewers.",
-  "homepage_url": "https://www.faintlake.com/eBird/extension/ReviewerUtilities/",
+  "homepage_url": "https://www.faintlake.com/eBird/extension/ReviewerAssistant/",
   "icons": {
     "48": "icons/48.png",
     "96": "icons/96.png"
