@@ -3,7 +3,7 @@
 const focusColor = '#eeddbb', greenBackground = '#ccf3b4';
 const boxBackgroundColor = '#edf4fe', itemBackgroundColor = '#113245';
 const flagBackgroundColor = '#bb2222';
-var keyboardMode = "main";
+var keyboardMode = 'main';
 var popupState = { };
 
 if (window.location.href.includes('https://review.ebird.org/admin/review')) {  // matches review.htm, reviewObs.htm, and reviewSub.htm
@@ -156,6 +156,18 @@ function regularReview() {
 	hyperlink['Toggle'] = '';
 	if (mainTable) {	// If we have a table of records, e.g., not "Congratulations! You have no more records to review"
 		document.addEventListener("keydown", keyboardDispatcher);
+
+		let filterForm = document.getElementById('filterwrapper');
+		if (filterForm) {	// Turn off keyboard handling when in filter form; turn it back on when leaving.
+			filterForm.addEventListener('focusin', () => { keyboardMode = 'filter'; });
+			filterForm.addEventListener('focusout', () => { keyboardMode = 'main'; });
+		}
+
+		let bulkactions = document.getElementById('bulkactions');
+		if (bulkactions) {	// Turn off keyboard handling when in disposition form; turn it back on when leaving.
+			bulkactions.addEventListener('focusin', () => { keyboardMode = 'bulkactions' });
+			bulkactions.addEventListener('focusout', () => { keyboardMode = 'main'; });
+		}
 
 		mainTable.querySelector('tr').setAttribute('id', 'tableHeader');	// Label header row for future reference
 
@@ -378,7 +390,6 @@ function pulldownHyperlinks(hyperlink) {
 		hyperlinkDiv.addEventListener('mouseleave', () => {
 			if (hyperlinkDiv.style.display === 'block') {
 				popupOff(hyperlinkDiv, 'main');
-				console.log(`Setting keyboardMode from ${keyboardMode} to main because Mouseleave`);
 			}
 		});
 	});
@@ -408,9 +419,9 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv, sequence) {
 		});
 
 		item.addEventListener('mouseleave', () => {
-      item.style.backgroundColor = boxBackgroundColor;
-      item.querySelector('a').style.color = ' #36c'
-    });
+			item.style.backgroundColor = boxBackgroundColor;
+			item.querySelector('a').style.color = ' #36c'
+		});
 
 		addonUL.appendChild(item);
 		item.appendChild(addon);
@@ -418,27 +429,24 @@ function addonLink(addonUL, addon, clear, hyperlinkDiv, sequence) {
 			addon.addEventListener('click', function () {
 				popupOff(hyperlinkDiv);
 			});
-		}
+		} else item.classList.add("Kpersistent");	
 	}
 }
 
 function keyboardDispatcher(e) {
-	if (keyboardMode === "main") {
+	if (keyboardMode === 'main') {
 		keyboardHandler(e);
-	} else if (keyboardMode === "popup") {
+	} else if (keyboardMode === 'popup') {
 		popupListener(e);
 	} else if (keyboardMode === 'filter') {
 	} else if (keyboardMode === 'bulkactions') {
 		bulkactionsKeyHandler(e);
-	} else console.log('=================> There is no keyboard mode!!!');
-	console.log('keyboardMode =', keyboardMode);
+	}
 }
 
 function popupMenu(id) {
-	keyboardMode = "popup";
-	console.log(`Setting keyboardMode from ${keyboardMode} to popup for ${id} in popupMenu`);
+	keyboardMode = 'popup';
 	popupState.div = document.getElementById(id);
-	console.log("In popupMenu for ", id);
 	popupState.div.style.display = "block";
 	popupState.items = Array.from(popupState.div.querySelectorAll("li"));
 	popupState.div.focus();
@@ -450,7 +458,6 @@ function popupMenu(id) {
 function popupListener(e) {
 	if (e) {
 		let msg;
-		console.log('In popupListener for', popupState.div.id, 'key', e.code);
 		switch (e.code) {
 			case "ArrowDown":
 				popupState.pos = (popupState.pos + 1) % popupState.items.length;
@@ -465,22 +472,20 @@ function popupListener(e) {
 				break;
 
 			case "Enter":
-				console.log('Clicking item ' + popupState.pos + ':', popupState.items[popupState.pos].textContent);
-				let anchor = popupState.items[popupState.pos];
-				let a = anchor.getElementsByTagName('a');
-				if (a[0]) {
-					anchor = a[0];
-					console.log('Anchor switched to', anchor);
-				} else {
-					console.log('Anchor kept at', anchor);
+				let item = popupState.items[popupState.pos];
+				if (!item.classList.contains('Kpersistent')) {
+					keyboardMode = 'main';
 				}
-				anchor.click();
+				let a = item.getElementsByTagName('a');
+				if (a[0]) {	// There is an anchor in the list item, so click it instead of the list item itself
+					item = a[0];
+				} // else 	 There is no anchor in the list item, so click the list item itself
+				item.click();
 				e.preventDefault();
 				break;
 
 			case 'Escape':
 			case 'KeyA':
-				console.log(`Setting keyboardMode from ${keyboardMode} to main because Escape or A`);
 				popupOff(popupState.div, 'main')		;
 		}
 	}
@@ -490,7 +495,6 @@ function highlight() {
 	let selected = -1;
 	let counter = 0;
 	let anchors;
-	console.log('In highlight');
 	popupState.items.forEach(item => {
 		if (item.classList.contains('selected')) selected = counter;
 		item.classList.remove("selected");
@@ -501,9 +505,6 @@ function highlight() {
 			anchors[0].style.color = '#36c'
 		counter++;
 	});
-	if (!popupState.items[popupState.pos]) {
-		console.error('popupState.items[popupState.pos] undefined for', popupState.pos)
-	}
 	popupState.items[popupState.pos].classList.add("selected");
 	popupState.items[popupState.pos].style.backgroundColor = itemBackgroundColor;
 	popupState.items[popupState.pos].style.color = 'white';
@@ -512,6 +513,20 @@ function highlight() {
 		anchors[0].style.color = 'white';
 
 	popupState.items[popupState.pos].focus();  // Move actual keyboard focus to the <a>
+}
+
+function popupOn(element, keyState = false) {
+	element.style.display = 'block';
+	if (keyState) {
+		keyboardMode = keyState;
+	}
+}
+
+function popupOff(element, keyState = false) {
+	element.style.display = 'none';
+	if (keyState) {
+		keyboardMode = keyState;
+	}
 }
 
 function CreateRecallControl() {
@@ -587,7 +602,7 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		docDiv.addEventListener('click', () => {	// Close the document list when it is clicked on
 			popupOff(docDiv, 'main');
 		});
-	
+
 		docDiv.addEventListener('mouseenter', () => {	// Once the mouse enters the document list;
 			docDiv.addEventListener('mouseleave', () => {	// Close the document list when the mouse leaves
 				popupOff(docDiv, 'main');
@@ -622,7 +637,6 @@ function makeDocList() {	// Prepare the clickable list of reviewer docs
 		}
 		// This function will execute when "Reviewer docs" is clicked.
 		hyperlinkDocAnchor.addEventListener('click', function () {
-			console.log('Calling popupMenu for docDiv');
 			popupMenu('docDiv');
 		});
 		return (hyperlinkDocAnchor);
@@ -786,7 +800,7 @@ function buildCSV(mainTable) { 	//	set up the CSV download
 					let details = Cell.querySelectorAll('a');
 					filterURL = details[0].href;
 					historyURL = details[1].href;
-					break;	
+					break;
 				default: break;
 			}
 		});
@@ -899,7 +913,6 @@ async function checkRecord(RowObject) {
 		if (!response.ok) { throw new Error("Bad response"); }
 		json = await response.json();
 	} catch (error) {
-		console.log("Fetch failed in checkRecord for " + OBS + ' (' + species + '): ' + error);
 		// This happens when the user changes a count from a positive number to zero.
 		// The count is incorrectly displayed as the original value.
 		flagCell(RowObject.count);
@@ -1374,35 +1387,26 @@ function setToggleStatus() {
 			case 1:
 				toggleStatus.textContent = 'Non-deferred records';
 				toggleStatusDiv.style.display = 'block';
-				keyboardMode = "popup";
 				break;
 			case 2:
 				toggleStatus.textContent = 'Deferred records';
 				toggleStatusDiv.style.display = 'block';
-				keyboardMode = "popup";
 				break;
 			case 3:
 				toggleStatus.textContent = 'Rereview records';
 				toggleStatusDiv.style.display = 'block';
-				keyboardMode = "popup";
 				break;
 			default:	// 0 or undefined
 				toggleStatus.textContent = '';
 				toggleStatusDiv.style.display = 'none';
-				console.log(toggleStatusDiv);
-				console.log(document.getElementById('hyperlinkDiv'));
 				let hyperlinkDiv = document.getElementById('hyperlinkDiv');
 				if (hyperlinkDiv)
 					popupOff(hyperlinkDiv, 'main');
-				else console.log('No hyperlinkDiv yet');
-				keyboardMode = "main";
 		}
-		console.log('In setToggleStatus, keyboard mode', keyboardMode);
 	}
 }
 
 function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, and create the list of species
-	console.log('Entering setupSelectSpecies');
 	// Set up a div to contain the species list
 	let toggleSpeciesDiv = document.createElement('div');
 	toggleSpeciesDiv.setAttribute("id", 'toggleSpeciesDiv');
@@ -1488,7 +1492,6 @@ function setupSelectSpecies(mainTable) {	// Set up "Select species" hyperlink, a
 
 function performSelectSpecies(mainTable, targetSpecies) {
 	sessionStorage.setItem('species', targetSpecies);
-	console.log('performSelectSpecies, targetSpecies', targetSpecies);
 	popupOff(document.getElementById('toggleSpeciesDiv'),'main');
 
 	let showAll = (targetSpecies == 'All species');
@@ -1961,33 +1964,4 @@ function unExpand() {	// Close any rows expanded with comments or media if under
 			Cell.style.display = 'none';
 		}
 	});
-}
-
-function popupOn(element, keyState = false) {
-	console.log('popupOn', element.id, keyState);
-	element.style.display = 'block';
-	if (keyState) {
-		keyboardMode = keyState;
-	}
-}
-
-function popupOff(element, keyState = false) {
-	console.log('Called from line', getCallerInfo());
-	console.log('popupOff', element.id, keyState);
-//	let displayed = element.style.display == 'block';
-	element.style.display = 'none';
-//	if (displayed) {
-		if (keyState) {
-			keyboardMode = keyState;
-		}
-//	} else console.log('popupOff: element was not displayed');
-}
-
-function getCallerInfo() {
-	const err = new Error();
-	const stack = err.stack.split(/\r?\n/);
-	const callerLine = stack[2];
-	const match = callerLine.match(/(.*)@.*:(\d+):/);
-	if (!match) return null;
-	return { 'function': match[1], 'line': Number(match[2]) }; // Return the function name and line number of the caller	
 }
